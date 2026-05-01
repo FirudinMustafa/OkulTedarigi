@@ -9,7 +9,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
     }
 
-    // Tum aktif okullari getir
     const schools = await prisma.school.findMany({
       where: { isActive: true },
       include: {
@@ -24,16 +23,11 @@ export async function GET() {
             }
           }
         },
-        schoolPayments: {
-          where: {
-            status: 'PAID'
-          }
-        }
+        schoolPayments: true
       }
     })
 
     const summaries = schools.map(school => {
-      // Her sinifin hakedis miktarini ve siparislerini hesapla
       let totalCommission = 0
       let totalOrders = 0
       let totalRevenue = 0
@@ -41,21 +35,23 @@ export async function GET() {
       school.classes.forEach(classItem => {
         const classOrders = classItem.orders
         totalOrders += classOrders.length
-
-        // Sinif hakedis miktari x siparis sayisi
         totalCommission += Number(classItem.commissionAmount) * classOrders.length
-
-        // Toplam ciro
         totalRevenue += classOrders.reduce((acc: number, order) => acc + Number(order.totalAmount), 0)
       })
 
-      // Odenen toplam (sadece PAID olanlar)
-      const paid = school.schoolPayments.reduce((acc: number, p) => acc + Number(p.amount), 0)
+      // Fiilen ödenmiş (status=PAID)
+      const paid = school.schoolPayments
+        .filter(p => p.status === 'PAID')
+        .reduce((acc, p) => acc + Number(p.amount), 0)
 
-      // Bekleyen hakedis
-      const pending = totalCommission - paid
+      // Onay bekleyen ödeme kayıtları (admin oluşturdu, henüz "Ödendi İşaretle" basmadı)
+      const pendingPayments = school.schoolPayments
+        .filter(p => p.status === 'PENDING')
+        .reduce((acc, p) => acc + Number(p.amount), 0)
 
-      // Komisyon orani hesapla (toplam ciro / toplam komisyon * 100)
+      // Henüz commit edilmemiş kalan komisyon — yeni ödeme oluştururken kullanılacak
+      const remaining = Math.max(totalCommission - paid - pendingPayments, 0)
+
       const commissionRate = totalRevenue > 0 ? (totalCommission / totalRevenue * 100) : 0
 
       return {
@@ -66,7 +62,8 @@ export async function GET() {
         totalRevenue,
         commission: totalCommission,
         paid,
-        pending: pending > 0 ? pending : 0
+        pendingPayments,
+        pending: remaining
       }
     })
 

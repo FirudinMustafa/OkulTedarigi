@@ -24,7 +24,9 @@ interface Payment {
   id: string
   amount: { toString(): string }
   description: string | null
+  status: string
   paymentDate: Date
+  paidAt: Date | null
   createdAt: Date
 }
 
@@ -33,7 +35,8 @@ async function getSchoolPayments(schoolId: string) {
     where: { id: schoolId },
     include: {
       schoolPayments: {
-        orderBy: { paymentDate: 'desc' }
+        where: { status: 'PAID' },
+        orderBy: { paidAt: 'desc' }
       },
       classes: {
         include: {
@@ -57,24 +60,25 @@ async function getSchoolPayments(schoolId: string) {
     0
   )
 
-  // Komisyonu sinif bazinda hesapla
   let totalCommission = 0
   school.classes.forEach((classItem: ClassItem) => {
     totalCommission += Number(classItem.commissionAmount) * classItem.orders.length
   })
 
   const paidAmount = school.schoolPayments.reduce(
-    (acc: number, p: Payment) => acc + Number(p.amount),
+    (acc: number, p) => acc + Number(p.amount),
     0
   )
 
+  const pendingAmount = Math.max(totalCommission - paidAmount, 0)
+
   return {
     school,
-    payments: school.schoolPayments as Payment[],
+    payments: school.schoolPayments as unknown as Payment[],
     totalRevenue,
     totalCommission,
     paidAmount,
-    pendingAmount: totalCommission - paidAmount
+    pendingAmount
   }
 }
 
@@ -181,7 +185,7 @@ export default async function MudurHakedislerPage() {
                 {data.payments.map((payment: Payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
-                      {formatDateTime(payment.paymentDate)}
+                      {formatDateTime(payment.paidAt ?? payment.paymentDate)}
                     </TableCell>
                     <TableCell className="font-medium">
                       {Number(payment.amount).toFixed(2)} TL

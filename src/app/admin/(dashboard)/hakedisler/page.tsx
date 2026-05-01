@@ -35,6 +35,7 @@ interface SchoolSummary {
   totalRevenue: number
   commission: number
   paid: number
+  pendingPayments: number
   pending: number
 }
 
@@ -72,23 +73,40 @@ export default function HakedislerPage() {
     }
   }
 
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [listError, setListError] = useState<string | null>(null)
+
+  const safeJson = async (res: Response) => {
+    try { return await res.json() } catch { return null }
+  }
+
   const markAsPaid = async (paymentId: string) => {
+    setListError(null)
+    setPayingId(paymentId)
     try {
-      await fetch(`/api/admin/payments/${paymentId}/pay`, {
+      const res = await fetch(`/api/admin/payments/${paymentId}/pay`, {
         method: "POST",
         credentials: 'include'
       })
+      if (!res.ok) {
+        const data = await safeJson(res)
+        setListError(data?.error || `Ödeme tamamlanamadı (HTTP ${res.status})`)
+        return
+      }
       fetchData()
-    } catch (error) {
-      console.error("Odeme hatasi:", error)
+    } catch {
+      setListError("Sunucuya ulaşılamadı. Lütfen tekrar deneyin.")
+    } finally {
+      setPayingId(null)
     }
   }
 
   const [paymentError, setPaymentError] = useState("")
   const [paymentAmount, setPaymentAmount] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   const createPayment = async () => {
-    if (!selectedSchool) return
+    if (!selectedSchool || submitting) return
     setPaymentError("")
 
     const amount = parseFloat(paymentAmount)
@@ -97,10 +115,11 @@ export default function HakedislerPage() {
       return
     }
     if (amount > selectedSchool.pending) {
-      setPaymentError(`Tutar bekleyen hakedişi (${selectedSchool.pending.toFixed(2)} TL) aşamaz`)
+      setPaymentError(`Tutar kalan hakedişi (${selectedSchool.pending.toFixed(2)} TL) aşamaz`)
       return
     }
 
+    setSubmitting(true)
     try {
       const res = await fetch("/api/admin/payments", {
         method: "POST",
@@ -113,16 +132,17 @@ export default function HakedislerPage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        setPaymentError(data.error || "Hakedis olusturulamadi")
+        const data = await safeJson(res)
+        setPaymentError(data?.error || `Hakediş oluşturulamadı (HTTP ${res.status})`)
         return
       }
 
       fetchData()
       setPaymentDialogOpen(false)
-    } catch (error) {
-      console.error("Hakedis olusturma hatasi:", error)
-      setPaymentError("Bir hata olustu. Lutfen tekrar deneyin.")
+    } catch {
+      setPaymentError("Sunucuya ulaşılamadı. Lütfen tekrar deneyin.")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -218,6 +238,7 @@ export default function HakedislerPage() {
                   <TableHead>Toplam Ciro</TableHead>
                   <TableHead>Toplam Hakedis</TableHead>
                   <TableHead className="text-green-700">Verilen</TableHead>
+                  <TableHead className="text-orange-700">İşlemde</TableHead>
                   <TableHead className="text-yellow-700">Kalan</TableHead>
                   <TableHead className="text-right">Islem</TableHead>
                 </TableRow>
@@ -231,6 +252,9 @@ export default function HakedislerPage() {
                     <TableCell>{school.commission.toFixed(2)} TL</TableCell>
                     <TableCell className="font-medium text-green-600">
                       {school.paid > 0 ? `${school.paid.toFixed(2)} TL` : <span className="text-gray-400">—</span>}
+                    </TableCell>
+                    <TableCell className="font-medium text-orange-600">
+                      {school.pendingPayments > 0 ? `${school.pendingPayments.toFixed(2)} TL` : <span className="text-gray-400">—</span>}
                     </TableCell>
                     <TableCell className="font-medium text-yellow-600">
                       {school.pending > 0 ? `${school.pending.toFixed(2)} TL` : <span className="text-green-500">✓ Tamam</span>}
@@ -288,6 +312,11 @@ export default function HakedislerPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {listError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {listError}
+            </div>
+          )}
           {filteredPayments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Odeme kaydi bulunamadi
@@ -323,10 +352,11 @@ export default function HakedislerPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={payingId === payment.id}
                           onClick={() => markAsPaid(payment.id)}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Odendi Isaretle
+                          {payingId === payment.id ? "İşleniyor..." : "Odendi Isaretle"}
                         </Button>
                       )}
                     </TableCell>
@@ -362,12 +392,16 @@ export default function HakedislerPage() {
                   <p className="font-medium">{selectedSchool.commission.toFixed(2)} TL</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Odenen:</span>
-                  <p className="font-medium">{selectedSchool.paid.toFixed(2)} TL</p>
+                  <span className="text-gray-500">Verilen (PAID):</span>
+                  <p className="font-medium text-green-600">{selectedSchool.paid.toFixed(2)} TL</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Bekleyen:</span>
-                  <p className="font-medium text-yellow-600">{selectedSchool.pending.toFixed(2)} TL</p>
+                  <span className="text-gray-500">İşlemde (PENDING):</span>
+                  <p className="font-medium text-orange-600">{selectedSchool.pendingPayments.toFixed(2)} TL</p>
+                </div>
+                <div className="col-span-2 border-t pt-2">
+                  <span className="text-gray-500">Kalan (yeni kayıt için):</span>
+                  <p className="font-bold text-yellow-700 text-lg">{selectedSchool.pending.toFixed(2)} TL</p>
                 </div>
               </div>
               <div className="border-t pt-4 space-y-3">
@@ -406,11 +440,11 @@ export default function HakedislerPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setPaymentDialogOpen(false)} disabled={submitting}>
               Iptal
             </Button>
-            <Button onClick={createPayment}>
-              Hakedis Olustur
+            <Button onClick={createPayment} disabled={submitting}>
+              {submitting ? "Kaydediliyor..." : "Hakedis Olustur"}
             </Button>
           </DialogFooter>
         </DialogContent>

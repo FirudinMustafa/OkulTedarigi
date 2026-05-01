@@ -66,16 +66,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Aciklama max 500 karakter olabilir' }, { status: 400 })
     }
 
-    // Foreign key existence check
+    // Okulu komisyon hesabı için ihtiyaç duyulan ilişkilerle çek
     const school = await prisma.school.findUnique({
       where: { id: schoolId },
-      select: { id: true }
+      include: {
+        classes: {
+          include: {
+            orders: {
+              where: {
+                status: {
+                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+                }
+              },
+              select: { id: true }
+            }
+          }
+        },
+        schoolPayments: { select: { amount: true, status: true } }
+      }
     })
     if (!school) {
       return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
     }
 
-    // Donem olustur (mevcut ay-yil)
+    // Server-side over-commitment guard:
+    // amount + (mevcut PAID + PENDING) <= toplam komisyon olmalı.
+    let totalCommission = 0
+    for (const c of school.classes) {
+      totalCommission += Number(c.commissionAmount) * c.orders.length
+    }
+    const alreadyCommitted = school.schoolPayments.reduce(
+      (acc, p) => acc + Number(p.amount), 0
+    )
+    const remaining = totalCommission - alreadyCommitted
+    if (numericAmount > remaining + 0.001) {
+      return NextResponse.json(
+        {
+          error: `Tutar kalan hakedişi aşıyor. Toplam komisyon ${totalCommission.toFixed(2)} TL, ` +
+                 `daha önce kayıtlı ${alreadyCommitted.toFixed(2)} TL (PAID+PENDING). ` +
+                 `Bu kayıt için en fazla ${remaining.toFixed(2)} TL girilebilir.`
+        },
+        { status: 400 }
+      )
+    }
+
     const now = new Date()
     const period = now.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
 
