@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  /* Background & Foreground */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(220 13% 13%);
+
+  /* Cards & Popovers */
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(220 13% 13%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(220 13% 13%);
+
+  /* Primary: Navy Blue #1E3A8A (blue-900) */
+  --color-primary: hsl(224 50% 33%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  /* Secondary: Light Gray #F3F4F6 (gray-100) */
+  --color-secondary: hsl(220 14% 96%);
+  --color-secondary-foreground: hsl(220 13% 13%);
+
+  /* Muted */
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 9% 46%);
+
+  /* Accent: Blue #3B82F6 (blue-500) */
+  --color-accent: hsl(217 91% 60%);
+  --color-accent-foreground: hsl(0 0% 100%);
+
+  /* Destructive: Red #EF4444 (red-500) */
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+
+  /* Success: Green #10B981 (green-500) */
+  --color-success: hsl(160 84% 39%);
+  --color-success-foreground: hsl(0 0% 100%);
+
+  /* Warning: Amber #F59E0B (amber-500) */
+  --color-warning: hsl(38 92% 50%);
+  --color-warning-foreground: hsl(0 0% 100%);
+
+  /* Borders & Input */
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(224 50% 33%);
+
+  --radius: 0.5rem;
+
+  /* Apple palette — signature neutrals + Apple blue */
+  --color-apple-blue: hsl(211 100% 45%);      /* #0071E3 — learn-more/CTA */
+  --color-apple-blue-hover: hsl(211 100% 50%);/* #0077ED */
+  --color-apple-ink: hsl(240 4% 12%);         /* #1D1D1F — near-black headline */
+  --color-apple-bg: hsl(240 14% 99%);         /* #FBFBFD — canvas */
+  --color-apple-panel: hsl(240 4% 95%);       /* #F5F5F7 — section alt-bg */
+  --color-apple-gray: hsl(240 2% 52%);        /* #86868B — secondary text */
+  --color-apple-border: hsl(240 6% 83%);      /* #D2D2D7 — hairline */
+}
+
+:root {
+  /* Playful school-theme gradients (Apple-style headline gradient, restrained) */
+  --gradient-spectrum: linear-gradient(135deg, #0071e3 0%, #8b5cf6 50%, #f472b6 100%);
+  --gradient-spectrum-warm: linear-gradient(135deg, #3b82f6 0%, #a855f7 50%, #f59e0b 100%);
+  --gradient-soft-blue: linear-gradient(135deg, #0071e3 0%, #5eb6ff 100%);
+  --gradient-green: linear-gradient(135deg, #10b981 0%, #22c55e 50%, #84cc16 100%);
+
+  /* Apple easings — for Framer Motion / CSS transitions */
+  --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-apple-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* Native select dropdown fix - ensure dropdowns open properly */
+select {
+  -webkit-appearance: menulist-button !important;
+  -moz-appearance: menulist-button !important;
+  appearance: menulist-button !important;
+  cursor: pointer;
+  background-color: white;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background-color: #f3f4f6;
+}
+
+.dark {
+  --color-background: hsl(222.2 84% 4.9%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(222.2 84% 4.9%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-popover: hsl(222.2 84% 4.9%);
+  --color-popover-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(217.2 91.2% 59.8%);
+  --color-primary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-secondary: hsl(217.2 32.6% 17.5%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+  --color-muted: hsl(217.2 32.6% 17.5%);
+  --color-muted-foreground: hsl(215 20.2% 65.1%);
+  --color-accent: hsl(217.2 32.6% 17.5%);
+  --color-accent-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(217.2 32.6% 17.5%);
+  --color-input: hsl(217.2 32.6% 17.5%);
+  --color-ring: hsl(224.3 76.3% 48%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted-foreground) 30%, transparent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-muted-foreground) 50%, transparent);
+}
+
+/* Animation keyframes — only those still used outside landing (siparis-takip) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Brand marquee — yatayda sürekli akan logo/yayınevi şeridi.
+   İçerik iki kez basılıyor, -50% kaydırarak loop yapıyoruz. */
+@keyframes brandScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-brand-scroll {
+  animation: brandScroll 30s linear infinite;
+  width: max-content;
+}
+
+/* Apple-style gradient text — restrained, playful for school theme */
+.text-gradient-spectrum {
+  background-image: var(--gradient-spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-spectrum-warm {
+  background-image: var(--gradient-spectrum-warm);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-soft-blue {
+  background-image: var(--gradient-soft-blue);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-green {
+  background-image: var(--gradient-green);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}

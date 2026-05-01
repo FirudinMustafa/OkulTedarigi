@@ -1,0 +1,16 @@
+{
+  "name": "OkulTedarigim - Okul Kitap Siparis Sistemi",
+  "short_name": "OkulTedarigim",
+  "description": "Okulunuza ozel kitap ve egitim materyali siparis platformu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "/logo-optimized.png",
+      "sizes": "300x300",
+      "type": "image/png"
+    }
+  ]
+}
