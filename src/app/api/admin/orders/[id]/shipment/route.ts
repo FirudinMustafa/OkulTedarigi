@@ -42,7 +42,7 @@ export async function POST(
       )
     }
 
-    if (!['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING'].includes(order.status)) {
+    if (!['PAID', 'CONFIRMED', 'INVOICED'].includes(order.status)) {
       return NextResponse.json(
         { error: 'Bu siparis icin kargo olusturulamaz' },
         { status: 400 }

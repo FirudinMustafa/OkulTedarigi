@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     const where: Record<string, unknown> = {
       deliveryDocumentId: null,
-      status: { in: ['CONFIRMED', 'INVOICED', 'PREPARING'] },
+      status: { in: ['CONFIRMED', 'INVOICED'] },
       class: { school: { deliveryType: 'SCHOOL_DELIVERY' } }
     }
 

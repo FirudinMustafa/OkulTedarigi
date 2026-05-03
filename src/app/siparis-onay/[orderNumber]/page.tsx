@@ -29,7 +29,6 @@ const statusLabels: Record<string, { label: string; bgClass: string; textClass: 
   PAID: { label: 'Ödeme Alindi', bgClass: 'bg-blue-50 border-b border-blue-100', textClass: 'text-blue-700', icon: '✓' },
   CONFIRMED: { label: 'Onaylandi', bgClass: 'bg-cyan-50 border-b border-cyan-100', textClass: 'text-cyan-700', icon: '✓' },
   INVOICED: { label: 'Fatura Kesildi', bgClass: 'bg-indigo-50 border-b border-indigo-100', textClass: 'text-indigo-700', icon: '🧾' },
-  PREPARING: { label: 'Hazirlaniyor', bgClass: 'bg-amber-50 border-b border-amber-100', textClass: 'text-amber-700', icon: '⏳' },
   SHIPPED: { label: 'Kargoya Verildi', bgClass: 'bg-purple-50 border-b border-purple-100', textClass: 'text-purple-700', icon: '📦' },
   DELIVERED: { label: 'Teslim Edildi', bgClass: 'bg-green-50 border-b border-green-100', textClass: 'text-green-700', icon: '✓' },
   COMPLETED: { label: 'Tamamlandi', bgClass: 'bg-green-50 border-b border-green-100', textClass: 'text-green-700', icon: '✓' },

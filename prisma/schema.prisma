@@ -129,6 +129,7 @@ model Order {
   class              Class             @relation(fields: [classId], references: [id])
   deliveryDocument   DeliveryDocument? @relation(fields: [deliveryDocumentId], references: [id])
   package            Package           @relation(fields: [packageId], references: [id])
+  students           OrderStudent[]
 
   @@index([classId])
   @@index([packageId])
@@ -137,6 +138,19 @@ model Order {
   @@index([createdAt])
   @@index([deliveryDocumentId], map: "orders_deliveryDocumentId_fkey")
   @@map("orders")
+}
+
+model OrderStudent {
+  id        String   @id @default(cuid())
+  orderId   String
+  firstName String
+  lastName  String
+  section   String?  @db.VarChar(4) // Sube harfi
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_students")
 }
 
 model CancelRequest {
@@ -273,7 +287,6 @@ enum OrderStatus {
   PAID
   CONFIRMED
   INVOICED
-  PREPARING
   SHIPPED
   DELIVERED
   COMPLETED

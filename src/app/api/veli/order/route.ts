@@ -21,8 +21,7 @@ export async function POST(request: Request) {
     const {
       classId,
       parentName,
-      studentName,
-      studentSection,
+      students,
       phone,
       email,
       address,
@@ -36,6 +35,10 @@ export async function POST(request: Request) {
       orderNote,
       discountCode
     } = parsed.data
+
+    // Ilk ogrenci geri uyumluluk icin Order.studentName / studentSection alanlarina yazilir
+    const primaryStudent = students[0]
+    const studentCount = students.length
 
     // IP basina rate limit (10 siparis denemesi / 10 dakika)
     const ip = getClientIp(request)
@@ -117,7 +120,9 @@ export async function POST(request: Request) {
       )
     }
 
-    let finalAmount = Number(classData.package.price)
+    // Toplam fiyat = paket fiyati × ogrenci sayisi
+    const unitPrice = Number(classData.package.price)
+    let finalAmount = Math.round(unitPrice * studentCount * 100) / 100
     let discountAmount: number | null = null
     let validDiscountCode: string | null = null
     let discountId: string | null = null
@@ -187,17 +192,20 @@ export async function POST(request: Request) {
           }
         }
 
-        // Limit asildiysa indirimi geri al (orijinal paket fiyatina don)
-        const effectiveTotal = limitExceeded ? Number(classData.package!.price) : finalAmount
+        // Limit asildiysa indirimi geri al (paket × ogrenci sayisi orijinal fiyatina don)
+        const baseTotal = Math.round(unitPrice * studentCount * 100) / 100
+        const effectiveTotal = limitExceeded ? baseTotal : finalAmount
         const effectiveDiscountCode = limitExceeded ? null : validDiscountCode
         const effectiveDiscountAmount = limitExceeded ? null : discountAmount
+
+        const primaryStudentName = `${primaryStudent.firstName.trim()} ${primaryStudent.lastName.trim()}`.trim()
 
         return tx.order.create({
           data: {
             orderNumber,
             parentName: parentName.trim(),
-            studentName: studentName.trim(),
-            studentSection: studentSection || null,
+            studentName: primaryStudentName,
+            studentSection: primaryStudent.section || null,
             phone,
             email: email || null,
             address: address || null,
@@ -215,7 +223,14 @@ export async function POST(request: Request) {
             taxNumber: taxNumber || null,
             taxOffice: isCorporateInvoice ? (taxOffice || null) : null,
             classId,
-            packageId: classData.package!.id
+            packageId: classData.package!.id,
+            students: {
+              create: students.map(s => ({
+                firstName: s.firstName.trim(),
+                lastName: s.lastName.trim(),
+                section: s.section || null,
+              }))
+            }
           }
         })
       })
@@ -239,7 +254,8 @@ export async function POST(request: Request) {
       ipAddress: ip,
       details: {
         orderNumber,
-        studentName,
+        studentName: order.studentName,
+        studentCount,
         paymentMethod: 'CREDIT_CARD',
         amount: effectiveAmount
       }

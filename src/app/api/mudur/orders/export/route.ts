@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getMudurSession } from '@/lib/auth'
 import { ORDER_STATUS_LABELS } from '@/lib/constants'
-import { escapeCsvValue } from '@/lib/security'
+import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 
 const safe = escapeCsvValue
@@ -153,10 +153,12 @@ export async function GET() {
     const safeName = schoolName.replace(/[^a-zA-Z0-9\u00C0-\u024F\u0400-\u04FF]/g, '_')
     const filename = `${safeName}_siparisler_${new Date().toISOString().slice(0, 10)}.xlsx`
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${filename}"`
+        'Content-Disposition': buildContentDisposition(filename),
+        'Content-Length': String((buffer as ArrayBuffer).byteLength),
+        'Cache-Control': 'no-store'
       }
     })
 

@@ -1,0 +1,20 @@
+{
+  "name": "Atatürk İlkokulu 2. Sınıf Paketi",
+  "description": "2. sınıf öğrencileri için tüm ders kitapları, çalışma kitapları ve yardımcı kaynaklar.",
+  "note": "Paket içeriği yıl boyunca kullanılacak şekilde özenle seçilmiştir.",
+  "basePrice": 2500.00,
+  "items": [
+    { "name": "Türkçe Ders Kitabı", "quantity": 1, "unitPrice": 250 },
+    { "name": "Matematik Ders Kitabı", "quantity": 1, "unitPrice": 280 },
+    { "name": "Hayat Bilgisi Ders Kitabı", "quantity": 1, "unitPrice": 220 },
+    { "name": "Türkçe Çalışma Kitabı", "quantity": 1, "unitPrice": 180 },
+    { "name": "Matematik Çalışma Kitabı", "quantity": 1, "unitPrice": 180 },
+    { "name": "İngilizce Ders Kitabı", "quantity": 1, "unitPrice": 240 },
+    { "name": "Resim Defteri (A4)", "quantity": 2, "unitPrice": 35 },
+    { "name": "Çizgili Defter (60 yaprak)", "quantity": 5, "unitPrice": 25 },
+    { "name": "Kareli Defter (60 yaprak)", "quantity": 3, "unitPrice": 25 },
+    { "name": "Kalem Kutusu (Tam Set)", "quantity": 1, "unitPrice": 320 },
+    { "name": "Boya Kalemi Seti (24'lü)", "quantity": 1, "unitPrice": 195 },
+    { "name": "Spor Çantası", "quantity": 1, "unitPrice": 450 }
+  ]
+}

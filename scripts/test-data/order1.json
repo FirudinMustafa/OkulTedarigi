@@ -1,0 +1,13 @@
+{
+  "classId": "cmop3ac8d000uc4bsoq8zs7p2",
+  "parentName": "Ayşe Demir",
+  "students": [
+    { "firstName": "Zeynep", "lastName": "Demir", "section": "A" }
+  ],
+  "phone": "05321234567",
+  "email": "ayse.demir@example.com",
+  "address": "Cumhuriyet Mahallesi, Atatürk Caddesi No:15 Kat:3 Daire:7, Çankaya, Ankara, 06520, Türkiye",
+  "isCorporateInvoice": false,
+  "taxNumber": "10000000146",
+  "orderNote": "Lütfen mesai saatleri içinde teslim ediniz."
+}

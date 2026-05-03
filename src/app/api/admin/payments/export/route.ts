@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { escapeCsvValue } from '@/lib/security'
+import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 
 const safe = escapeCsvValue
@@ -22,7 +22,7 @@ export async function GET() {
             orders: {
               where: {
                 status: {
-                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED']
                 }
               }
             }
@@ -217,10 +217,12 @@ export async function GET() {
     const buffer = await workbook.xlsx.writeBuffer()
     const filename = `hakedisler_${new Date().toISOString().slice(0, 10)}.xlsx`
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${filename}"`
+        'Content-Disposition': buildContentDisposition(filename),
+        'Content-Length': String((buffer as ArrayBuffer).byteLength),
+        'Cache-Control': 'no-store'
       }
     })
 

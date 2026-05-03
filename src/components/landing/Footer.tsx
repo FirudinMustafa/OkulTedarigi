@@ -201,7 +201,7 @@ export default function Footer() {
           </p>
           <div className="inline-flex items-center gap-1.5 text-[12px] text-apple-gray">
             <ShieldCheck weight="regular" className="w-4 h-4" />
-            iyzico 3D Secure • SSL şifreli ödeme
+            3D Secure • SSL şifreli ödeme
           </div>
         </div>
       </div>

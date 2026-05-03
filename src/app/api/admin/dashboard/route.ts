@@ -30,7 +30,7 @@ export async function GET() {
     ] = await Promise.all([
       prisma.order.count(),
       prisma.order.count({
-        where: { status: { in: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED', 'PREPARING'] } }
+        where: { status: { in: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED'] } }
       }),
       prisma.order.count({
         where: { status: 'COMPLETED' }
@@ -49,26 +49,26 @@ export async function GET() {
     // Revenue calculations
     const [totalRevenue, monthlyRevenue, lastMonthRevenue, weeklyRevenue] = await Promise.all([
       prisma.order.aggregate({
-        where: { status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } },
+        where: { status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
           createdAt: { gte: startOfMonth }
         },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
           createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
         },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
           createdAt: { gte: startOfWeek }
         },
         _sum: { totalAmount: true }

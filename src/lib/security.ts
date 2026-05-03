@@ -164,3 +164,32 @@ export function verifyOrderAccessToken(orderId: string, token: string): boolean 
     return false
   }
 }
+
+/**
+ * RFC 5987 uyumlu Content-Disposition baslik degeri olusturur.
+ *
+ * HTTP basliklari ASCII ile sinirli oldugu icin Turkce karakter iceren dosya isimlerini
+ * iki yontemle veririz: (1) ASCII fallback ('filename=...'), (2) UTF-8 percent-encoded
+ * tam dogru versiyon ('filename*=UTF-8''...'). Modern tarayicilar `filename*` kullanir,
+ * eski tarayicilar fallback'e duser.
+ *
+ * Ornek girdi: "Atatürk_İlkokulu_siparisler_2026-05-03.xlsx"
+ * Ornek cikti: attachment; filename="Ataturk_Ilkokulu_siparisler_2026-05-03.xlsx"; filename*=UTF-8''Atat%C3%BCrk_%C4%B0lkokulu_siparisler_2026-05-03.xlsx
+ */
+export function buildContentDisposition(filename: string, disposition: 'attachment' | 'inline' = 'attachment'): string {
+  // Turkce karakterleri ASCII karsiliklariyla degistir (fallback icin)
+  const turkishMap: Record<string, string> = {
+    'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'I': 'I',
+    'İ': 'I', 'i': 'i', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S',
+    'ü': 'u', 'Ü': 'U'
+  }
+  const asciiName = filename
+    .split('')
+    .map(ch => turkishMap[ch] ?? (ch.charCodeAt(0) <= 127 ? ch : '_'))
+    .join('')
+
+  // RFC 5987: filename*=UTF-8''<percent-encoded>
+  const encoded = encodeURIComponent(filename)
+
+  return `${disposition}; filename="${asciiName}"; filename*=UTF-8''${encoded}`
+}

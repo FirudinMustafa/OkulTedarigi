@@ -39,11 +39,11 @@ export async function POST(request: Request) {
     }
 
     // Kargo gonderimi yapilabilecek siparisleri getir
-    // PAID veya PREPARING durumundaki siparisler
+    // PAID/CONFIRMED → otomatik fatura kesilir; INVOICED → direkt kargolanir
     const orders = await prisma.order.findMany({
       where: {
         id: { in: orderIds },
-        status: { in: ['PAID', 'PREPARING'] }
+        status: { in: ['PAID', 'CONFIRMED', 'INVOICED'] }
       },
       include: {
         class: {

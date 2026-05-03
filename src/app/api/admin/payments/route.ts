@@ -75,7 +75,7 @@ export async function POST(request: Request) {
             orders: {
               where: {
                 status: {
-                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'PREPARING', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED']
                 }
               },
               select: { id: true }

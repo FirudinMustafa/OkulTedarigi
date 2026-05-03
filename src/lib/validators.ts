@@ -78,12 +78,26 @@ export const adminDiscountBodySchema = z.object({
 
 export type AdminDiscountBody = z.infer<typeof adminDiscountBodySchema>
 
+// Maksimum ogrenci sayisi (1 siparis basina) - kotuye kullanim ve ozet ekraninin sismesi icin sinir
+export const MAX_STUDENTS_PER_ORDER = 5
+
+// Tek bir ogrenci girdisi (cogul ogrenci destegi)
+export const orderStudentSchema = z.object({
+  firstName: z.string().trim().min(2, 'Ogrenci adi en az 2 karakter olmali').max(100),
+  lastName: z.string().trim().min(2, 'Ogrenci soyadi en az 2 karakter olmali').max(100),
+  section: studentSectionSchema,
+})
+
 // Veli order body — guvenlik kritik (DoS, oversized fields)
 export const veliOrderBodySchema = z.object({
   classId: z.string().trim().min(1).max(40),
   parentName: z.string().trim().min(2, 'Veli adi en az 2 karakter olmali').max(100),
-  studentName: z.string().trim().min(2, 'Ogrenci adi en az 2 karakter olmali').max(100),
+  // Geriye uyumluluk: tek ogrenci alanlari opsiyonel; cogul `students` array'i tercih edilir.
+  studentName: z.string().trim().min(2).max(100).optional().nullable(),
   studentSection: studentSectionSchema,
+  students: z.array(orderStudentSchema)
+    .min(1, 'En az bir ogrenci eklenmelidir')
+    .max(MAX_STUDENTS_PER_ORDER, `En fazla ${MAX_STUDENTS_PER_ORDER} ogrenci eklenebilir`),
   phone: phoneSchema,
   email: emailSchema,
   address: z.string().trim().min(5, 'Adres en az 5 karakter olmali').max(1000),

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle, CaretDown, CaretUp } from '@phosphor-icons/react'
 
 // Sinif kartlari icin gorsel arka plan listesi (public/images/class-bg/)
 const CLASS_BG_VARIANTS = [
@@ -105,12 +105,21 @@ function OrderHeader() {
 }
 
 // ==================== SCHOOL PASSWORD FLOW ====================
+const SCHOOL_DATA_KEY = 'siparisSchoolData'
+
 function SchoolPasswordFlow() {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [isValidating, setIsValidating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [schoolData, setSchoolData] = useState<SchoolData | null>(null)
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
+
+  // /siparis her acildiginda kullanicidan sifre yeniden istenir.
+  // Onceki oturumdan kalmis okul verisini temizle.
+  useEffect(() => {
+    try { sessionStorage.removeItem(SCHOOL_DATA_KEY) } catch {}
+  }, [])
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -187,20 +196,21 @@ function SchoolPasswordFlow() {
           {/* Baslik */}
           <div className="mb-10 max-w-2xl">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-apple-ink leading-[1.05]">
-              Sınıfını <span className="text-gradient-green">seç.</span>
+              Paketini <span className="text-gradient-green">seç.</span>
             </h2>
-            <p className="mt-4 text-lg text-apple-gray">Öğrencinizin sınıfını seçin, paketi görüntüleyin.</p>
+            <p className="mt-4 text-lg text-apple-gray">Sınıfınıza uygun paketi inceleyin ve seçin.</p>
           </div>
 
-          {/* Sinif grid */}
+          {/* Paket grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {schoolData.classes.map((cls, idx) => {
               const variant = CLASS_BG_VARIANTS[idx % CLASS_BG_VARIANTS.length]
+              const isExpanded = expandedIdx === idx
+              const hasItems = !!cls.package && Array.isArray(cls.package.items) && cls.package.items.length > 0
               return (
-                <button
-                  key={cls.id}
-                  onClick={() => handleClassSelect(cls)}
-                  className="group relative text-left rounded-[28px] overflow-hidden border border-apple-border/60 bg-white shadow-[0_12px_32px_-20px_rgba(0,0,0,0.15)] hover:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all"
+                <div
+                  key={`${cls.id}-${idx}`}
+                  className="group relative rounded-[28px] overflow-hidden border border-apple-border/60 bg-white shadow-[0_12px_32px_-20px_rgba(0,0,0,0.15)] transition-all flex flex-col"
                 >
                   <div className="relative w-full aspect-[16/9] overflow-hidden">
                     <Image
@@ -208,7 +218,7 @@ function SchoolPasswordFlow() {
                       alt={`${cls.name} sınıfı`}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-5 right-5">
@@ -216,7 +226,7 @@ function SchoolPasswordFlow() {
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 flex-1 flex flex-col gap-4">
                     {cls.package && (
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[14px] font-medium text-apple-ink line-clamp-1">{cls.package.name}</p>
@@ -226,42 +236,66 @@ function SchoolPasswordFlow() {
                       </div>
                     )}
 
-                    {cls.package && cls.package.items.length > 0 && (
+                    {hasItems && isExpanded && (
                       <div className="pt-4 border-t border-apple-border/60">
                         <p className="text-[11px] font-semibold text-apple-gray uppercase tracking-wide mb-2">
                           Paket içeriği
                         </p>
-                        <div className="space-y-1.5">
-                          {cls.package.items.slice(0, 4).map((item) => (
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                          {cls.package!.items.map((item) => (
                             <div key={item.id} className="flex items-center gap-2">
                               <CheckCircle weight="fill" className="w-3.5 h-3.5 text-[#10b981] flex-shrink-0" />
-                              <span className="text-[13px] text-apple-gray line-clamp-1">
+                              <span className="text-[13px] text-apple-gray line-clamp-2">
                                 {item.quantity > 1 && <span className="font-medium text-apple-ink">{item.quantity}× </span>}
                                 {item.name}
                               </span>
                             </div>
                           ))}
-                          {cls.package.items.length > 4 && (
-                            <p className="text-[12px] text-apple-gray/80 italic pl-5">
-                              +{cls.package.items.length - 4} ürün daha
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}
 
-                    <div className="pt-2 flex items-center justify-end text-[#10b981] text-[13px] font-medium gap-1">
-                      Paketi görüntüle
-                      <ArrowRight weight="bold" className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    {/* Aksiyon butonlari — mobilde alt alta, sm+ yan yana */}
+                    <div className="mt-auto pt-2 flex flex-col sm:flex-row gap-2">
+                      {hasItems && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-full border border-apple-border/80 text-apple-ink text-[13px] font-medium hover:bg-apple-panel transition-colors"
+                        >
+                          {isExpanded ? (
+                            <>
+                              Gizle <CaretUp weight="bold" className="w-3.5 h-3.5" />
+                            </>
+                          ) : (
+                            <>
+                              Paketi görüntüle <CaretDown weight="bold" className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleClassSelect(cls)}
+                        disabled={!cls.package}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Paketi seç
+                        <ArrowRight weight="bold" className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
 
           <button
-            onClick={() => { setSchoolData(null); setPassword('') }}
+            onClick={() => {
+              try { sessionStorage.removeItem(SCHOOL_DATA_KEY) } catch {}
+              setSchoolData(null)
+              setPassword('')
+            }}
             className="mt-10 mx-auto flex items-center gap-2 text-[13px] text-apple-gray hover:text-apple-ink transition-colors"
           >
             <ArrowLeft weight="regular" className="w-4 h-4" />

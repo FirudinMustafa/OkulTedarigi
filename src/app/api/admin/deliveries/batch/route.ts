@@ -57,8 +57,8 @@ export async function POST(request: Request) {
         const deliveryType = order.class.school.deliveryType
 
         if (action === 'DELIVERED') {
-          // Teslim edildi: PREPARING (okula teslim) veya SHIPPED (kargo teslim) durumundakiler
-          canUpdate = (deliveryType === 'SCHOOL_DELIVERY' && ['CONFIRMED', 'INVOICED', 'PREPARING'].includes(order.status)) ||
+          // Teslim edildi: SCHOOL_DELIVERY (CONFIRMED/INVOICED) veya CARGO (SHIPPED)
+          canUpdate = (deliveryType === 'SCHOOL_DELIVERY' && ['CONFIRMED', 'INVOICED'].includes(order.status)) ||
                       (deliveryType === 'CARGO' && order.status === 'SHIPPED')
         } else if (action === 'COMPLETED') {
           // Tamamla: DELIVERED durumundakiler

@@ -1,0 +1,14 @@
+{
+  "classId": "cmop3ac8d000uc4bsoq8zs7p2",
+  "parentName": "Mustafa Çelik",
+  "students": [
+    { "firstName": "Emir",   "lastName": "Çelik", "section": "B" },
+    { "firstName": "Elif",   "lastName": "Çelik", "section": "B" },
+    { "firstName": "Berkay", "lastName": "Çelik", "section": "B" }
+  ],
+  "phone": "05451112233",
+  "email": "mcelik@example.com",
+  "address": "Kızılay Mahallesi, Ziya Gökalp Caddesi No:88, Çankaya, Ankara, 06420, Türkiye",
+  "isCorporateInvoice": false,
+  "taxNumber": "11111111110"
+}

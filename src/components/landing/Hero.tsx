@@ -106,10 +106,10 @@ export default function Hero() {
       <div className="relative z-10 flex h-full w-full items-center justify-center px-6 lg:px-8">
         <div className="w-full max-w-5xl text-center">
           <FadeIn delay={0.05}>
-            <h1 className="text-gradient-green text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.02]">
-              Okul kitapları,
+            <h1 className="text-gradient-green text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2">
+              Kaliteli hizmet için
               <br />
-              kapında.
+              doğru adres.
             </h1>
           </FadeIn>
 
@@ -149,7 +149,7 @@ export default function Hero() {
           <FadeIn delay={0.2}>
             <p className="mt-6 text-[13px] text-apple-gray inline-flex items-center justify-center gap-1.5 w-full">
               <ShieldCheck weight="regular" className="w-4 h-4 text-apple-gray" />
-              iyzico 3D Secure ile güvenli ödeme
+              3D Secure ile güvenli ödeme
             </p>
           </FadeIn>
         </div>

@@ -56,7 +56,6 @@ const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
   PAID: { label: "Ödeme Alındı", tone: "bg-blue-100 text-blue-700" },
   CONFIRMED: { label: "Onaylandı", tone: "bg-cyan-100 text-cyan-700" },
   INVOICED: { label: "Fatura Kesildi", tone: "bg-indigo-100 text-indigo-700" },
-  PREPARING: { label: "Hazırlanıyor", tone: "bg-amber-100 text-amber-700" },
   SHIPPED: { label: "Kargoya Verildi", tone: "bg-purple-100 text-purple-700" },
   DELIVERED: { label: "Teslim Edildi", tone: "bg-green-100 text-green-700" },
   COMPLETED: { label: "Tamamlandı", tone: "bg-green-100 text-green-700" },
@@ -428,7 +427,7 @@ function SiparisTakipPage() {
                 >
                   Yeni sorgulama
                 </button>
-                {["NEW", "PAYMENT_PENDING", "PAID", "CONFIRMED", "PREPARING"].includes(order.status) &&
+                {["NEW", "PAYMENT_PENDING", "PAID", "CONFIRMED"].includes(order.status) &&
                   (!order.cancelRequest || order.cancelRequest.status === "REJECTED") &&
                   !cancelSuccess && (
                     <button
@@ -445,8 +444,8 @@ function SiparisTakipPage() {
 
         {/* Iptal talebi modal */}
         {cancelDialogOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-[28px] border border-apple-border/60 shadow-2xl p-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm overflow-y-auto">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-[28px] border border-apple-border/60 shadow-2xl p-8">
               <h3 className="text-xl font-semibold text-apple-ink tracking-tight">Sipariş İptal Talebi</h3>
               <p className="mt-2 text-[14px] text-apple-gray">
                 İptal talebiniz admin tarafından incelenecektir.

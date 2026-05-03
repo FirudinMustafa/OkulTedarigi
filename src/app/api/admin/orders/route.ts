@@ -49,6 +49,10 @@ export async function GET(request: Request) {
           },
           package: {
             select: { name: true }
+          },
+          students: {
+            select: { id: true, firstName: true, lastName: true, section: true },
+            orderBy: { createdAt: 'asc' }
           }
         }
       }),

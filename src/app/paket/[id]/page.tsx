@@ -110,9 +110,20 @@ export default function PaketPage() {
   const [altSelectedIlce, setAltSelectedIlce] = useState("")
   const [altPostalCode, setAltPostalCode] = useState("")
 
-  // Form state - Öğrenci Bilgileri
-  const [studentFirstName, setStudentFirstName] = useState("")
-  const [studentLastName, setStudentLastName] = useState("")
+  // Form state - Öğrenci Bilgileri (cogul)
+  const MAX_STUDENTS = 5
+  type StudentRow = { firstName: string; lastName: string; section: string }
+  const [students, setStudents] = useState<StudentRow[]>([{ firstName: '', lastName: '', section: '' }])
+
+  const updateStudent = (idx: number, field: keyof StudentRow, value: string) => {
+    setStudents(prev => prev.map((s, i) => i === idx ? { ...s, [field]: field === 'section' ? value.toUpperCase().slice(0, 4) : value } : s))
+  }
+  const addStudent = () => {
+    setStudents(prev => prev.length >= MAX_STUDENTS ? prev : [...prev, { firstName: '', lastName: '', section: '' }])
+  }
+  const removeStudent = (idx: number) => {
+    setStudents(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))
+  }
 
   // Form state - Ek Alanlar
   const [orderNote, setOrderNote] = useState("")
@@ -151,9 +162,6 @@ export default function PaketPage() {
 
   // Odeme yontemi (sadece kredi karti destekleniyor)
   const paymentMethod = "CREDIT_CARD" as const
-
-  // Ogrenci sube bilgisi
-  const [studentSection, setStudentSection] = useState("")
 
   // Real-time field validation: onBlur'da kontrol edilen alan-bazli hata mesajlari
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -243,8 +251,20 @@ export default function PaketPage() {
       if (data.altSelectedIl !== undefined) setAltSelectedIl(data.altSelectedIl)
       if (data.altSelectedIlce !== undefined) setAltSelectedIlce(data.altSelectedIlce)
       if (data.altPostalCode !== undefined) setAltPostalCode(data.altPostalCode)
-      if (data.studentFirstName !== undefined) setStudentFirstName(data.studentFirstName)
-      if (data.studentLastName !== undefined) setStudentLastName(data.studentLastName)
+      // Cogul ogrenci yukleme (geri uyumluluk: eski tek-ogrenci kayitlari da desteklenir)
+      if (Array.isArray(data.students) && data.students.length > 0) {
+        setStudents(data.students.slice(0, MAX_STUDENTS).map((s: { firstName?: string; lastName?: string; section?: string }) => ({
+          firstName: s.firstName || '',
+          lastName: s.lastName || '',
+          section: s.section || '',
+        })))
+      } else if (data.studentFirstName !== undefined || data.studentLastName !== undefined) {
+        setStudents([{
+          firstName: data.studentFirstName || '',
+          lastName: data.studentLastName || '',
+          section: data.studentSection || '',
+        }])
+      }
       if (data.orderNote !== undefined) setOrderNote(data.orderNote)
       if (data.invoiceType !== undefined) setInvoiceType(data.invoiceType)
       if (data.isCorporateInvoice !== undefined) setIsCorporateInvoice(data.isCorporateInvoice)
@@ -258,7 +278,6 @@ export default function PaketPage() {
       if (data.invoiceSelectedIl !== undefined) setInvoiceSelectedIl(data.invoiceSelectedIl)
       if (data.invoiceSelectedIlce !== undefined) setInvoiceSelectedIlce(data.invoiceSelectedIlce)
       if (data.invoicePostalCode !== undefined) setInvoicePostalCode(data.invoicePostalCode)
-      if (data.studentSection !== undefined) setStudentSection(data.studentSection)
     } catch {
       // Bozuk JSON varsa temizle
       try { localStorage.removeItem(FORM_STORAGE_KEY) } catch {}
@@ -277,11 +296,10 @@ export default function PaketPage() {
           country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
           shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
           altSelectedIl, altSelectedIlce, altPostalCode,
-          studentFirstName, studentLastName, orderNote,
+          students, orderNote,
           invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
           invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
           invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
-          studentSection,
         }
         localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(snapshot))
       } catch {
@@ -295,11 +313,11 @@ export default function PaketPage() {
     country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
     shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
     altSelectedIl, altSelectedIlce, altPostalCode,
-    studentFirstName, studentLastName, orderNote,
+    students, orderNote,
     invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
     invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
     invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
-    studentSection, FORM_STORAGE_KEY
+    FORM_STORAGE_KEY
   ])
 
   useEffect(() => {
@@ -375,12 +393,13 @@ export default function PaketPage() {
     setDiscountError("")
 
     try {
+      const baseTotal = Number(classData?.package.price || 0) * students.length
       const res = await fetch("/api/veli/discount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: discountCode.trim(),
-          totalAmount: classData?.package.price || 0
+          totalAmount: baseTotal
         })
       })
 
@@ -407,11 +426,12 @@ export default function PaketPage() {
   }
 
   const getFinalPrice = () => {
-    const basePrice = classData?.package.price || 0
+    const unitPrice = Number(classData?.package.price || 0)
+    const baseTotal = unitPrice * students.length
     if (discountApplied) {
-      return Number(basePrice) - discountApplied.discountAmount
+      return baseTotal - discountApplied.discountAmount
     }
-    return Number(basePrice)
+    return baseTotal
   }
 
   const validateForm = (): boolean => {
@@ -436,9 +456,13 @@ export default function PaketPage() {
       return false
     }
 
-    // Öğrenci bilgileri
-    if (!studentFirstName || !studentLastName) {
-      setError("Lütfen öğrenci bilgilerini doldurun")
+    // Öğrenci bilgileri (cogul)
+    if (students.length === 0) {
+      setError("En az bir öğrenci eklemelisiniz")
+      return false
+    }
+    if (students.some(s => !s.firstName.trim() || !s.lastName.trim())) {
+      setError("Lütfen tüm öğrencilerin ad ve soyadını doldurun")
       return false
     }
 
@@ -568,8 +592,11 @@ export default function PaketPage() {
           classId,
           parentName: `${firstName} ${lastName}`,
           companyName: companyName || null,
-          studentName: `${studentFirstName} ${studentLastName}`,
-          studentSection: studentSection || null,
+          students: students.map(s => ({
+            firstName: s.firstName.trim(),
+            lastName: s.lastName.trim(),
+            section: s.section.trim() || null,
+          })),
           phone: phone.replace(/\s/g, ''),
           email,
           address: fullAddress,
@@ -753,7 +780,14 @@ export default function PaketPage() {
               </span>
             </Link>
             <button
-              onClick={() => router.push("/")}
+              onClick={() => {
+                // Tarayici history'sinde onceki sayfa varsa onu kullan; yoksa /siparis'e fallback
+                if (typeof window !== 'undefined' && window.history.length > 1) {
+                  router.back()
+                } else {
+                  router.push('/siparis')
+                }
+              }}
               className="flex items-center gap-2 text-gray-600 hover:text-blue-900 transition-colors"
             >
               <ArrowLeftIcon />
@@ -763,7 +797,7 @@ export default function PaketPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Sol - Form Alanları */}
@@ -794,9 +828,9 @@ export default function PaketPage() {
                 </div>
               </div>
 
-              {/* 👤 Fatura & İletişim Bilgileri */}
+              {/* 👤 Kargo ve İletişim Bilgileri */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 Fatura & İletişim Bilgileri</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 Kargo ve İletişim Bilgileri</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ad *</label>
@@ -855,6 +889,13 @@ export default function PaketPage() {
                     {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
                   </div>
                 </div>
+
+                {/* Adres alanlari ayni kart icinde */}
+                {(isCargoDelivery || invoiceType === 'bireysel') && (
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    {renderAddressFields()}
+                  </div>
+                )}
               </div>
 
               {/* Okula Teslim Bilgisi */}
@@ -869,18 +910,11 @@ export default function PaketPage() {
                       <p className="text-green-700 text-sm">
                         Siparişiniz, okulunuz tarafından belirlenen teslim tarihinde okulunuza teslim edilecektir.
                       </p>
+                      <p className="text-green-700 text-sm mt-1 font-medium">
+                        (Aşağıdaki teslimat bilgilerini doldurmanız gerekmektedir.)
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Adres Bilgileri - kargo teslimatta veya bireysel fatura icin */}
-              {(isCargoDelivery || invoiceType === 'bireysel') && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    📍 {isCargoDelivery ? 'Teslimat ve Fatura Adresi' : 'Fatura ve Iletisim Adresi'}
-                  </h3>
-                  {renderAddressFields()}
                 </div>
               )}
 
@@ -987,51 +1021,93 @@ export default function PaketPage() {
 
               {/* 🎓 Öğrenci Bilgileri */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🎓 Öğrenci Bilgileri</h3>
-                <div className="grid sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Öğrenci Adı *</label>
-                    <input
-                      type="text"
-                      value={studentFirstName}
-                      onChange={(e) => setStudentFirstName(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Öğrenci Soyadı *</label>
-                    <input
-                      type="text"
-                      value={studentLastName}
-                      onChange={(e) => setStudentLastName(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sınıf *</label>
-                    <input
-                      type="text"
-                      value={classData.name}
-                      disabled
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Şube <span className="text-gray-400 text-xs">(Opsiyonel)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={studentSection}
-                      onChange={(e) => setStudentSection(e.target.value.toUpperCase().slice(0, 4))}
-                      placeholder="A, B, C..."
-                      maxLength={4}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    🎓 Öğrenci Bilgileri
+                    {students.length > 1 && (
+                      <span className="ml-2 text-sm font-normal text-gray-500">({students.length} öğrenci)</span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-gray-500">Birden fazla çocuğunuz için aynı pakettin sipariş verebilirsiniz. Toplam tutar öğrenci sayısıyla orantılı olarak hesaplanır.</p>
                 </div>
+
+                <div className="space-y-4">
+                  {students.map((student, idx) => (
+                    <div key={idx} className="rounded-lg border border-gray-200 p-4 bg-gray-50/40">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-gray-700">
+                          {idx + 1}. Öğrenci
+                        </p>
+                        {students.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeStudent(idx)}
+                            className="text-xs text-red-600 hover:text-red-700 hover:underline"
+                          >
+                            Sil
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid sm:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Öğrenci Adı *</label>
+                          <input
+                            type="text"
+                            value={student.firstName}
+                            onChange={(e) => updateStudent(idx, 'firstName', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Öğrenci Soyadı *</label>
+                          <input
+                            type="text"
+                            value={student.lastName}
+                            onChange={(e) => updateStudent(idx, 'lastName', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Sınıf *</label>
+                          <input
+                            type="text"
+                            value={classData.name}
+                            disabled
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Şube <span className="text-gray-400 text-xs">(Opsiyonel)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={student.section}
+                            onChange={(e) => updateStudent(idx, 'section', e.target.value)}
+                            placeholder="A, B, C..."
+                            maxLength={4}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {students.length < MAX_STUDENTS && (
+                  <button
+                    type="button"
+                    onClick={addStudent}
+                    className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-blue-400 text-blue-600 hover:bg-blue-50 text-sm font-medium transition-colors"
+                  >
+                    + Öğrenci Ekle
+                  </button>
+                )}
+                {students.length >= MAX_STUDENTS && (
+                  <p className="mt-3 text-xs text-gray-500">En fazla {MAX_STUDENTS} öğrenci eklenebilir.</p>
+                )}
               </div>
 
               {/* 🧾 Fatura Bilgileri */}
@@ -1319,9 +1395,9 @@ export default function PaketPage() {
               )}
             </div>
 
-            {/* Sağ - Sipariş Özeti (Sticky) */}
+            {/* Sağ - Sipariş Özeti (sadece desktop'ta sticky; mobilde dogal akista) */}
             <div className="lg:col-span-1">
-              <div className="sticky top-24">
+              <div className="lg:sticky lg:top-24">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="bg-blue-900 px-6 py-4">
                     <h3 className="text-white font-semibold">Sipariş Özeti</h3>
@@ -1428,10 +1504,25 @@ export default function PaketPage() {
 
                     {/* Toplam */}
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Ara Toplam</span>
-                        <span className="text-gray-700">{formatPrice(classData.package.price)} TL</span>
-                      </div>
+                      {students.length > 1 ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Paket × {students.length} öğrenci</span>
+                            <span className="text-gray-700">
+                              {formatPrice(classData.package.price)} × {students.length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Ara Toplam</span>
+                            <span className="text-gray-700">{formatPrice(Number(classData.package.price) * students.length)} TL</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Ara Toplam</span>
+                          <span className="text-gray-700">{formatPrice(classData.package.price)} TL</span>
+                        </div>
+                      )}
                       {discountApplied && (
                         <div className="flex justify-between text-sm">
                           <span className="text-green-600">Indirim</span>
@@ -1471,8 +1562,8 @@ export default function PaketPage() {
 
       {/* Mock Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4 flex items-center justify-between">
               <h3 className="font-semibold text-yellow-800">Test Ödemesi</h3>
               <button

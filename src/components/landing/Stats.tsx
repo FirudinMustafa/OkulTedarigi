@@ -32,8 +32,7 @@ export default function Stats() {
               Türkiye&apos;nin dört bir yanındaki okullarla çalışıyor, her sezon
               on binlerce öğrencinin ders kitabı ve kırtasiye ihtiyacını tek bir
               akışta buluşturuyoruz. Şeffaf süreç, güvenli ödeme ve hızlı
-              teslimatla ailelerin yükünü hafifletiyor; okul idaresinin işini
-              kolaylaştırıyoruz.
+              teslimatla ailelerin işini kolaylaştırıyoruz.
             </p>
           </FadeIn>
         </div>

@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     }
 
     // Sadece teslim edilebilir durumlardakiler
-    const validStatuses = ['CONFIRMED', 'INVOICED', 'PREPARING']
+    const validStatuses = ['CONFIRMED', 'INVOICED']
     const invalidStatus = orders.filter(o => !validStatuses.includes(o.status))
     if (invalidStatus.length > 0) {
       const numbers = invalidStatus.map(o => o.orderNumber).join(', ')

@@ -1,0 +1,15 @@
+{
+  "classId": "cmop3ac8d000uc4bsoq8zs7p2",
+  "parentName": "Hatice Yıldız",
+  "students": [
+    { "firstName": "İrem", "lastName": "Yıldız", "section": "C" },
+    { "firstName": "Yusuf", "lastName": "Yıldız", "section": "C" }
+  ],
+  "phone": "05557778899",
+  "email": "h.yildiz@firma.com.tr",
+  "address": "Maltepe Mahallesi, Eskişehir Yolu Üzeri No:204, Çankaya, Ankara, 06570, Türkiye",
+  "isCorporateInvoice": true,
+  "companyTitle": "Yıldız Mühendislik San. ve Tic. Ltd. Şti.",
+  "taxNumber": "1234567890",
+  "taxOffice": "Çankaya Vergi Dairesi"
+}
