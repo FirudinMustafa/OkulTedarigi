@@ -78,11 +78,11 @@ interface OrderType {
 
 // Sayfanin ust kismindaki sekmeler (akilli gruplama)
 const TABS = [
-  { id: 'aktif',     label: 'Aktif',           statuses: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED'] },
-  { id: 'sevkiyat',  label: 'Sevkiyatta',      statuses: ['SHIPPED'] },
-  { id: 'teslim',    label: 'Teslim Edildi',   statuses: ['DELIVERED'] },
-  { id: 'tamam',     label: 'Tamamlanan',      statuses: ['COMPLETED'] },
-  { id: 'iptal',     label: 'İptal/İade',      statuses: ['CANCELLED', 'REFUNDED'] },
+  { id: 'aktif',     label: 'Aktif',           statuses: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED'] as string[] },
+  { id: 'sevkiyat',  label: 'Sevkiyatta',      statuses: ['SHIPPED'] as string[] },
+  { id: 'teslim',    label: 'Teslim Edildi',   statuses: ['DELIVERED'] as string[] },
+  { id: 'tamam',     label: 'Tamamlanan',      statuses: ['COMPLETED'] as string[] },
+  { id: 'iptal',     label: 'İptal/İade',      statuses: ['CANCELLED', 'REFUNDED'] as string[] },
   { id: 'tumu',      label: 'Tümü',            statuses: [] as string[] },
 ] as const
 
