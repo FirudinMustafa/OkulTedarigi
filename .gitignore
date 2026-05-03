@@ -86,3 +86,5 @@ TEST-SENARYOLARI.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
