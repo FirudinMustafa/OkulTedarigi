@@ -23,7 +23,10 @@ const USE_MOCK = process.env.USE_MOCK_EMAIL === 'true'
 const isDev = process.env.NODE_ENV !== 'production'
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+// Email icindeki tum linkler (logo, CTA butonlari) public URL kullanir.
+// NEXT_PUBLIC_APP_URL localhost olabilir; mail client localhost'a erisemez.
+const EMAIL_BASE_URL = process.env.NEXT_PUBLIC_EMAIL_BASE_URL || 'https://okul-tedarigi.vercel.app'
+const LOGO_URL = `${EMAIL_BASE_URL}/logo-email.png`
 
 
 async function sendViaResend(data: EmailData): Promise<EmailResult> {
@@ -122,9 +125,11 @@ function wrapTemplate(title: string, content: string): string {
 
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, ${COLORS.bgDark} 0%, ${COLORS.primary} 100%); padding: 30px 40px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0 0 6px; font-size: 24px; font-weight: 700; letter-spacing: 1px;">OKULTEDARIGIM.COM</h1>
-              <p style="color: ${COLORS.textLight}; margin: 0; font-size: 13px; letter-spacing: 1px;">OKUL MALZEME TEDARIGINIZ BIZDEN</p>
+            <td style="background: linear-gradient(135deg, ${COLORS.bgDark} 0%, ${COLORS.primary} 100%); padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
+              <a href="${EMAIL_BASE_URL}" style="text-decoration: none; display: inline-block;">
+                <img src="${LOGO_URL}" alt="OkulTedariğim" width="180" height="auto" style="display: block; margin: 0 auto 12px; max-width: 180px; height: auto; border: 0;" />
+              </a>
+              <p style="color: ${COLORS.textLight}; margin: 0; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;">Okul tedariğinizin tek adresi</p>
             </td>
           </tr>
 
@@ -241,7 +246,7 @@ export async function sendOrderConfirmation(data: {
       infoRow('Toplam Tutar', `<span style="color: ${COLORS.primary}; font-size: 18px;">${data.totalAmount.toLocaleString('tr-TR')} TL</span>`)
     )}
 
-    ${ctaButton('Sipari\u015fi Takip Et', `${APP_URL}/siparis-takip`)}
+    ${ctaButton('Sipari\u015fi Takip Et', `${EMAIL_BASE_URL}/siparis-takip`)}
 
     ${paragraph('Sipari\u015finiz \u00f6deme a\u015famas\u0131na ge\u00e7irildi. \u00d6demenizi tamamlad\u0131\u011f\u0131n\u0131zda sipari\u015finiz haz\u0131rlanmaya ba\u015flayacakt\u0131r.')}
   `
@@ -279,7 +284,7 @@ export async function sendPaymentConfirmation(data: {
       infoRow('\u00d6deme Tarihi', new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }))
     )}
 
-    ${ctaButton('Sipari\u015fi Takip Et', `${APP_URL}/siparis-takip`)}
+    ${ctaButton('Sipari\u015fi Takip Et', `${EMAIL_BASE_URL}/siparis-takip`)}
 
     ${paragraph('Sipari\u015finiz en k\u0131sa s\u00fcrede haz\u0131rlanarak kargoya verilecektir. Kargo bilgileri ayr\u0131ca taraf\u0131n\u0131za iletilecektir.')}
   `
@@ -406,7 +411,7 @@ export async function sendInvoiceCreated(data: {
       infoRow('Tarih', new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }))
     )}
 
-    ${ctaButton('Siparişi Takip Et', `${APP_URL}/siparis-takip?orderNumber=${encodeURIComponent(data.orderNumber)}`)}
+    ${ctaButton('Siparişi Takip Et', `${EMAIL_BASE_URL}/siparis-takip?orderNumber=${encodeURIComponent(data.orderNumber)}`)}
 
     ${paragraph('Faturanızın elektronik (e-Arşiv / e-Fatura) kopyası kayıt altına alınmıştır. Siparişinize ait detayları sipariş takip sayfasından görebilirsiniz.')}
   `
@@ -447,7 +452,7 @@ export async function sendInvoiceCancelled(data: {
 
     ${paragraph('Eğer siparişiniz hâlâ aktif ise yeni bir fatura kesim sürecine alınacaktır. Sorularınız için bize ulaşabilirsiniz.')}
 
-    ${ctaButton('Siparişi Takip Et', `${APP_URL}/siparis-takip?orderNumber=${encodeURIComponent(data.orderNumber)}`)}
+    ${ctaButton('Siparişi Takip Et', `${EMAIL_BASE_URL}/siparis-takip?orderNumber=${encodeURIComponent(data.orderNumber)}`)}
   `
 
   return sendEmailInternal({
