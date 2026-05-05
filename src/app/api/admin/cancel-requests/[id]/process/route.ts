@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { processRefund } from '@/lib/iyzico'
+import { sendCancellationConfirmation, sendCancellationRejected } from '@/lib/email'
 import { CANCELLABLE_STATUSES } from '@/lib/constants'
 
 export async function POST(
@@ -151,6 +152,26 @@ export async function POST(
         adminNote: adminNote?.trim() || null
       }
     })
+
+    // Veliye bildirim maili (best-effort)
+    if (result.order?.email) {
+      const orderEmail = result.order.email
+      if (status === 'APPROVED') {
+        sendCancellationConfirmation({
+          email: orderEmail,
+          orderNumber: result.order.orderNumber,
+          parentName: result.order.parentName,
+          refundAmount: result.order.paidAt ? Number(result.order.totalAmount) : undefined
+        }).catch(err => console.error('[email] sendCancellationConfirmation hatasi:', err))
+      } else if (status === 'REJECTED') {
+        sendCancellationRejected({
+          email: orderEmail,
+          orderNumber: result.order.orderNumber,
+          parentName: result.order.parentName,
+          reason: adminNote?.trim() || 'Reddedilme nedeni belirtilmedi.'
+        }).catch(err => console.error('[email] sendCancellationRejected hatasi:', err))
+      }
+    }
 
     return NextResponse.json({ request: finalRequest })
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { sendDeliveryConfirmation } from '@/lib/email'
 
 interface BatchResult {
   orderId: string
@@ -88,6 +89,16 @@ export async function POST(request: Request) {
           where: { id: order.id },
           data: updateData
         })
+
+        // Teslim onay maili (best-effort, sadece DELIVERED durumunda)
+        if (action === 'DELIVERED' && order.email) {
+          sendDeliveryConfirmation({
+            email: order.email,
+            orderNumber: order.orderNumber,
+            parentName: order.parentName,
+            deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+          }).catch(err => console.error('[email] sendDeliveryConfirmation batch hatasi:', err))
+        }
 
         results.push({
           orderId: order.id,

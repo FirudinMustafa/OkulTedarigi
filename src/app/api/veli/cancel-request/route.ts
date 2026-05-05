@@ -4,6 +4,7 @@ import { CANCELLABLE_STATUSES } from '@/lib/constants'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
 import { getClientIp, verifyOrderAccessToken } from '@/lib/security'
 import { veliCancelRequestBodySchema, formatZodError } from '@/lib/validators'
+import { sendAdminNewCancelRequest } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +33,8 @@ export async function POST(request: Request) {
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId }
+      where: { id: orderId },
+      include: { class: { include: { school: { select: { name: true } } } } }
     })
 
     if (!order) {
@@ -106,6 +108,19 @@ export async function POST(request: Request) {
 
     // Başarılı talep — sayaç sıfırlansın
     await resetRateLimit(rlIdentifier)
+
+    // Admine bilgi maili (best-effort, transaction'i bozmaz)
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+    if (adminEmail) {
+      sendAdminNewCancelRequest({
+        adminEmail,
+        orderNumber: order.orderNumber,
+        parentName: order.parentName,
+        schoolName: order.class.school.name,
+        totalAmount: Number(order.totalAmount),
+        reason: reason || 'Belirtilmedi'
+      }).catch(err => console.error('[email] sendAdminNewCancelRequest hatasi:', err))
+    }
 
     return NextResponse.json({
       success: true,

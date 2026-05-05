@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateDeliveryDocumentNumber } from '@/lib/order-number'
+import { sendDeliveryConfirmation } from '@/lib/email'
 
 export async function GET() {
   try {
@@ -208,6 +209,22 @@ export async function POST(request: Request) {
       entity: 'DELIVERY_DOCUMENT',
       entityId: document.id,
       details: { documentNo: docNo, orderCount: orderIds.length, receivedBy: receivedBy.trim() }
+    })
+
+    // Her siparis icin teslim onay maili (best-effort)
+    const deliveredOrders = await prisma.order.findMany({
+      where: { id: { in: orderIds } },
+      select: { orderNumber: true, parentName: true, email: true, deliveredAt: true }
+    })
+    const deliveryDateStr = new Date(deliveryDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+    deliveredOrders.forEach(o => {
+      if (!o.email) return
+      sendDeliveryConfirmation({
+        email: o.email,
+        orderNumber: o.orderNumber,
+        parentName: o.parentName,
+        deliveryDate: deliveryDateStr
+      }).catch(err => console.error('[email] sendDeliveryConfirmation (tutanak) hatasi:', err))
     })
 
     return NextResponse.json({ success: true, document })

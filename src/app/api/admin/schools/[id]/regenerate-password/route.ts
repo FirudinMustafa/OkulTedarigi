@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
+import { sendSchoolPasswordRegenerated } from '@/lib/email'
 
 export async function POST(
   request: Request,
@@ -63,6 +64,14 @@ export async function POST(
       entityId: school.id,
       details: { action: 'password_regenerated' }
     })
+
+    // Mudure yeni veli sifresi maili (best-effort)
+    sendSchoolPasswordRegenerated({
+      directorEmail: updatedSchool.directorEmail,
+      directorName: updatedSchool.directorName,
+      schoolName: updatedSchool.name,
+      newPassword: updatedSchool.password
+    }).catch(err => console.error('[email] sendSchoolPasswordRegenerated hatasi:', err))
 
     // Cleartext sifre cache/proxy'lere yazilmasin (tek seferlik gosterim).
     return NextResponse.json(

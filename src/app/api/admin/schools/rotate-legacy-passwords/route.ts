@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword, isLegacySchoolPassword } from '@/lib/password-generator'
+import { sendSchoolPasswordRegenerated } from '@/lib/email'
 
 /**
  * Eski format (SFR-1234, 9000 kombinasyon — enumeration zafiyetli) okul sifrelerini
@@ -19,7 +20,7 @@ export async function POST() {
     }
 
     const schools = await prisma.school.findMany({
-      select: { id: true, name: true, password: true }
+      select: { id: true, name: true, password: true, directorEmail: true, directorName: true }
     })
 
     const legacy = schools.filter(s => isLegacySchoolPassword(s.password))
@@ -72,6 +73,14 @@ export async function POST() {
         entityId: school.id,
         details: { action: 'legacy_password_rotated' }
       })
+
+      // Mudure yeni veli sifresi maili (best-effort)
+      sendSchoolPasswordRegenerated({
+        directorEmail: school.directorEmail,
+        directorName: school.directorName,
+        schoolName: school.name,
+        newPassword
+      }).catch(err => console.error('[email] sendSchoolPasswordRegenerated rotate hatasi:', err))
     }
 
     return NextResponse.json({

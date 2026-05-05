@@ -506,3 +506,281 @@ export async function sendCancellationConfirmation(data: {
     html: wrapTemplate(`Sipari\u015f \u0130ptal - ${safeOrder}`, content)
   })
 }
+
+/**
+ * Veliye iptal talebinin reddedildigini bildiren mail
+ */
+export async function sendCancellationRejected(data: {
+  email: string
+  orderNumber: string
+  parentName: string
+  reason: string
+}): Promise<EmailResult> {
+  const safeParent = escapeHtml(data.parentName)
+  const safeOrder = escapeHtml(data.orderNumber)
+  const safeReason = escapeHtml(data.reason)
+
+  const content = `
+    ${greeting(safeParent)}
+    ${paragraph(`<strong>${safeOrder}</strong> numaral\u0131 sipari\u015finize ait iptal talebiniz de\u011ferlendirildi ve <strong>reddedilmi\u015ftir</strong>.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('Talep Reddedildi', COLORS.danger)}
+    </div>
+
+    <div style="background-color: #fef2f2; border-left: 4px solid ${COLORS.danger}; border-radius: 4px; padding: 14px 16px; margin: 16px 0;">
+      <p style="color: ${COLORS.textMuted}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px;">Reddedilme Nedeni</p>
+      <p style="color: ${COLORS.textDark}; font-size: 14px; line-height: 1.5; margin: 0;">${safeReason}</p>
+    </div>
+
+    ${paragraph('Sipari\u015finiz i\u015flemine kald\u0131\u011f\u0131 yerden devam edecektir. E\u011fer bu konuda farkl\u0131 bir sorunuz varsa bizimle ileti\u015fime ge\u00e7ebilirsiniz.')}
+
+    ${ctaButton('Sipari\u015fi G\u00f6r\u00fcnt\u00fcle', `${EMAIL_BASE_URL}/siparis-takip?orderNumber=${encodeURIComponent(data.orderNumber)}`)}
+  `
+
+  return sendEmailInternal({
+    to: data.email,
+    subject: `\u0130ptal Talebiniz Reddedildi - ${safeOrder}`,
+    html: wrapTemplate(`\u0130ptal Talebi Reddedildi - ${safeOrder}`, content)
+  })
+}
+
+// ============================================================
+// Admin Notification Emails
+// ============================================================
+
+/**
+ * Yeni sipari\u015f geldi\u011finde admine bildiren mail.
+ * Veli \u00f6demeyi tamamlad\u0131\u011f\u0131nda tetiklenir (PENDING degil, PAID siparis).
+ */
+export async function sendAdminNewOrder(data: {
+  adminEmail: string
+  orderNumber: string
+  parentName: string
+  studentName: string
+  schoolName: string
+  className: string
+  packageName: string
+  totalAmount: number
+}): Promise<EmailResult> {
+  const safeParent = escapeHtml(data.parentName)
+  const safeStudent = escapeHtml(data.studentName)
+  const safeSchool = escapeHtml(data.schoolName)
+  const safeClass = escapeHtml(data.className)
+  const safePackage = escapeHtml(data.packageName)
+  const safeOrder = escapeHtml(data.orderNumber)
+
+  const content = `
+    ${paragraph(`<strong>${safeSchool}</strong> okulundan yeni bir sipari\u015f geldi.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('Yeni Sipari\u015f', COLORS.success)}
+    </div>
+
+    ${infoTable(
+      infoRow('Sipari\u015f No', safeOrder) +
+      infoRow('Veli', safeParent) +
+      infoRow('\u00d6\u011frenci', safeStudent) +
+      infoRow('Okul', safeSchool) +
+      infoRow('S\u0131n\u0131f', safeClass) +
+      infoRow('Paket', safePackage) +
+      infoRow('Tutar', `<span style="color: ${COLORS.success}; font-size: 18px;">${data.totalAmount.toLocaleString('tr-TR')} TL</span>`)
+    )}
+
+    ${ctaButton('Y\u00f6netim Paneli', `${EMAIL_BASE_URL}/admin/siparisler`)}
+
+    ${paragraph('Sipari\u015f y\u00f6netim panelinde "Aktif" sekmesinde i\u015fleme al\u0131nmay\u0131 bekliyor.')}
+  `
+
+  return sendEmailInternal({
+    to: data.adminEmail,
+    subject: `Yeni Sipari\u015f - ${safeOrder} - ${data.totalAmount.toLocaleString('tr-TR')} TL`,
+    html: wrapTemplate(`Yeni Sipari\u015f - ${safeOrder}`, content)
+  })
+}
+
+/**
+ * Veli iptal talebi olusturdugunda admine bildiren mail.
+ */
+export async function sendAdminNewCancelRequest(data: {
+  adminEmail: string
+  orderNumber: string
+  parentName: string
+  schoolName: string
+  totalAmount: number
+  reason: string
+}): Promise<EmailResult> {
+  const safeParent = escapeHtml(data.parentName)
+  const safeSchool = escapeHtml(data.schoolName)
+  const safeOrder = escapeHtml(data.orderNumber)
+  const safeReason = escapeHtml(data.reason)
+
+  const content = `
+    ${paragraph(`<strong>${safeSchool}</strong> okulundan bir veli sipari\u015f iptali talep ediyor.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('\u0130ptal Talebi', COLORS.warning)}
+    </div>
+
+    ${infoTable(
+      infoRow('Sipari\u015f No', safeOrder) +
+      infoRow('Veli', safeParent) +
+      infoRow('Okul', safeSchool) +
+      infoRow('Tutar', `<span style="color: ${COLORS.warning}; font-size: 18px;">${data.totalAmount.toLocaleString('tr-TR')} TL</span>`)
+    )}
+
+    <div style="background-color: ${COLORS.bgLight}; border-left: 4px solid ${COLORS.warning}; border-radius: 4px; padding: 14px 16px; margin: 16px 0;">
+      <p style="color: ${COLORS.textMuted}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px;">Velinin Belirttigi Neden</p>
+      <p style="color: ${COLORS.textDark}; font-size: 14px; line-height: 1.5; margin: 0;">${safeReason}</p>
+    </div>
+
+    ${ctaButton('\u0130ptal Taleplerini \u0130ncele', `${EMAIL_BASE_URL}/admin/iptal-talepleri`, COLORS.warning)}
+
+    ${paragraph('L\u00fctfen iptal talebini de\u011ferlendirip onayla veya reddet.')}
+  `
+
+  return sendEmailInternal({
+    to: data.adminEmail,
+    subject: `\u0130ptal Talebi - ${safeOrder}`,
+    html: wrapTemplate(`\u0130ptal Talebi - ${safeOrder}`, content)
+  })
+}
+
+// ============================================================
+// Director (Mudur) Emails
+// ============================================================
+
+/**
+ * Yeni okul/mudur kaydi yapildiginda mudure giden hos geldin maili.
+ * Hem mudur panel kimligi hem de veli sifresi tek bir mailde gonderilir.
+ */
+function passwordBox(label: string, value: string, color: string): string {
+  return `
+    <div style="background-color: ${COLORS.bgLight}; border: 1px dashed ${color}; border-radius: 8px; padding: 14px 18px; margin: 12px 0;">
+      <p style="color: ${COLORS.textMuted}; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 6px;">${label}</p>
+      <p style="font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: ${color}; margin: 0; letter-spacing: 1px; word-break: break-all;">${value}</p>
+    </div>`
+}
+
+export async function sendDirectorWelcome(data: {
+  directorEmail: string
+  directorName: string | null
+  schoolName: string
+  loginPassword: string
+  veliPassword: string
+}): Promise<EmailResult> {
+  const safeName = escapeHtml(data.directorName || 'Say\u0131n Yetkili')
+  const safeSchool = escapeHtml(data.schoolName)
+  const safeEmail = escapeHtml(data.directorEmail)
+  const safeLoginPwd = escapeHtml(data.loginPassword)
+  const safeVeliPwd = escapeHtml(data.veliPassword)
+
+  const content = `
+    ${greeting(safeName)}
+    ${paragraph(`<strong>${safeSchool}</strong> i\u00e7in m\u00fcd\u00fcr paneli hesab\u0131n\u0131z haz\u0131rlanm\u0131\u015ft\u0131r.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('Hesap Aktifle\u015ftirildi', COLORS.success)}
+    </div>
+
+    <h3 style="color: ${COLORS.textDark}; font-size: 16px; margin: 24px 0 8px;">M\u00fcd\u00fcr Paneli Giri\u015f Bilgileriniz</h3>
+    ${paragraph('A\u015fa\u011f\u0131daki bilgilerle m\u00fcd\u00fcr paneline giri\u015f yapabilirsiniz:')}
+    ${passwordBox('Email', safeEmail, COLORS.primary)}
+    ${passwordBox('\u015eifre', safeLoginPwd, COLORS.primary)}
+
+    ${ctaButton('M\u00fcd\u00fcr Paneline Giri\u015f Yap', `${EMAIL_BASE_URL}/mudur/login`)}
+
+    <h3 style="color: ${COLORS.textDark}; font-size: 16px; margin: 24px 0 8px;">Velilerinize \u0130letmeniz Gereken \u015eifre</h3>
+    ${paragraph('Velilerinizin sipari\u015f verirken kullanaca\u011f\u0131 okul \u015fifresi a\u015fa\u011f\u0131dad\u0131r. Bu \u015fifreyi okul ileti\u015fim kanallar\u0131nda velilere duyurman\u0131z gerekmektedir:')}
+    ${passwordBox('Veli Sipari\u015f \u015eifresi', safeVeliPwd, COLORS.success)}
+
+    ${ctaButton('Sipari\u015f Sayfas\u0131', `${EMAIL_BASE_URL}/siparis`, COLORS.success)}
+
+    <div style="background-color: #fffbeb; border-left: 4px solid ${COLORS.warning}; border-radius: 4px; padding: 14px 16px; margin: 24px 0;">
+      <p style="color: ${COLORS.textDark}; font-size: 13px; line-height: 1.5; margin: 0;">
+        <strong>G\u00fcvenlik:</strong> L\u00fctfen bu \u015fifreleri kimseyle payla\u015fmay\u0131n. M\u00fcd\u00fcr panel \u015fifrenizi yaln\u0131zca kendiniz kullan\u0131n. Veli \u015fifresini ise yaln\u0131zca okul velilerine duyurun.
+      </p>
+    </div>
+  `
+
+  return sendEmailInternal({
+    to: data.directorEmail,
+    subject: `M\u00fcd\u00fcr Paneli Hesab\u0131n\u0131z Haz\u0131r - ${safeSchool}`,
+    html: wrapTemplate(`Ho\u015f Geldiniz - ${safeSchool}`, content)
+  })
+}
+
+/**
+ * Mudur sifresi yenilendiginde gonderilen mail.
+ */
+export async function sendDirectorPasswordReset(data: {
+  directorEmail: string
+  directorName: string | null
+  schoolName: string
+  newPassword: string
+}): Promise<EmailResult> {
+  const safeName = escapeHtml(data.directorName || 'Say\u0131n Yetkili')
+  const safeSchool = escapeHtml(data.schoolName)
+  const safePwd = escapeHtml(data.newPassword)
+
+  const content = `
+    ${greeting(safeName)}
+    ${paragraph(`<strong>${safeSchool}</strong> m\u00fcd\u00fcr panelinizin \u015fifresi yenilenmi\u015ftir.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('\u015eifre Yenilendi', COLORS.warning)}
+    </div>
+
+    ${passwordBox('Yeni \u015eifreniz', safePwd, COLORS.primary)}
+
+    ${ctaButton('M\u00fcd\u00fcr Paneline Giri\u015f Yap', `${EMAIL_BASE_URL}/mudur/login`)}
+
+    <div style="background-color: #fffbeb; border-left: 4px solid ${COLORS.warning}; border-radius: 4px; padding: 14px 16px; margin: 24px 0;">
+      <p style="color: ${COLORS.textDark}; font-size: 13px; line-height: 1.5; margin: 0;">
+        Bu i\u015flemi siz yapmad\u0131ysan\u0131z l\u00fctfen derhal <a href="mailto:destek@okultedarigim.com" style="color: ${COLORS.primaryLight};">destek@okultedarigim.com</a> adresine bildirin.
+      </p>
+    </div>
+  `
+
+  return sendEmailInternal({
+    to: data.directorEmail,
+    subject: `M\u00fcd\u00fcr Panel \u015eifreniz Yenilendi - ${safeSchool}`,
+    html: wrapTemplate(`\u015eifre Yenileme - ${safeSchool}`, content)
+  })
+}
+
+/**
+ * Veli/okul sipari\u015f sifresi yenilendiginde mudure haber veren mail.
+ * Mudur bu yeni sifreyi velilere duyurmak zorunda.
+ */
+export async function sendSchoolPasswordRegenerated(data: {
+  directorEmail: string
+  directorName: string | null
+  schoolName: string
+  newPassword: string
+}): Promise<EmailResult> {
+  const safeName = escapeHtml(data.directorName || 'Say\u0131n Yetkili')
+  const safeSchool = escapeHtml(data.schoolName)
+  const safePwd = escapeHtml(data.newPassword)
+
+  const content = `
+    ${greeting(safeName)}
+    ${paragraph(`<strong>${safeSchool}</strong> okulunun veli sipari\u015f \u015fifresi yenilenmi\u015ftir.`)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge('Veli \u015eifresi Yenilendi', COLORS.warning)}
+    </div>
+
+    ${passwordBox('Yeni Veli Sipari\u015f \u015eifresi', safePwd, COLORS.success)}
+
+    ${paragraph('Bu yeni \u015fifreyi velilerinize duyurman\u0131z gerekmektedir. Eski \u015fifre art\u0131k ge\u00e7erli de\u011fildir.')}
+
+    ${ctaButton('Sipari\u015f Sayfas\u0131', `${EMAIL_BASE_URL}/siparis`, COLORS.success)}
+  `
+
+  return sendEmailInternal({
+    to: data.directorEmail,
+    subject: `Veli \u015eifresi Yenilendi - ${safeSchool}`,
+    html: wrapTemplate(`Veli \u015eifresi Yenileme - ${safeSchool}`, content)
+  })
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { processPayment } from '@/lib/iyzico'
-import { sendPaymentConfirmation } from '@/lib/email'
+import { sendPaymentConfirmation, sendAdminNewOrder } from '@/lib/email'
 import { sendSMS } from '@/lib/sms'
 import { logAction } from '@/lib/logger'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
@@ -114,6 +114,16 @@ export async function POST(request: Request) {
       details: { orderNumber: order.orderNumber, paymentId, amount: Number(order.totalAmount) }
     })
 
+    // Admin notification email + paket+sinif bilgisi yuklemek icin order'i tekrar yukle
+    const orderWithRefs = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        package: { select: { name: true } },
+        class: { include: { school: { select: { name: true } } } }
+      }
+    })
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || ''
+
     try {
       await Promise.all([
         order.email ? sendPaymentConfirmation({
@@ -125,7 +135,18 @@ export async function POST(request: Request) {
         sendSMS({
           to: order.phone,
           message: `${order.orderNumber} no'lu siparisini aldik. Odeme basarili. Tesekkurler!`
-        })
+        }),
+        // Admin'e yeni siparis bildirimi (best-effort)
+        adminEmail && orderWithRefs ? sendAdminNewOrder({
+          adminEmail,
+          orderNumber: order.orderNumber,
+          parentName: order.parentName,
+          studentName: order.studentName,
+          schoolName: orderWithRefs.class.school.name,
+          className: orderWithRefs.class.name,
+          packageName: orderWithRefs.package.name,
+          totalAmount: Number(order.totalAmount)
+        }) : Promise.resolve()
       ])
     } catch (notifError) {
       console.error('Bildirim gonderilemedi:', notifError)

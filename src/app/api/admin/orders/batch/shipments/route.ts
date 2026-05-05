@@ -4,6 +4,7 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
 import { createShipment } from '@/lib/aras-kargo'
+import { sendCargoNotification, sendInvoiceCreated } from '@/lib/email'
 
 interface BatchResult {
   orderId: string
@@ -186,6 +187,26 @@ export async function POST(request: Request) {
             batchOperation: true
           }
         }).catch(err => console.error('Batch shipment log error:', err))
+
+        // Best-effort email gonderimi (basarisiz olsa bile sevkiyat etkilenmez)
+        if (order.email && shipmentResult.trackingNo) {
+          sendCargoNotification({
+            email: order.email,
+            orderNumber: order.orderNumber,
+            parentName: order.parentName,
+            trackingNo: shipmentResult.trackingNo,
+            trackingUrl: shipmentResult.trackingUrl || `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${shipmentResult.trackingNo}`
+          }).catch(err => console.error('[email] sendCargoNotification batch hatasi:', err))
+        }
+        if (autoInvoiced && invoiceNo && order.email) {
+          sendInvoiceCreated({
+            email: order.email,
+            orderNumber: order.orderNumber,
+            parentName: order.parentName,
+            invoiceNo,
+            totalAmount: Number(order.totalAmount)
+          }).catch(err => console.error('[email] sendInvoiceCreated batch hatasi:', err))
+        }
 
         return {
           orderId: order.id,

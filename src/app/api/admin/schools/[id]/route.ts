@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { adminSchoolUpdateSchema, formatZodError } from '@/lib/validators'
+import { sendDirectorPasswordReset, sendSchoolPasswordRegenerated } from '@/lib/email'
 
 export async function GET(
   request: Request,
@@ -111,6 +112,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Guncellenecek alan bulunamadi' }, { status: 400 })
     }
 
+    // Mail gonderme kararini almak icin update'ten ONCE eski degerleri al
+    const previousSchool = await prisma.school.findUnique({
+      where: { id },
+      select: { password: true, directorEmail: true, directorName: true, name: true }
+    })
+
     const school = await prisma.school.update({
       where: { id },
       data: updateData
@@ -124,6 +131,26 @@ export async function PUT(
       entityId: school.id,
       details: { name: school.name }
     })
+
+    // Mudur sifresi degistiyse mail gonder (best-effort)
+    if (directorPassword && typeof directorPassword === 'string' && directorPassword.trim()) {
+      sendDirectorPasswordReset({
+        directorEmail: school.directorEmail,
+        directorName: school.directorName,
+        schoolName: school.name,
+        newPassword: directorPassword.trim()
+      }).catch(err => console.error('[email] sendDirectorPasswordReset hatasi:', err))
+    }
+
+    // Veli sifresi degistiyse mail gonder
+    if (typeof updateData.password === 'string' && previousSchool && previousSchool.password !== updateData.password) {
+      sendSchoolPasswordRegenerated({
+        directorEmail: school.directorEmail,
+        directorName: school.directorName,
+        schoolName: school.name,
+        newPassword: updateData.password as string
+      }).catch(err => console.error('[email] sendSchoolPasswordRegenerated hatasi:', err))
+    }
 
     return NextResponse.json({ school })
   } catch (error) {

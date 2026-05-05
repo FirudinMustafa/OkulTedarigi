@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { getTrackingInfo } from '@/lib/aras-kargo'
+import { sendDeliveryConfirmation } from '@/lib/email'
 import { OrderStatus } from '@prisma/client'
 
 interface SyncResult {
@@ -42,7 +43,9 @@ export async function POST(request: Request) {
         id: true,
         orderNumber: true,
         trackingNo: true,
-        status: true
+        status: true,
+        email: true,
+        parentName: true
       }
     })
 
@@ -110,6 +113,16 @@ export async function POST(request: Request) {
               autoUpdated: true
             }
           })
+
+          // Teslim onay maili (best-effort)
+          if (newStatus === OrderStatus.DELIVERED && order.email) {
+            sendDeliveryConfirmation({
+              email: order.email,
+              orderNumber: order.orderNumber,
+              parentName: order.parentName,
+              deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+            }).catch(err => console.error('[email] sendDeliveryConfirmation sync-cargo hatasi:', err))
+          }
         } else {
           results.push({
             orderId: order.id,

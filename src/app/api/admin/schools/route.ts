@@ -4,6 +4,7 @@ import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
 import { adminSchoolCreateSchema, formatZodError } from '@/lib/validators'
+import { sendDirectorWelcome } from '@/lib/email'
 
 export async function GET() {
   try {
@@ -134,6 +135,15 @@ export async function POST(request: Request) {
       entityId: school.id,
       details: { name: school.name }
     })
+
+    // Mudure hos geldin maili (best-effort — login bilgileri + veli sifresi)
+    sendDirectorWelcome({
+      directorEmail: school.directorEmail,
+      directorName: school.directorName,
+      schoolName: school.name,
+      loginPassword: directorPassword,
+      veliPassword: schoolPassword
+    }).catch(err => console.error('[email] sendDirectorWelcome hatasi:', err))
 
     // Cleartext sifreler response'ta tek seferlik gosterilir; cache/proxy'lere yazilmasin.
     return NextResponse.json(

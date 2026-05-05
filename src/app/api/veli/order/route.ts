@@ -7,6 +7,7 @@ import { isValidTCKimlik } from '@/lib/utils'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
 import { getClientIp, generateOrderAccessToken } from '@/lib/security'
 import { veliOrderBodySchema, formatZodError } from '@/lib/validators'
+import { sendOrderConfirmation } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
@@ -290,6 +291,18 @@ export async function POST(request: Request) {
     // Defense-in-depth: order'a erişim için HMAC-imzalı access token ver.
     // Frontend bu token'ı sonraki isteklerde (cancel-request, payment) yollar.
     const accessToken = generateOrderAccessToken(order.id)
+
+    // Sipariş onay maili — best-effort, mail hatası DB transaction'ı bozmaz
+    if (email) {
+      sendOrderConfirmation({
+        email,
+        orderNumber,
+        parentName,
+        studentName: order.studentName,
+        packageName: classData.package.name,
+        totalAmount: effectiveAmount,
+      }).catch(err => console.error('[email] sendOrderConfirmation hatasi:', err))
+    }
 
     return NextResponse.json({
       success: true,
