@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { z } from 'zod'
+import { NO_HTML_REGEX, NO_HTML_MSG } from '@/lib/validators'
 
 // validUntil: gun sonuna ayarla (UTC midnight girilirse 23:59:59.999'a yuvarla)
 function isMidnightUTC(d: Date): boolean {
@@ -17,7 +18,7 @@ const validUntilUpdateSchema = z.coerce.date().transform(d => {
 
 const adminDiscountUpdateSchema = z.object({
   code: z.string().trim().toUpperCase().min(3).max(40).regex(/^[A-Z0-9_-]+$/).optional(),
-  description: z.string().trim().max(500).nullable().optional(),
+  description: z.string().trim().max(500).regex(NO_HTML_REGEX, NO_HTML_MSG).nullable().optional(),
   type: z.enum(['PERCENTAGE', 'FIXED']).optional(),
   value: z.coerce.number().positive().optional(),
   minAmount: z.coerce.number().nonnegative().nullable().optional(),

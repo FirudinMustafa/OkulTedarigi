@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { REVENUE_STATUSES } from '@/lib/constants'
+import { REVENUE_STATUSES, ACTIVE_SCHOOL_WHERE } from '@/lib/constants'
 
 export async function GET(request: Request) {
   try {
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
           }
         }
       }),
-      prisma.school.count({ where: { isActive: true } }),
+      prisma.school.count({ where: ACTIVE_SCHOOL_WHERE }),
       prisma.class.count({ where: { isActive: true } })
     ])
 

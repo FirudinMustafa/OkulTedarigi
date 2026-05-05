@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    const { orderId, accessToken, reason } = parsed.data
+    const { orderId, accessToken, phoneLast4, reason } = parsed.data
 
     // IP başına 10 iptal talebi / 10 dk (spam koruması)
     const ip = getClientIp(request)
@@ -43,11 +43,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // F-04: Defense-in-depth — accessToken doğrulaması
-    if (!verifyOrderAccessToken(order.id, accessToken)) {
+    // Kimlik dogrulama: accessToken (POST yaratandan) VEYA phoneLast4 (takip sayfasindan)
+    let authorized = false
+    if (accessToken && verifyOrderAccessToken(order.id, accessToken)) {
+      authorized = true
+    } else if (phoneLast4) {
+      const phoneDigits = String(order.phone || '').replace(/\D/g, '')
+      const orderLast4 = phoneDigits.slice(-4)
+      if (orderLast4.length === 4 && orderLast4 === phoneLast4) {
+        authorized = true
+      }
+    }
+    if (!authorized) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Bu siparise erisim yetkiniz yok' },
+        { error: 'Kimlik dogrulamasi basarisiz. Telefon son 4 hane dogru mu?' },
         { status: 403 }
       )
     }

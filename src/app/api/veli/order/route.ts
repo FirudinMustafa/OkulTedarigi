@@ -302,6 +302,14 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
+    // DB-level (classId, taxNumber) unique cakismasi — race penceresi veya iptal-sonrasi tekrar.
+    // existingOrder check'i (notIn:CANCELLED) racede atlanabilir; DB unique son savunma.
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Bu sinif icin TC/Vergi numaraniz ile bir siparis zaten mevcut. Iptal ettiyseniz destek hatti ile iletisime gecin.' },
+        { status: 409 }
+      )
+    }
     console.error('Siparis olusturma hatasi:', error)
     return NextResponse.json(
       { error: 'Siparis olusturulamadi' },
@@ -383,13 +391,12 @@ export async function GET(request: Request) {
     // Başarılı sorgu — meşru kullanıcı cezalandırılmasın
     await resetRateLimit(rlIdentifier)
 
-    // Order GET response'unda da accessToken ver (frontend takip sayfasinda kullanir)
-    const accessToken = generateOrderAccessToken(order.id)
-
+    // accessToken GET response'unda DONULMEZ (defense-in-depth):
+    // orderNumber'i bilen 3. sahis (forward, screenshot, log) iptal/odeme yapamasin.
+    // POST /api/veli/order response'unda zaten dondurulur — siparisi olusturan veli orada alir.
     return NextResponse.json({
       id: order.id,
       orderNumber: order.orderNumber,
-      accessToken,
       status: order.status,
       parentName: order.parentName,
       studentName: order.studentName,

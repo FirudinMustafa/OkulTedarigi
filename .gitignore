@@ -55,13 +55,25 @@ yarn-error.log*
 nul
 cookies*.txt
 *cookies*.txt
+*cookie*.txt
 test-db.js
+
+# QA / test artifacts (contain credentials, response dumps, exports)
+qa-*
+race*.json
+*-export.xlsx
+prod-test.mjs
+ui-test.mjs
+big.json
+tcs.txt
+QA_REPORT_*.md
 
 # Local agent/IDE config
 .claude/
 
 # Credentials file (contains test passwords - keep local only)
 GIRIS_BILGILERI.md
+CREDENTIALS.local.md
 
 # Local backups & test artifacts
 .test-artifacts/
@@ -88,3 +100,9 @@ TEST-SENARYOLARI.md
 next-env.d.ts
 
 .vercel
+
+# Vercel env dumps - never commit
+.env.production
+.env.development
+.env.dev-pull
+.env.preview

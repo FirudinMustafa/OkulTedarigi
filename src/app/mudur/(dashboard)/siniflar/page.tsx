@@ -3,13 +3,12 @@ import { getMudurSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Package, DollarSign, ShoppingCart } from "lucide-react"
+import { Users, Package, ShoppingCart } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
 import { COMMISSION_STATUSES } from "@/lib/constants"
 
 interface ClassOrder {
   status: string
-  totalAmount: { toString(): string }
 }
 
 interface ClassWithDetails {
@@ -17,7 +16,7 @@ interface ClassWithDetails {
   name: string
   commissionAmount: { toString(): string }
   isActive: boolean
-  package: { name: string; price: { toString(): string } } | null
+  package: { name: string } | null
   orders: ClassOrder[]
 }
 
@@ -31,12 +30,11 @@ async function getSchoolClasses(schoolId: string) {
         orderBy: { name: 'asc' },
         include: {
           package: {
-            select: { name: true, price: true }
+            select: { name: true }
           },
           orders: {
             select: {
-              status: true,
-              totalAmount: true
+              status: true
             }
           }
         }
@@ -102,7 +100,6 @@ export default async function MudurSiniflarPage() {
       <div className="space-y-4">
         {school.classes.map((cls: ClassWithDetails) => {
           const commissionOrders = cls.orders.filter((o: ClassOrder) => COMMISSION_STATUSES.includes(o.status))
-          const totalRevenue = commissionOrders.reduce((acc: number, o: ClassOrder) => acc + Number(o.totalAmount), 0)
           const completedOrders = cls.orders.filter((o: ClassOrder) => o.status === 'COMPLETED').length
           const pendingOrders = cls.orders.filter((o: ClassOrder) =>
             !['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(o.status)
@@ -123,13 +120,10 @@ export default async function MudurSiniflarPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-500">Paket</p>
                     <p className="font-medium text-sm">{cls.package?.name || 'Tanimlanmamis'}</p>
-                    {cls.package && (
-                      <p className="text-xs text-gray-400">{formatNumber(Number(cls.package.price))} TL</p>
-                    )}
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <p className="text-xs text-blue-600">Toplam Siparis</p>
@@ -137,10 +131,6 @@ export default async function MudurSiniflarPage() {
                     <p className="text-xs text-blue-500">
                       {completedOrders} tamamlandi, {pendingOrders} devam ediyor
                     </p>
-                  </div>
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <p className="text-xs text-purple-600">Ciro</p>
-                    <p className="font-bold text-lg text-purple-700">{formatNumber(totalRevenue)} TL</p>
                   </div>
                   <div className="p-3 bg-emerald-50 rounded-lg">
                     <p className="text-xs text-emerald-600">Hakedis Miktari</p>

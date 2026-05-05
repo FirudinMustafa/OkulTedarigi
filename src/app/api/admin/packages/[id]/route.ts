@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { NO_HTML_REGEX, NO_HTML_MSG } from '@/lib/validators'
 
 export async function GET(
   request: Request,
@@ -89,6 +90,15 @@ export async function PUT(
     if (typeof packageData.name === 'string' && (!packageData.name.trim() || packageData.name.length > 200)) {
       return NextResponse.json({ error: 'Paket adi 1-200 karakter olmali' }, { status: 400 })
     }
+    if (typeof packageData.name === 'string' && !NO_HTML_REGEX.test(packageData.name)) {
+      return NextResponse.json({ error: `Paket adi: ${NO_HTML_MSG}` }, { status: 400 })
+    }
+    if (typeof packageData.description === 'string' && !NO_HTML_REGEX.test(packageData.description)) {
+      return NextResponse.json({ error: `Aciklama: ${NO_HTML_MSG}` }, { status: 400 })
+    }
+    if (typeof packageData.note === 'string' && !NO_HTML_REGEX.test(packageData.note)) {
+      return NextResponse.json({ error: `Not: ${NO_HTML_MSG}` }, { status: 400 })
+    }
 
     // basePrice varsa price olarak kaydet
     if (basePrice !== undefined) {
@@ -110,6 +120,9 @@ export async function PUT(
       for (const item of items) {
         if (!item.name || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 200) {
           return NextResponse.json({ error: 'Urun adi 1-200 karakter olmali' }, { status: 400 })
+        }
+        if (!NO_HTML_REGEX.test(item.name)) {
+          return NextResponse.json({ error: `Urun adi (${item.name}): ${NO_HTML_MSG}` }, { status: 400 })
         }
         const itemPrice = Number(item.unitPrice ?? item.price ?? 0)
         if (!isFinite(itemPrice) || itemPrice < 0 || itemPrice > 1_000_000) {

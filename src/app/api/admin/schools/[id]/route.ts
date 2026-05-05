@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { adminSchoolUpdateSchema, formatZodError } from '@/lib/validators'
 
 export async function GET(
   request: Request,
@@ -54,11 +55,18 @@ export async function PUT(
     }
 
     const { id } = await params
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
+    const parsed = adminSchoolUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(parsed.error) },
+        { status: 400 }
+      )
+    }
 
     // Izin verilen alanlari filtrele
     const allowedFields = ['name', 'address', 'phone', 'email', 'deliveryType', 'password', 'directorName', 'directorEmail', 'directorPassword', 'isActive']
-    const { directorPassword, ...rest } = body
+    const { directorPassword, ...rest } = parsed.data as Record<string, unknown>
     const updateData: Record<string, unknown> = {}
 
     for (const key of Object.keys(rest)) {
@@ -119,6 +127,12 @@ export async function PUT(
 
     return NextResponse.json({ school })
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Bu e-posta adresi ile baska bir okul zaten mevcut.' },
+        { status: 409 }
+      )
+    }
     console.error('Okul guncellenemedi:', error)
     return NextResponse.json(
       { error: 'Okul guncellenemedi' },
@@ -151,44 +165,40 @@ export async function DELETE(
 
     const classIds = school.classes.map(c => c.id)
 
-    // Aktif siparis kontrolu - tamamlanmamis siparisler varsa silmeyi engelle
+    // Yasal saklama (VUK/TTK 5-10 yil): herhangi bir siparis kaydi varsa hard delete YOK.
+    // Tum durumlar (COMPLETED/CANCELLED/REFUNDED dahil) hesap defteri/fatura kaydidir.
     if (classIds.length > 0) {
-      const activeOrders = await prisma.order.count({
-        where: {
-          classId: { in: classIds },
-          status: { notIn: ['COMPLETED', 'CANCELLED', 'REFUNDED'] }
-        }
+      const hasOrders = await prisma.order.findFirst({
+        where: { classId: { in: classIds } },
+        select: { id: true }
       })
-
-      if (activeOrders > 0) {
+      if (hasOrders) {
         return NextResponse.json(
-          { error: `Bu okula ait ${activeOrders} aktif siparis bulunuyor. Silmeden once siparislerin tamamlanmasi veya iptal edilmesi gerekiyor.` },
-          { status: 400 }
+          { error: 'Bu okulun siparis kayitlari mevcut. Silmek yerine okulu pasiflestirebilirsiniz.' },
+          { status: 409 }
         )
       }
 
-      // 1. Siparis iptal taleplerini sil
-      await prisma.cancelRequest.deleteMany({
-        where: { order: { classId: { in: classIds } } }
-      })
-
-      // 2. Siparisleri sil (sadece tamamlanmis/iptal/iade edilmis)
-      await prisma.order.deleteMany({
-        where: { classId: { in: classIds } }
-      })
-
-      // 3. Siniflari sil
+      // Siparis hic yoksa siniflari guvenle sil
       await prisma.class.deleteMany({
         where: { schoolId: id }
       })
     }
 
-    // 4. Okul hakedislerini sil
-    await prisma.schoolPayment.deleteMany({
-      where: { schoolId: id }
+    // Hakedisler: order kaydi yoksa hakedis de uretilmemis olur (commission siparisten geliyor).
+    // Buna ragmen manuel girilmis kayit olabilir — onlar da yasal kayit, silmeyelim.
+    const hasPayments = await prisma.schoolPayment.findFirst({
+      where: { schoolId: id },
+      select: { id: true }
     })
+    if (hasPayments) {
+      return NextResponse.json(
+        { error: 'Bu okulun hakedis kayitlari mevcut. Silmek yerine okulu pasiflestirebilirsiniz.' },
+        { status: 409 }
+      )
+    }
 
-    // 5. Okulu sil
+    // Hicbir muhasebesel kayit yok — okulu sil
     await prisma.school.delete({
       where: { id }
     })

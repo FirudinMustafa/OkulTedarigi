@@ -106,7 +106,7 @@ export default function Hero() {
       <div className="relative z-10 flex h-full w-full items-center justify-center px-6 lg:px-8">
         <div className="w-full max-w-5xl text-center">
           <FadeIn delay={0.05}>
-            <h1 className="text-gradient-green text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2">
+            <h1 className="text-gradient-green-dark text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2">
               Kaliteli hizmet için
               <br />
               doğru adres.
@@ -115,7 +115,7 @@ export default function Hero() {
 
           <FadeIn delay={0.1}>
             <p className="mt-8 text-xl md:text-2xl text-apple-ink/85 leading-snug max-w-2xl mx-auto font-medium">
-              Okulunuzun belirlediği eğitim paketini tek tıkla sipariş edin.
+              Eğitim paketini tek tıkla sipariş edin.
               Şeffaf süreç, güvenli ödeme, eksiksiz teslimat.
             </p>
           </FadeIn>

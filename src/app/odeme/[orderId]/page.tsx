@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { CreditCard, Lock, Loader2, CheckCircle } from "lucide-react"
+import { CreditCard, Lock, Loader2, CheckCircle, XCircle, Info } from "lucide-react"
+import { REVENUE_STATUSES } from "@/lib/constants"
 
 interface Order {
   id: string
@@ -183,6 +185,58 @@ export default function OdemePage({ params }: { params: Promise<{ orderId: strin
     )
   }
 
+  // Sipariş ödenmiş veya iptal edilmiş ise form yerine bilgi kartı.
+  // PAID ve sonrası (CONFIRMED, INVOICED, SHIPPED, DELIVERED, COMPLETED) -> "zaten ödenmiş".
+  // CANCELLED, REFUNDED -> "iptal edilmiş".
+  if (order && order.status && order.status !== 'PAYMENT_PENDING' && order.status !== 'NEW') {
+    const isPaid = REVENUE_STATUSES.includes(order.status)
+    const isCancelled = order.status === 'CANCELLED' || order.status === 'REFUNDED'
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 py-8 px-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-8 pb-8">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isPaid ? 'bg-green-100' : isCancelled ? 'bg-red-100' : 'bg-blue-100'}`}>
+              {isPaid ? (
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              ) : isCancelled ? (
+                <XCircle className="h-8 w-8 text-red-600" />
+              ) : (
+                <Info className="h-8 w-8 text-blue-600" />
+              )}
+            </div>
+            <h2 className={`text-2xl font-bold mb-2 ${isPaid ? 'text-green-700' : isCancelled ? 'text-red-700' : 'text-blue-700'}`}>
+              {isPaid ? 'Bu siparis zaten odenmis' : isCancelled ? 'Bu siparis iptal edildi' : 'Bu siparis icin odeme yapilamaz'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isPaid
+                ? 'Siparisinizin durumunu takip sayfasindan kontrol edebilirsiniz.'
+                : isCancelled
+                ? 'Bu siparis iptal edilmistir. Yeni bir siparis olusturmak icin ana sayfayi ziyaret edin.'
+                : 'Siparisinizin guncel durumunu takip sayfasindan goruntuleyin.'}
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Siparis No: <span className="font-mono">{order.orderNumber}</span>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link
+                href={`/siparis-takip?orderNumber=${order.orderNumber}`}
+                className="inline-flex items-center justify-center gap-2 bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Siparis Takibi
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors"
+              >
+                Ana Sayfa
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-lg">
@@ -228,7 +282,7 @@ export default function OdemePage({ params }: { params: Promise<{ orderId: strin
                 <Input
                   id="cardNumber"
                   name="cardNumber"
-                  placeholder="0000 0000 0000 0000"
+                  placeholder="Kart numaranızı giriniz"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                   maxLength={19}

@@ -8,11 +8,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table"
 import { DollarSign, CheckCircle, Clock } from "lucide-react"
-import { formatDateTime, formatNumber } from "@/lib/utils"
+import { formatDateTime } from "@/lib/utils"
 
 interface Order {
   status: string
-  totalAmount: { toString(): string }
 }
 
 interface ClassItem {
@@ -54,12 +53,6 @@ async function getSchoolPayments(schoolId: string) {
 
   if (!school) return null
 
-  const allOrders = school.classes.flatMap((c: ClassItem) => c.orders)
-  const totalRevenue = allOrders.reduce(
-    (acc: number, o: Order) => acc + Number(o.totalAmount),
-    0
-  )
-
   let totalCommission = 0
   school.classes.forEach((classItem: ClassItem) => {
     totalCommission += Number(classItem.commissionAmount) * classItem.orders.length
@@ -75,7 +68,6 @@ async function getSchoolPayments(schoolId: string) {
   return {
     school,
     payments: school.schoolPayments as unknown as Payment[],
-    totalRevenue,
     totalCommission,
     paidAmount,
     pendingAmount
@@ -99,28 +91,15 @@ export default async function MudurHakedislerPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hakedisler</h1>
-        <p className="text-gray-500">Komisyon ve odeme durumu</p>
+        <p className="text-gray-500">Hakedis ve odeme durumu</p>
       </div>
 
       {/* Ozet Kartlari */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
-              Toplam Ciro
-            </CardTitle>
-            <DollarSign className="h-5 w-5 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(data.totalRevenue)} TL
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Toplam Komisyon
+              Toplam Hakedis
             </CardTitle>
             <DollarSign className="h-5 w-5 text-purple-500" />
           </CardHeader>
@@ -207,7 +186,7 @@ export default async function MudurHakedislerPage() {
           <div className="bg-purple-50 p-4 rounded-lg">
             <h4 className="font-medium text-purple-900 mb-2">Hakedis Bilgilendirmesi</h4>
             <ul className="text-sm text-purple-700 space-y-1">
-              <li>Komisyon miktari her sinif icin ayri belirlenir.</li>
+              <li>Hakedis miktari her sinif icin ayri belirlenir.</li>
               <li>Hakedisler aylik olarak hesaplanir ve odenir.</li>
               <li>Odeme islemleri banka havalesi ile yapilir.</li>
               <li>Sorulariniz icin yonetim ile iletisime gecebilirsiniz.</li>

@@ -5,14 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BarChart3, TrendingUp, Users, Package, ShoppingCart
 } from "lucide-react"
-import { formatNumber } from "@/lib/utils"
 import { ORDER_STATUS_LABELS } from "@/lib/constants"
 import YearFilter from "@/components/mudur/year-filter"
 import ReportExportButton from "@/components/mudur/report-export-button"
 
 interface OrderItem {
   status: string
-  totalAmount: { toString(): string }
   createdAt: Date
 }
 
@@ -69,23 +67,15 @@ async function getSchoolReports(schoolId: string, year?: string) {
     return {
       name: cls.name,
       packageName: cls.package?.name || 'Paket yok',
-      orderCount: classOrders.length,
-      revenue: classOrders
-        .filter((o: OrderItem) => !['CANCELLED', 'REFUNDED'].includes(o.status))
-        .reduce((acc: number, o: OrderItem) => acc + Number(o.totalAmount), 0)
+      orderCount: classOrders.length
     }
   }).sort((a, b) => b.orderCount - a.orderCount)
-
-  const totalRevenue = allOrders
-    .filter((o: OrderItem) => !['CANCELLED', 'REFUNDED'].includes(o.status))
-    .reduce((acc: number, o: OrderItem) => acc + Number(o.totalAmount), 0)
 
   return {
     school,
     totalOrders: allOrders.length,
     completedOrders: allOrders.filter((o: OrderItem) => o.status === 'COMPLETED').length,
     cancelledOrders: allOrders.filter((o: OrderItem) => o.status === 'CANCELLED').length,
-    totalRevenue,
     ordersByStatus,
     ordersByDeliveryType,
     classStat,
@@ -152,13 +142,13 @@ export default async function MudurRaporlarPage({ searchParams }: { searchParams
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
-              Toplam Ciro
+              Iptal Edilen
             </CardTitle>
-            <BarChart3 className="h-5 w-5 text-purple-500" />
+            <BarChart3 className="h-5 w-5 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(data.totalRevenue)} TL
+            <div className="text-2xl font-bold text-red-600">
+              {data.cancelledOrders}
             </div>
           </CardContent>
         </Card>
@@ -264,11 +254,8 @@ export default async function MudurRaporlarPage({ searchParams }: { searchParams
                       <p className="text-sm text-gray-500">{cls.packageName}</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-medium">{cls.orderCount}</p>
+                      <p className="font-bold">{cls.orderCount}</p>
                       <p className="text-xs text-gray-500">siparis</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{formatNumber(cls.revenue)} TL</p>
                     </div>
                   </div>
                 ))}

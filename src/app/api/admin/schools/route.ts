@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
+import { adminSchoolCreateSchema, formatZodError } from '@/lib/validators'
 
 export async function GET() {
   try {
@@ -49,7 +50,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
+    const parsed = adminSchoolCreateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(parsed.error) },
+        { status: 400 }
+      )
+    }
     const {
       name,
       address,
@@ -60,14 +68,7 @@ export async function POST(request: Request) {
       directorEmail,
       directorPassword,
       password // Veli giris sifresi (opsiyonel - verilmezse otomatik olusturulur)
-    } = body
-
-    if (!name || !directorEmail || !directorPassword) {
-      return NextResponse.json(
-        { error: 'Okul adi, mudur emaili ve sifresi gerekli' },
-        { status: 400 }
-      )
-    }
+    } = parsed.data
 
     // Mudur sifresini hashle
     const hashedPassword = await hashPassword(directorPassword)
@@ -134,22 +135,32 @@ export async function POST(request: Request) {
       details: { name: school.name }
     })
 
-    return NextResponse.json({
-      school: {
-        id: school.id,
-        name: school.name,
-        address: school.address,
-        phone: school.phone,
-        email: school.email,
-        deliveryType: school.deliveryType,
-        password: school.password,
-        directorName: school.directorName,
-        directorEmail: school.directorEmail,
-        directorPassword: directorPassword, // Mudur sifresi (ilk olusturmada goster)
-        isActive: school.isActive
-      }
-    })
+    // Cleartext sifreler response'ta tek seferlik gosterilir; cache/proxy'lere yazilmasin.
+    return NextResponse.json(
+      {
+        school: {
+          id: school.id,
+          name: school.name,
+          address: school.address,
+          phone: school.phone,
+          email: school.email,
+          deliveryType: school.deliveryType,
+          password: school.password,
+          directorName: school.directorName,
+          directorEmail: school.directorEmail,
+          directorPassword: directorPassword, // Mudur sifresi (ilk olusturmada goster)
+          isActive: school.isActive
+        }
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Bu e-posta adresi ile baska bir okul zaten mevcut.' },
+        { status: 409 }
+      )
+    }
     console.error('Okul olusturulamadi:', error)
     return NextResponse.json(
       { error: 'Okul olusturulamadi' },

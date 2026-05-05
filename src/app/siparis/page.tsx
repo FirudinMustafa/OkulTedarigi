@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle, CaretDown, CaretUp } from '@phosphor-icons/react'
@@ -44,9 +44,10 @@ interface SchoolData {
 export default function SiparisPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-clip">
-      <OrderHeader />
       <main className="relative">
-        <SchoolPasswordFlow />
+        <Suspense fallback={null}>
+          <SchoolPasswordFlow />
+        </Suspense>
       </main>
     </div>
   )
@@ -54,8 +55,9 @@ export default function SiparisPage() {
 
 // ==================== ORDER HEADER ====================
 // Ana sayfa ile ayni floating pill stili: solda logo + nav,
-// sagda tek buton "Ana Sayfaya Dön".
-function OrderHeader() {
+// sagda tek buton. onBack verilirse "Şifre ekranına dön" gibi
+// state-aware geri eylemi calistirilir; yoksa "Ana Sayfaya Dön" linki.
+function OrderHeader({ onBack }: { onBack?: () => void }) {
   const navLinks = [
     { label: 'Nasıl Çalışır', href: '/#nasil-calisir' },
     { label: 'Referanslar', href: '/#referanslar' },
@@ -88,15 +90,26 @@ function OrderHeader() {
             </nav>
           </div>
 
-          {/* Sag pill — Ana Sayfaya Don */}
+          {/* Sag pill — duruma gore "Sifre ekranina don" veya "Ana Sayfaya Don" */}
           <div className="pointer-events-auto flex items-center h-12 pl-1.5 pr-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-apple-ink/80 hover:text-apple-ink text-[13px] font-medium transition-colors"
-            >
-              <ArrowLeft weight="regular" className="w-4 h-4" />
-              Ana Sayfaya Dön
-            </Link>
+            {onBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-apple-ink/80 hover:text-apple-ink text-[13px] font-medium transition-colors"
+              >
+                <ArrowLeft weight="regular" className="w-4 h-4" />
+                Şifre ekranına dön
+              </button>
+            ) : (
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-apple-ink/80 hover:text-apple-ink text-[13px] font-medium transition-colors"
+              >
+                <ArrowLeft weight="regular" className="w-4 h-4" />
+                Ana Sayfaya Dön
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -109,11 +122,14 @@ const SCHOOL_DATA_KEY = 'siparisSchoolData'
 
 function SchoolPasswordFlow() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const sessionLost = searchParams.get('reason') === 'session-lost'
   const [password, setPassword] = useState('')
   const [isValidating, setIsValidating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [schoolData, setSchoolData] = useState<SchoolData | null>(null)
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
+  const [showSessionWarning, setShowSessionWarning] = useState(sessionLost)
 
   // /siparis her acildiginda kullanicidan sifre yeniden istenir.
   // Onceki oturumdan kalmis okul verisini temizle.
@@ -160,6 +176,15 @@ function SchoolPasswordFlow() {
     }
   }
 
+  // Sınıf-seçim ekranindan geri donerken sifre giris ekranina don (ana sayfaya degil).
+  const handleBackToPassword = () => {
+    try { sessionStorage.removeItem(SCHOOL_DATA_KEY) } catch {}
+    setSchoolData(null)
+    setPassword('')
+    setExpandedIdx(null)
+    setErrorMessage('')
+  }
+
   const handleClassSelect = (cls: ClassOption) => {
     if (!schoolData || !cls.package) return
 
@@ -178,6 +203,8 @@ function SchoolPasswordFlow() {
   // ========== SINIF SECIM EKRANI ==========
   if (schoolData) {
     return (
+      <>
+      <OrderHeader onBack={handleBackToPassword} />
       <section className="min-h-screen pt-32 pb-20 px-6 lg:px-8 bg-apple-bg">
         <div className="max-w-6xl mx-auto">
           {/* Okul bilgisi */}
@@ -202,7 +229,7 @@ function SchoolPasswordFlow() {
           </div>
 
           {/* Paket grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
             {schoolData.classes.map((cls, idx) => {
               const variant = CLASS_BG_VARIANTS[idx % CLASS_BG_VARIANTS.length]
               const isExpanded = expandedIdx === idx
@@ -215,14 +242,14 @@ function SchoolPasswordFlow() {
                   <div className="relative w-full aspect-[16/9] overflow-hidden">
                     <Image
                       src={`/images/class-bg/${variant}.png`}
-                      alt={`${cls.name} sınıfı`}
+                      alt={`${cls.name} sınıf paketi`}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-5 right-5">
-                      <p className="text-white font-semibold text-xl tracking-tight drop-shadow-md">{cls.name} Sınıfı</p>
+                      <p className="text-white font-semibold text-xl tracking-tight drop-shadow-md">{cls.name} Sınıf Paketi</p>
                     </div>
                   </div>
 
@@ -303,11 +330,14 @@ function SchoolPasswordFlow() {
           </button>
         </div>
       </section>
+      </>
     )
   }
 
   // ========== SIFRE GIRIS EKRANI — iki sutun ==========
   return (
+    <>
+    <OrderHeader />
     <section className="min-h-screen grid lg:grid-cols-2 bg-white">
       {/* Sol: 3D siparis ikonu — mobilde gizli */}
       <div className="relative hidden lg:flex items-center justify-center bg-apple-panel lg:min-h-screen px-6 py-24">
@@ -326,6 +356,23 @@ function SchoolPasswordFlow() {
       {/* Sag: Sifre giris formu */}
       <div className="flex items-center justify-center min-h-screen px-6 py-24">
         <div className="w-full max-w-md">
+          {showSessionWarning && (
+            <div className="mb-6 flex items-start gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+              <WarningCircle weight="fill" className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-[13px] text-amber-800">
+                <p className="font-medium mb-0.5">Oturum bulunamadı</p>
+                <p className="text-amber-700">Sipariş bilgileriniz kayboldu. Lütfen okul şifrenizi tekrar girin.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSessionWarning(false)}
+                className="text-amber-600 hover:text-amber-800 text-[13px]"
+                aria-label="Kapat"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <div className="mb-10">
             <p className="text-[13px] font-medium text-[#10b981] mb-4 tracking-wide uppercase">
               Sipariş
@@ -345,7 +392,7 @@ function SchoolPasswordFlow() {
               </label>
               <input
                 id="schoolPassword"
-                type="text"
+                type="password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value.toUpperCase())
@@ -398,5 +445,6 @@ function SchoolPasswordFlow() {
         </div>
       </div>
     </section>
+    </>
   )
 }

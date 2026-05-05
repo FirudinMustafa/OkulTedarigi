@@ -84,11 +84,16 @@ export async function POST(
       const updatedRequest = await tx.cancelRequest.findUnique({ where: { id } })
 
       if (status === 'APPROVED') {
+        // Odenmis siparis (PAID ve sonrasi) -> REFUNDED. Aksi halde -> CANCELLED.
+        const wasPaid = cancelRequest.order.paidAt !== null
+        const newStatus = wasPaid ? 'REFUNDED' : 'CANCELLED'
+        const now = new Date()
         await tx.order.update({
           where: { id: cancelRequest.orderId },
           data: {
-            status: 'CANCELLED',
-            cancelledAt: new Date()
+            status: newStatus,
+            cancelledAt: now,
+            ...(wasPaid ? { refundedAt: now } : {})
           }
         })
       }

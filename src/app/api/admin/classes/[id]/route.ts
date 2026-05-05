@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { adminClassUpdateSchema, formatZodError } from '@/lib/validators'
 
 export async function GET(
   request: Request,
@@ -53,17 +54,21 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json().catch(() => null)
-    if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+    const parsed = adminClassUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
     // Izin verilen alanlari filtrele
     const allowedFields = ['name', 'schoolId', 'packageId', 'isActive', 'commissionAmount']
     const updateData: Record<string, unknown> = {}
 
-    for (const key of Object.keys(body)) {
+    for (const key of Object.keys(parsed.data as Record<string, unknown>)) {
       if (allowedFields.includes(key)) {
-        updateData[key] = body[key]
+        updateData[key] = (parsed.data as Record<string, unknown>)[key]
       }
     }
 

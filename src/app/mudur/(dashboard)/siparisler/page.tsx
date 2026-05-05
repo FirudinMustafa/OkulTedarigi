@@ -113,7 +113,6 @@ export default async function MudurSiparislerPage(
                     <TableHead>Sinif</TableHead>
                     <TableHead>Ogrenci</TableHead>
                     <TableHead>Veli</TableHead>
-                    <TableHead>Tutar</TableHead>
                     <TableHead>Teslimat</TableHead>
                     <TableHead>Durum</TableHead>
                     <TableHead>Tarih</TableHead>
@@ -134,9 +133,6 @@ export default async function MudurSiparislerPage(
                           <p className="text-sm">{order.parentName}</p>
                           <p className="text-xs text-gray-500">{order.phone}</p>
                         </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {Number(order.totalAmount).toFixed(2)} TL
                       </TableCell>
                       <TableCell>
                         {deliveryType === "CARGO" ? "Kargo" : "Okula"}

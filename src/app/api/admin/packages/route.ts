@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { NO_HTML_REGEX, NO_HTML_MSG } from '@/lib/validators'
 
 export async function GET() {
   try {
@@ -67,6 +68,15 @@ export async function POST(request: Request) {
     if (name.length > 200) {
       return NextResponse.json({ error: 'Paket adi max 200 karakter olabilir' }, { status: 400 })
     }
+    if (!NO_HTML_REGEX.test(name)) {
+      return NextResponse.json({ error: `Paket adi: ${NO_HTML_MSG}` }, { status: 400 })
+    }
+    if (typeof description === 'string' && !NO_HTML_REGEX.test(description)) {
+      return NextResponse.json({ error: `Aciklama: ${NO_HTML_MSG}` }, { status: 400 })
+    }
+    if (typeof body.note === 'string' && !NO_HTML_REGEX.test(body.note)) {
+      return NextResponse.json({ error: `Not: ${NO_HTML_MSG}` }, { status: 400 })
+    }
 
     const numericPrice = Number(finalPrice)
     if (!isFinite(numericPrice) || numericPrice < 0) {
@@ -92,6 +102,13 @@ export async function POST(request: Request) {
     }
     if (validItems.length > 100) {
       return NextResponse.json({ error: 'Bir pakette en fazla 100 urun olabilir' }, { status: 400 })
+    }
+
+    // Item adlari HTML icermemeli
+    for (const item of validItems) {
+      if (typeof item.name === 'string' && !NO_HTML_REGEX.test(item.name)) {
+        return NextResponse.json({ error: `Urun adi (${item.name}): ${NO_HTML_MSG}` }, { status: 400 })
+      }
     }
 
     // Item fiyatlari negatif olamaz

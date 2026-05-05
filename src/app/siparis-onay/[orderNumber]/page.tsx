@@ -248,9 +248,9 @@ export default function SiparisOnayPage() {
         <div className="mt-8 bg-blue-50 rounded-xl p-6 border border-blue-100">
           <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
           <ul className="text-blue-700 text-sm space-y-2">
-            <li>• Sipariş bilgileriniz e-posta ve SMS ile gönderilecektir.</li>
-            <li>• Siparişinizi takip etmek için sipariş numaranızı saklayın.</li>
-            <li>• Sorularınız için destek hattımızı arayabilirsiniz: <strong>+90 549 774 71 37</strong></li>
+            <li>• Lütfen sipariş numaranızı kaydedin — siparişinizi takip için bu numaraya ihtiyacınız olacak.</li>
+            <li>• <Link href={`/siparis-takip?orderNumber=${order.orderNumber}`} className="underline font-medium hover:text-blue-900">Sipariş Takip</Link> sayfasından durum güncellemelerini görüntüleyebilirsiniz.</li>
+            <li>• Sorularınız için destek hattımızı arayabilirsiniz: <a href="tel:+905497747137" className="font-semibold underline">+90 549 774 71 37</a></li>
           </ul>
         </div>
 

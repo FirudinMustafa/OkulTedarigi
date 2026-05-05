@@ -122,24 +122,59 @@ export async function POST(
       }
     }
 
-    // Kargo olustur
-    const shipmentResult = await createShipment({
-      orderNumber: order.orderNumber,
-      receiverName: order.parentName,
-      receiverPhone: order.phone,
-      receiverAddress: order.deliveryAddress || order.address || '',
-      packageCount: 1,
-      packageWeight: 2, // varsayilan 2 kg
-      packageContent: 'Okul Malzemeleri'
+    // Atomic claim: SHIPPED slot'u rezerve et (concurrent POST'lar engellenir).
+    // Sadece kargolanmamis (trackingNo: null) ve uygun statuslu siparisler claim edilir.
+    // count=0 ise: baska admin/istek ayni anda kargoyu olusturmus.
+    const previousStatus = order.status
+    const shippedAt = new Date()
+    const claimResult = await prisma.order.updateMany({
+      where: {
+        id,
+        status: { in: ['PAID', 'CONFIRMED', 'INVOICED'] },
+        trackingNo: null
+      },
+      data: {
+        status: 'SHIPPED',
+        shippedAt
+      }
     })
+    if (claimResult.count === 0) {
+      return NextResponse.json(
+        { error: 'Bu siparis kargoya verilemez (zaten gonderilmis veya uygun durumda degil).' },
+        { status: 409 }
+      )
+    }
 
-    // Siparis durumunu guncelle
+    // Aras kargo cagrisi (slot rezervasyonu sonrasi)
+    let shipmentResult
+    try {
+      shipmentResult = await createShipment({
+        orderNumber: order.orderNumber,
+        receiverName: order.parentName,
+        receiverPhone: order.phone,
+        receiverAddress: order.deliveryAddress || order.address || '',
+        packageCount: 1,
+        packageWeight: 2, // varsayilan 2 kg
+        packageContent: 'Okul Malzemeleri'
+      })
+    } catch (cargoErr) {
+      // Kargo basarisiz - status'u geri al (rollback)
+      await prisma.order.update({
+        where: { id },
+        data: { status: previousStatus, shippedAt: null }
+      })
+      console.error('Kargo olusturulamadi (rollback yapildi):', cargoErr)
+      return NextResponse.json(
+        { error: 'Kargo olusturulamadi, lutfen tekrar deneyin' },
+        { status: 500 }
+      )
+    }
+
+    // Tracking numarasini kaydet (status zaten SHIPPED'a alindi)
     await prisma.order.update({
       where: { id },
       data: {
-        status: 'SHIPPED',
-        trackingNo: shipmentResult.trackingNo,
-        shippedAt: new Date()
+        trackingNo: shipmentResult.trackingNo
       }
     })
 

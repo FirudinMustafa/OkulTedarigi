@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
+import { ACTIVE_SCHOOL_WHERE } from '@/lib/constants'
 
 export async function GET() {
   try {
@@ -35,7 +36,7 @@ export async function GET() {
       prisma.order.count({
         where: { status: 'COMPLETED' }
       }),
-      prisma.school.count({ where: { isActive: true } }),
+      prisma.school.count({ where: ACTIVE_SCHOOL_WHERE }),
       prisma.class.count({ where: { isActive: true } }),
       prisma.package.count({ where: { isActive: true } }),
       prisma.cancelRequest.count({ where: { status: 'PENDING' } }),

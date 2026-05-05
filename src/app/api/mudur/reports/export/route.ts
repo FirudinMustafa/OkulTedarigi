@@ -50,8 +50,6 @@ export async function GET(request: Request) {
       left: { style: 'thin', color: { argb: 'D1D5DB' } },
       right: { style: 'thin', color: { argb: 'D1D5DB' } }
     }
-    const currencyFormat = '#,##0.00 "TL"'
-
     // ==================== SAYFA 1: OZET ====================
     const wsOzet = workbook.addWorksheet('Ozet', { properties: { tabColor: { argb: primaryColor } } })
 
@@ -78,9 +76,6 @@ export async function GET(request: Request) {
       allOrders = allOrders.filter(o => new Date(o.createdAt).getFullYear() === yearNum)
     }
 
-    const totalRevenue = allOrders
-      .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
-      .reduce((acc, o) => acc + Number(o.totalAmount), 0)
     const completedOrders = allOrders.filter(o => o.status === 'COMPLETED').length
     const cancelledOrders = allOrders.filter(o => o.status === 'CANCELLED').length
 
@@ -88,7 +83,6 @@ export async function GET(request: Request) {
       ['Toplam Siparis', allOrders.length],
       ['Tamamlanan Siparis', completedOrders],
       ['Iptal Edilen Siparis', cancelledOrders],
-      ['Toplam Ciro', totalRevenue],
       ['Sinif Sayisi', school.classes.length],
       ['Teslimat Tipi', school.deliveryType === 'CARGO' ? 'Kargo ile Teslim' : 'Okula Teslim']
     ]
@@ -114,10 +108,6 @@ export async function GET(request: Request) {
       row.getCell(3).fill = stripeFill
       row.getCell(3).border = borderStyle
       row.getCell(3).alignment = { horizontal: 'center' }
-      if (item[0] === 'Toplam Ciro') {
-        row.getCell(3).numFmt = currencyFormat
-        row.getCell(3).font = { bold: true, size: 12, color: { argb: '16A34A' } }
-      }
       row.height = 24
     })
 
@@ -160,7 +150,7 @@ export async function GET(request: Request) {
     // ==================== SAYFA 2: SINIF BAZLI ====================
     const wsSinif = workbook.addWorksheet('Sinif Bazli', { properties: { tabColor: { argb: '8B5CF6' } } })
 
-    wsSinif.mergeCells('A1:E1')
+    wsSinif.mergeCells('A1:D1')
     const sinifTitle = wsSinif.getCell('A1')
     sinifTitle.value = `Sinif Bazli Istatistikler - ${yearLabel}`
     sinifTitle.font = { bold: true, size: 14, color: { argb: primaryColor } }
@@ -169,7 +159,7 @@ export async function GET(request: Request) {
 
     wsSinif.addRow([])
 
-    const sinifHeaders = ['#', 'Sinif', 'Paket', 'Siparis Adedi', 'Ciro (TL)']
+    const sinifHeaders = ['#', 'Sinif', 'Paket', 'Siparis Adedi']
     const sinifHeaderRow = wsSinif.addRow(sinifHeaders)
     sinifHeaderRow.eachCell((cell) => {
       cell.fill = headerFill
@@ -188,15 +178,12 @@ export async function GET(request: Request) {
       return {
         name: cls.name,
         packageName: cls.package?.name || 'Paket yok',
-        orderCount: classOrders.length,
-        revenue: classOrders
-          .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
-          .reduce((acc, o) => acc + Number(o.totalAmount), 0)
+        orderCount: classOrders.length
       }
     }).sort((a, b) => b.orderCount - a.orderCount)
 
     classStat.forEach((cls, idx) => {
-      const row = wsSinif.addRow([idx + 1, safe(cls.name), safe(cls.packageName), cls.orderCount, cls.revenue])
+      const row = wsSinif.addRow([idx + 1, safe(cls.name), safe(cls.packageName), cls.orderCount])
       const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
       row.eachCell((cell, colNumber) => {
         cell.fill = stripeFill
@@ -204,15 +191,13 @@ export async function GET(request: Request) {
         cell.alignment = { horizontal: colNumber <= 3 ? 'left' : 'center', vertical: 'middle' }
       })
       row.getCell(1).alignment = { horizontal: 'center' }
-      row.getCell(5).numFmt = currencyFormat
       row.height = 24
     })
 
     // Toplam satiri
     const totalRow = wsSinif.addRow([
       '', '', 'TOPLAM',
-      classStat.reduce((a, c) => a + c.orderCount, 0),
-      totalRevenue
+      classStat.reduce((a, c) => a + c.orderCount, 0)
     ])
     totalRow.eachCell((cell, colNumber) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'EEF2FF' } }
@@ -225,19 +210,17 @@ export async function GET(request: Request) {
       }
       cell.alignment = { horizontal: colNumber <= 3 ? 'left' : 'center', vertical: 'middle' }
     })
-    totalRow.getCell(5).numFmt = currencyFormat
     totalRow.height = 28
 
     wsSinif.getColumn(1).width = 6
     wsSinif.getColumn(2).width = 20
     wsSinif.getColumn(3).width = 30
     wsSinif.getColumn(4).width = 16
-    wsSinif.getColumn(5).width = 20
 
     // ==================== SAYFA 3: DETAY ====================
     const wsDetay = workbook.addWorksheet('Siparis Detay', { properties: { tabColor: { argb: '059669' } } })
 
-    wsDetay.mergeCells('A1:I1')
+    wsDetay.mergeCells('A1:H1')
     const detayTitle = wsDetay.getCell('A1')
     detayTitle.value = `Tum Siparisler - ${yearLabel}`
     detayTitle.font = { bold: true, size: 14, color: { argb: primaryColor } }
@@ -246,7 +229,7 @@ export async function GET(request: Request) {
 
     wsDetay.addRow([])
 
-    const detayHeaders = ['Siparis No', 'Sinif', 'Paket', 'Durum', 'Veli Adi', 'Ogrenci Adi', 'Telefon', 'Tutar (TL)', 'Tarih']
+    const detayHeaders = ['Siparis No', 'Sinif', 'Paket', 'Durum', 'Veli Adi', 'Ogrenci Adi', 'Telefon', 'Tarih']
     const detayHeaderRow = wsDetay.addRow(detayHeaders)
     detayHeaderRow.eachCell((cell) => {
       cell.fill = headerFill
@@ -287,7 +270,6 @@ export async function GET(request: Request) {
           safe(o.parentName),
           safe(o.studentName),
           safe(o.phone),
-          Number(o.totalAmount),
           new Date(o.createdAt).toLocaleDateString('tr-TR')
         ])
 
@@ -303,10 +285,6 @@ export async function GET(request: Request) {
         const statusColor = statusColors[o.status] || '6B7280'
         statusCell.font = { bold: true, color: { argb: statusColor } }
 
-        // Tutar format
-        row.getCell(8).numFmt = currencyFormat
-        row.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' }
-
         row.height = 22
         rowIdx++
       }
@@ -319,8 +297,7 @@ export async function GET(request: Request) {
     wsDetay.getColumn(5).width = 20
     wsDetay.getColumn(6).width = 20
     wsDetay.getColumn(7).width = 16
-    wsDetay.getColumn(8).width = 16
-    wsDetay.getColumn(9).width = 14
+    wsDetay.getColumn(8).width = 14
 
     // Tum sayfalara yazdir ayarlari
     ;[wsOzet, wsSinif, wsDetay].forEach(ws => {

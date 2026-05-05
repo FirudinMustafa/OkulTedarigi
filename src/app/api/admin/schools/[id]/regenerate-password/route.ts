@@ -64,10 +64,14 @@ export async function POST(
       details: { action: 'password_regenerated' }
     })
 
-    return NextResponse.json({
-      success: true,
-      password: updatedSchool.password
-    })
+    // Cleartext sifre cache/proxy'lere yazilmasin (tek seferlik gosterim).
+    return NextResponse.json(
+      {
+        success: true,
+        password: updatedSchool.password
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   } catch (error) {
     console.error('Sifre yenilenemedi:', error)
     return NextResponse.json(

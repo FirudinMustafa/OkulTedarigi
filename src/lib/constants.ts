@@ -41,6 +41,10 @@ export const REVENUE_STATUSES = ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DE
 // Hakediş hesabina dahil edilecek durumlar (Onaylanmis + Teslim edilmemis + Iade edilmemis)
 export const COMMISSION_STATUSES = ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED']
 
+// Aktif okul filtresi - dashboard ve reports tutarliligi icin ortak helper
+// Schools listesi (admin yonetim) bu filtreyi kullanmaz, tum okullari gosterir.
+export const ACTIVE_SCHOOL_WHERE = { isActive: true } as const
+
 // Gecerli status gecisleri
 export const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
   NEW: ['PAYMENT_PENDING', 'PAID', 'CANCELLED'],

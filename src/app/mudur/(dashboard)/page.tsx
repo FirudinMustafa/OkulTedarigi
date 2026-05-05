@@ -14,7 +14,6 @@ interface Order {
   orderNumber: string
   studentName: string
   status: string
-  totalAmount: { toString(): string }
   createdAt: Date
 }
 
@@ -47,11 +46,7 @@ async function getDashboardStats(schoolId: string) {
     !['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(o.status)
   ).length
 
-  const totalRevenue = allOrders
-    .filter((o: Order) => COMMISSION_STATUSES.includes(o.status))
-    .reduce((acc: number, o: Order) => acc + Number(o.totalAmount), 0)
-
-  // Komisyonu sinif bazinda hesapla (sadece odenmis ve sonrasi siparisler)
+  // Hakedisi sinif bazinda hesapla (sadece odenmis ve sonrasi siparisler)
   let totalCommission = 0
   school.classes.forEach((classItem: ClassItem) => {
     const classOrders = classItem.orders.filter(
@@ -74,7 +69,6 @@ async function getDashboardStats(schoolId: string) {
     totalOrders,
     completedOrders,
     pendingOrders,
-    totalRevenue,
     commission: totalCommission,
     paidCommission,
     pendingCommission: totalCommission - paidCommission,
@@ -121,14 +115,7 @@ export default async function MudurDashboard() {
       bgColor: "bg-indigo-100"
     },
     {
-      title: "Toplam Ciro",
-      value: `${formatNumber(stats.totalRevenue)} TL`,
-      icon: DollarSign,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100"
-    },
-    {
-      title: "Kurum Hakedisi",
+      title: "Toplam Hakedis",
       value: `${formatNumber(stats.commission)} TL`,
       icon: DollarSign,
       color: "text-emerald-600",
@@ -147,7 +134,7 @@ export default async function MudurDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{stats.school.name}</h1>
-        <p className="text-gray-500">Okul siparis ve komisyon durumu</p>
+        <p className="text-gray-500">Okul siparis ve hakedis durumu</p>
       </div>
 
       {/* Stat Cards */}
@@ -172,7 +159,7 @@ export default async function MudurDashboard() {
       {/* Kurum Hakedisi Durumu */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Kurum Hakedisi</CardTitle>
+          <CardTitle className="text-lg">Kurum Hakedis Durumu</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
@@ -235,7 +222,6 @@ export default async function MudurDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{Number(order.totalAmount).toFixed(2)} TL</p>
                     <p className="text-sm text-gray-500">
                       {statusLabels[order.status] || order.status}
                     </p>

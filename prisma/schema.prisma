@@ -131,6 +131,7 @@ model Order {
   package            Package           @relation(fields: [packageId], references: [id])
   students           OrderStudent[]
 
+  @@unique([classId, taxNumber], map: "orders_class_tax_unique")
   @@index([classId])
   @@index([packageId])
   @@index([orderNumber])

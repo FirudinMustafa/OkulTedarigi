@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       )
     }
     const { code, totalAmount } = parsed.data
+    const amount = Number(totalAmount)
 
     // Discount code enumeration koruması: IP başına 20 deneme / 5 dk
     const ip = getClientIp(request)
@@ -65,8 +66,6 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-
-    const amount = totalAmount ? Number(totalAmount) : 0
 
     if (discount.minAmount && amount < Number(discount.minAmount)) {
       return NextResponse.json(

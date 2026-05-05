@@ -89,7 +89,6 @@ export default function PaketPage() {
   // Form state - Kişisel Bilgiler
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
-  const [companyName, setCompanyName] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
 
@@ -159,9 +158,6 @@ export default function PaketPage() {
   const [invoiceSelectedIl, setInvoiceSelectedIl] = useState("")
   const [invoiceSelectedIlce, setInvoiceSelectedIlce] = useState("")
   const [invoicePostalCode, setInvoicePostalCode] = useState("")
-
-  // Odeme yontemi (sadece kredi karti destekleniyor)
-  const paymentMethod = "CREDIT_CARD" as const
 
   // Real-time field validation: onBlur'da kontrol edilen alan-bazli hata mesajlari
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -235,7 +231,6 @@ export default function PaketPage() {
       }
       if (data.firstName !== undefined) setFirstName(data.firstName)
       if (data.lastName !== undefined) setLastName(data.lastName)
-      if (data.companyName !== undefined) setCompanyName(data.companyName)
       if (data.phone !== undefined) setPhone(data.phone)
       if (data.email !== undefined) setEmail(data.email)
       if (data.country !== undefined) setCountry(data.country)
@@ -292,7 +287,7 @@ export default function PaketPage() {
       try {
         const snapshot = {
           savedAt: Date.now(),
-          firstName, lastName, companyName, phone, email,
+          firstName, lastName, phone, email,
           country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
           shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
           altSelectedIl, altSelectedIlce, altPostalCode,
@@ -309,7 +304,7 @@ export default function PaketPage() {
     return () => clearTimeout(handle)
   }, [
     classId, loading,
-    firstName, lastName, companyName, phone, email,
+    firstName, lastName, phone, email,
     country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
     shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
     altSelectedIl, altSelectedIlce, altPostalCode,
@@ -379,10 +374,10 @@ export default function PaketPage() {
       }
 
       // SessionStorage'da veri yoksa veya classId eslesmiyorsa siparis sayfasina yonlendir
-      router.push('/siparis')
+      router.push('/siparis?reason=session-lost')
     } catch {
       // Hata durumunda siparis sayfasina yonlendir
-      router.push('/siparis')
+      router.push('/siparis?reason=session-lost')
     }
   }
 
@@ -591,7 +586,6 @@ export default function PaketPage() {
         body: JSON.stringify({
           classId,
           parentName: `${firstName} ${lastName}`,
-          companyName: companyName || null,
           students: students.map(s => ({
             firstName: s.firstName.trim(),
             lastName: s.lastName.trim(),
@@ -609,7 +603,6 @@ export default function PaketPage() {
           taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
           orderNote,
           discountCode: discountApplied ? discountApplied.code : null,
-          paymentMethod
         })
       })
 
@@ -785,7 +778,7 @@ export default function PaketPage() {
                 if (typeof window !== 'undefined' && window.history.length > 1) {
                   router.back()
                 } else {
-                  router.push('/siparis')
+                  router.push('/siparis?reason=session-lost')
                 }
               }}
               className="flex items-center gap-2 text-gray-600 hover:text-blue-900 transition-colors"
@@ -850,15 +843,6 @@ export default function PaketPage() {
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Firma Adı (Opsiyonel)</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <div>

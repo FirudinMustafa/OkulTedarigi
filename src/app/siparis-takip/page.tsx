@@ -28,7 +28,6 @@ interface CancelRequestData {
 interface OrderData {
   id: string
   orderNumber: string
-  accessToken?: string
   status: string
   parentName: string
   studentName: string
@@ -79,21 +78,23 @@ export default function SiparisTakipPageWrapper() {
 
 function SiparisTakipPage() {
   const searchParams = useSearchParams()
-  const [orderNumber, setOrderNumber] = useState("")
-  const [loading, setLoading] = useState(false)
+  // FIX 14: URL'de orderNumber varsa spinner ilk frame'de gozuksun
+  const initialAutoSearch = !!searchParams.get("orderNumber")
+  const [orderNumber, setOrderNumber] = useState(() => (searchParams.get("orderNumber") || "").toUpperCase())
+  const [loading, setLoading] = useState(initialAutoSearch)
   const [error, setError] = useState("")
   const [order, setOrder] = useState<OrderData | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
+  const [cancelPhoneLast4, setCancelPhoneLast4] = useState("")
   const [cancelLoading, setCancelLoading] = useState(false)
   const [cancelSuccess, setCancelSuccess] = useState(false)
+  const [cancelError, setCancelError] = useState("")
 
   useEffect(() => {
     const urlOrderNumber = searchParams.get("orderNumber")
     if (urlOrderNumber) {
-      const normalized = urlOrderNumber.toUpperCase()
-      setOrderNumber(normalized)
-      searchOrder(normalized)
+      searchOrder(urlOrderNumber.toUpperCase())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -141,8 +142,10 @@ function SiparisTakipPage() {
   const handleCancelRequest = async () => {
     if (!order || !cancelReason.trim()) return
 
-    if (!order.accessToken) {
-      setError("Erisim anahtari alinamadi. Lutfen siparis numarasini tekrar arayin.")
+    setCancelError("")
+
+    if (!/^\d{4}$/.test(cancelPhoneLast4)) {
+      setCancelError("Telefon numaranızın son 4 hanesini girin")
       return
     }
 
@@ -153,7 +156,7 @@ function SiparisTakipPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId: order.id,
-          accessToken: order.accessToken,
+          phoneLast4: cancelPhoneLast4,
           reason: cancelReason.trim(),
         }),
       })
@@ -161,13 +164,14 @@ function SiparisTakipPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "İptal talebi gönderilemedi")
+        setCancelError(data.error || "İptal talebi gönderilemedi")
         return
       }
 
       setCancelSuccess(true)
       setCancelDialogOpen(false)
       setCancelReason("")
+      setCancelPhoneLast4("")
       setOrder({
         ...order,
         cancelRequest: {
@@ -178,7 +182,7 @@ function SiparisTakipPage() {
         },
       })
     } catch {
-      setError("İptal talebi gönderilirken hata oluştu")
+      setCancelError("İptal talebi gönderilirken hata oluştu")
     } finally {
       setCancelLoading(false)
     }
@@ -453,16 +457,50 @@ function SiparisTakipPage() {
               <p className="mt-4 text-[13px] text-apple-gray">
                 Sipariş No: <span className="font-mono font-medium text-apple-ink">{order?.orderNumber}</span>
               </p>
-              <textarea
-                placeholder="İptal nedeninizi yazın…"
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                rows={4}
-                className="mt-4 w-full px-4 py-3 text-[14px] bg-white border border-apple-border rounded-2xl outline-none focus:border-apple-ink resize-none"
-              />
+
+              {/* Telefon son 4 hane — kimlik doğrulama */}
+              <div className="mt-5">
+                <label className="block text-[13px] font-medium text-apple-ink mb-1.5">
+                  Telefon son 4 hane
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="Örn: 1234"
+                  value={cancelPhoneLast4}
+                  onChange={(e) => setCancelPhoneLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  maxLength={4}
+                  className="w-32 h-11 px-4 text-[15px] bg-white border border-apple-border rounded-2xl outline-none focus:border-apple-ink font-mono tracking-wider"
+                />
+                <p className="mt-1.5 text-[12px] text-apple-gray">
+                  Sipariş verirken kullandığınız telefonun son 4 hanesi.
+                </p>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-[13px] font-medium text-apple-ink mb-1.5">
+                  İptal nedeni
+                </label>
+                <textarea
+                  placeholder="İptal nedeninizi yazın…"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 text-[14px] bg-white border border-apple-border rounded-2xl outline-none focus:border-apple-ink resize-none"
+                />
+              </div>
+
+              {cancelError && (
+                <div className="mt-3 flex items-center gap-2 text-red-600">
+                  <WarningCircle weight="fill" className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-[13px] font-medium">{cancelError}</span>
+                </div>
+              )}
+
               <div className="mt-6 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => setCancelDialogOpen(false)}
+                  onClick={() => { setCancelDialogOpen(false); setCancelError(""); setCancelPhoneLast4("") }}
                   disabled={cancelLoading}
                   className="h-10 px-4 rounded-full border border-apple-border text-apple-ink text-[13px] font-medium hover:border-apple-ink transition-colors disabled:opacity-50"
                 >
@@ -470,7 +508,7 @@ function SiparisTakipPage() {
                 </button>
                 <button
                   onClick={handleCancelRequest}
-                  disabled={cancelLoading || !cancelReason.trim()}
+                  disabled={cancelLoading || !cancelReason.trim() || cancelPhoneLast4.length !== 4}
                   className="h-10 px-5 rounded-full bg-red-600 hover:bg-red-700 text-white text-[13px] font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   {cancelLoading && <CircleNotch weight="bold" className="w-4 h-4 animate-spin" />}

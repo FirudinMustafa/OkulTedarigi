@@ -47,8 +47,6 @@ export async function GET() {
       left: { style: 'thin', color: { argb: 'D1D5DB' } },
       right: { style: 'thin', color: { argb: 'D1D5DB' } }
     }
-    const currencyFormat = '#,##0.00 "TL"'
-
     const statusColors: Record<string, string> = {
       COMPLETED: '16A34A',
       CANCELLED: 'DC2626',
@@ -65,14 +63,14 @@ export async function GET() {
     const ws = workbook.addWorksheet('Siparisler', { properties: { tabColor: { argb: primaryColor } } })
 
     // Baslik
-    ws.mergeCells('A1:I1')
+    ws.mergeCells('A1:H1')
     const titleCell = ws.getCell('A1')
     titleCell.value = `${schoolName} - Siparis Listesi`
     titleCell.font = { bold: true, size: 16, color: { argb: primaryColor } }
     titleCell.alignment = { horizontal: 'left', vertical: 'middle' }
     ws.getRow(1).height = 35
 
-    ws.mergeCells('A2:I2')
+    ws.mergeCells('A2:H2')
     const subtitleCell = ws.getCell('A2')
     subtitleCell.value = `Toplam: ${orders.length} siparis  |  Olusturma: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })}`
     subtitleCell.font = { size: 10, color: { argb: '6B7280' }, italic: true }
@@ -80,7 +78,7 @@ export async function GET() {
     ws.addRow([])
 
     // Header
-    const headers = ['Siparis No', 'Durum', 'Veli Adi', 'Ogrenci Adi', 'Telefon', 'Sinif', 'Paket', 'Tutar (TL)', 'Siparis Tarihi']
+    const headers = ['Siparis No', 'Durum', 'Veli Adi', 'Ogrenci Adi', 'Telefon', 'Sinif', 'Paket', 'Siparis Tarihi']
     const headerRow = ws.addRow(headers)
     headerRow.eachCell((cell) => {
       cell.fill = headerFill
@@ -100,7 +98,6 @@ export async function GET() {
         safe(o.phone),
         safe(o.class.name),
         safe(o.package?.name || ''),
-        Number(o.totalAmount),
         new Date(o.createdAt).toLocaleDateString('tr-TR')
       ])
 
@@ -114,20 +111,12 @@ export async function GET() {
       // Durum rengi
       row.getCell(2).font = { bold: true, color: { argb: statusColors[o.status] || '6B7280' } }
 
-      // Tutar
-      row.getCell(8).numFmt = currencyFormat
-      row.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' }
-
       row.height = 22
     })
 
     // Toplam
     if (orders.length > 0) {
-      const totalRevenue = orders
-        .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
-        .reduce((acc, o) => acc + Number(o.totalAmount), 0)
-
-      const tRow = ws.addRow(['', '', '', '', '', '', 'TOPLAM', totalRevenue, `${orders.length} siparis`])
+      const tRow = ws.addRow(['', '', '', '', '', '', 'TOPLAM', `${orders.length} siparis`])
       tRow.eachCell((cell) => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'EEF2FF' } }
         cell.font = { bold: true, size: 11, color: { argb: primaryColor } }
@@ -138,12 +127,11 @@ export async function GET() {
           right: { style: 'thin', color: { argb: 'D1D5DB' } }
         }
       })
-      tRow.getCell(8).numFmt = currencyFormat
       tRow.height = 28
     }
 
     // Sutun genislikleri
-    const colWidths = [18, 18, 20, 20, 16, 14, 28, 16, 14]
+    const colWidths = [18, 18, 20, 20, 16, 14, 28, 14]
     colWidths.forEach((w, i) => { ws.getColumn(i + 1).width = w })
 
     ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }

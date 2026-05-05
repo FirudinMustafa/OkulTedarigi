@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { adminClassCreateSchema, formatZodError } from '@/lib/validators'
 
 export async function GET() {
   try {
@@ -40,15 +41,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { name, schoolId, packageId, commissionAmount } = body
-
-    if (!name || typeof name !== 'string' || !name.trim() || !schoolId) {
+    const body = await request.json().catch(() => null)
+    const parsed = adminClassCreateSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Sinif adi ve okul gerekli' },
+        { error: formatZodError(parsed.error) },
         { status: 400 }
       )
     }
+    const { name, schoolId, packageId, commissionAmount } = parsed.data
 
     // Foreign key existence check (kullanici-dostu hata mesaji icin)
     const school = await prisma.school.findUnique({
