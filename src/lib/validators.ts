@@ -197,6 +197,7 @@ export const veliOrderBodySchema = z.object({
   taxOffice: z.string().trim().max(100).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   orderNote: z.string().trim().max(500).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   discountCode: z.string().trim().max(40).optional().nullable(),
+  selectedItemIds: z.array(z.string().trim().min(1).max(40)).max(100).optional().nullable(),
 })
 
 export type VeliOrderBody = z.infer<typeof veliOrderBodySchema>

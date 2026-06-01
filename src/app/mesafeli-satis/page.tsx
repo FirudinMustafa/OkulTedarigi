@@ -268,7 +268,6 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 function LegalHeader() {
   const navLinks = [
     { label: 'Nasıl Çalışır', href: '/#nasil-calisir' },
-    { label: 'Referanslar', href: '/#referanslar' },
     { label: 'S.S.S', href: '/#sss' },
     { label: 'Sipariş Takibi', href: '/siparis-takip' },
   ]

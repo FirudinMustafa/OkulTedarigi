@@ -23,7 +23,7 @@ import {
   Search, Eye, FileText, Truck, X, ArrowRight,
   CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox
 } from "lucide-react"
-import { formatDateTime } from "@/lib/utils"
+import { formatDateTime, formatPrice } from "@/lib/utils"
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants"
 import {
   previewShippingLabel, printBulkLabels,
@@ -62,7 +62,8 @@ interface OrderType {
     name: string
     school: { name: string }
   }
-  package: { name: string } | null
+  package: { name: string; items?: { id: string; name: string; quantity: number; price: number }[] } | null
+  items?: { id: string; name: string; quantity: number; price: number }[]
   students?: OrderStudent[]
 }
 
@@ -959,6 +960,23 @@ export default function SiparislerPage() {
                   </div>
                 </div>
               </div>
+
+              {(() => {
+                const contentItems = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items : (selectedOrder.package?.items || [])
+                return contentItems.length > 0 ? (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-900 mb-2">Paket İçeriği</h4>
+                    <div className="text-sm space-y-1">
+                      {contentItems.map((item) => (
+                        <div key={item.id} className="flex justify-between">
+                          <span className="text-gray-700">{item.name} <span className="text-gray-400">x{item.quantity}</span></span>
+                          <span className="text-gray-600">{formatPrice(item.price)} TL</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null
+              })()}
 
               <div className="border-t pt-4">
                 <h4 className="font-medium text-gray-900 mb-2">Teslimat</h4>

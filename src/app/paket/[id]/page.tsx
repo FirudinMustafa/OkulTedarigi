@@ -10,6 +10,7 @@ interface PackageItem {
   id: string
   name: string
   quantity: number
+  price?: number
 }
 
 interface ClassData {
@@ -27,6 +28,7 @@ interface ClassData {
     description: string | null
     note: string | null
     price: number
+    isCustomizable?: boolean
     items: PackageItem[]
   }
 }
@@ -81,6 +83,8 @@ export default function PaketPage() {
   const classId = params.id as string
 
   const [classData, setClassData] = useState<ClassData | null>(null)
+  // Ozellestirilebilir pakette velinin secili tuttugu kalem id'leri (varsayilan: hepsi)
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -368,6 +372,7 @@ export default function PaketPage() {
             },
             package: parsed.package
           })
+          setSelectedItemIds((parsed.package?.items || []).map((it: PackageItem) => it.id))
           setLoading(false)
           return
         }
@@ -420,13 +425,39 @@ export default function PaketPage() {
     setDiscountError("")
   }
 
+  // Ozellestirilebilir pakette ogrenci basina birim fiyat = secili kalemlerin
+  // (birim fiyat x adet) toplami. Aksi halde paketin sabit fiyati kullanilir.
+  const getUnitPrice = () => {
+    const pkg = classData?.package
+    if (pkg?.isCustomizable) {
+      return (pkg.items || [])
+        .filter((it) => selectedItemIds.includes(it.id))
+        .reduce((sum, it) => sum + Number(it.price || 0) * Number(it.quantity || 1), 0)
+    }
+    return Number(pkg?.price || 0)
+  }
+
   const getFinalPrice = () => {
-    const unitPrice = Number(classData?.package.price || 0)
-    const baseTotal = unitPrice * students.length
+    const baseTotal = getUnitPrice() * students.length
     if (discountApplied) {
       return baseTotal - discountApplied.discountAmount
     }
     return baseTotal
+  }
+
+  const toggleItem = (itemId: string) => {
+    setSelectedItemIds((prev) => {
+      if (prev.includes(itemId)) {
+        // En az 1 kalem secili kalmali (0 TL bos siparis engellenir)
+        if (prev.length <= 1) return prev
+        return prev.filter((id) => id !== itemId)
+      }
+      return [...prev, itemId]
+    })
+    // Kalem degisince uygulanmis indirim eski tutara gore yeniden hesaplanmali; kaldir
+    if (discountApplied) {
+      handleRemoveDiscount()
+    }
   }
 
   const validateForm = (): boolean => {
@@ -603,6 +634,7 @@ export default function PaketPage() {
           taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
           orderNote,
           discountCode: discountApplied ? discountApplied.code : null,
+          selectedItemIds: classData?.package.isCustomizable ? selectedItemIds : undefined,
         })
       })
 
@@ -1414,17 +1446,53 @@ export default function PaketPage() {
                     {/* Paket İçeriği */}
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Paket İçeriği</p>
-                      <ul className="space-y-2">
-                        {classData.package.items.map((item) => (
-                          <li key={item.id} className="flex items-center gap-2 text-sm text-gray-600">
-                            <CheckIcon />
-                            <span>{item.name}</span>
-                            {item.quantity > 1 && (
-                              <span className="text-gray-400">x{item.quantity}</span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
+                      {classData.package.isCustomizable && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          İhtiyacınız olmayan ürünleri çıkarabilirsiniz; toplam tutar buna göre güncellenir.
+                        </p>
+                      )}
+                      {classData.package.isCustomizable ? (
+                        <ul className="space-y-1.5">
+                          {classData.package.items.map((item) => {
+                            const checked = selectedItemIds.includes(item.id)
+                            const isLast = checked && selectedItemIds.length <= 1
+                            return (
+                              <li key={item.id}>
+                                <label className={`flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-50 ${checked ? "text-gray-700" : "text-gray-400"} ${isLast ? "cursor-not-allowed" : ""}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    disabled={isLast}
+                                    onChange={() => toggleItem(item.id)}
+                                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-60"
+                                  />
+                                  <span className={checked ? "" : "line-through"}>{item.name}</span>
+                                  {item.quantity > 1 && (
+                                    <span className="text-gray-400">x{item.quantity}</span>
+                                  )}
+                                  {item.price != null && (
+                                    <span className="ml-auto text-gray-500">
+                                      {formatPrice(Number(item.price) * Number(item.quantity || 1))}
+                                    </span>
+                                  )}
+                                </label>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        <ul className="space-y-2">
+                          {classData.package.items.map((item) => (
+                            <li key={item.id} className="flex items-center gap-2 text-sm text-gray-600">
+                              <CheckIcon />
+                              <span>{item.name}</span>
+                              {item.quantity > 1 && (
+                                <span className="text-gray-400">x{item.quantity}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
 
                     {classData.package.note && (
@@ -1493,18 +1561,18 @@ export default function PaketPage() {
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Paket × {students.length} öğrenci</span>
                             <span className="text-gray-700">
-                              {formatPrice(classData.package.price)} × {students.length}
+                              {formatPrice(getUnitPrice())} × {students.length}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Ara Toplam</span>
-                            <span className="text-gray-700">{formatPrice(Number(classData.package.price) * students.length)} TL</span>
+                            <span className="text-gray-700">{formatPrice(getUnitPrice() * students.length)} TL</span>
                           </div>
                         </>
                       ) : (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">Ara Toplam</span>
-                          <span className="text-gray-700">{formatPrice(classData.package.price)} TL</span>
+                          <span className="text-gray-700">{formatPrice(getUnitPrice())} TL</span>
                         </div>
                       )}
                       {discountApplied && (

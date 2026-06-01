@@ -60,7 +60,6 @@ export default function SiparisPage() {
 function OrderHeader({ onBack }: { onBack?: () => void }) {
   const navLinks = [
     { label: 'Nasıl Çalışır', href: '/#nasil-calisir' },
-    { label: 'Referanslar', href: '/#referanslar' },
     { label: 'S.S.S', href: '/#sss' },
     { label: 'Sipariş Takibi', href: '/siparis-takip' },
   ]

@@ -58,12 +58,14 @@ export async function POST(request: Request) {
                 description: true,
                 note: true,
                 price: true,
+                isCustomizable: true,
                 items: {
                   select: {
                     id: true,
                     name: true,
-                    quantity: true
-                    // Fiyat veliye gosterilmez
+                    quantity: true,
+                    // Fiyat yalnizca ozellestirilebilir pakette veliye gonderilir (asagidaki map'te filtrelenir)
+                    price: true
                   },
                   orderBy: { name: 'asc' }
                 }
@@ -112,7 +114,14 @@ export async function POST(request: Request) {
           description: c.package.description,
           note: c.package.note,
           price: c.package.price,
-          items: c.package.items
+          isCustomizable: c.package.isCustomizable,
+          items: c.package.items.map(it => ({
+            id: it.id,
+            name: it.name,
+            quantity: it.quantity,
+            // Kalem fiyati sadece ozellestirilebilir pakette veliye gonderilir.
+            ...(c.package!.isCustomizable ? { price: it.price } : {})
+          }))
         } : null
       }))
     })

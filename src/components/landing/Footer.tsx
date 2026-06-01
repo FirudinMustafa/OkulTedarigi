@@ -75,18 +75,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#referanslar"
-                  className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
-                >
-                  Referanslar
-                  <ArrowRight
-                    weight="bold"
-                    className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
-                  />
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/#sss"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >

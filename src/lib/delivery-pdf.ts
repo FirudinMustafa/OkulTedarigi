@@ -35,6 +35,7 @@ export interface DeliveryPdfData {
     totalAmount: number | string
     className?: string
     schoolName?: string
+    items?: Array<{ name: string; quantity: number }>
   }>
 }
 
@@ -71,15 +72,20 @@ export function generateDeliveryPdf(data: DeliveryPdfData): Buffer {
     String(index + 1),
     clip(order.orderNumber, 30),
     clip(order.studentName, 60),
-    clip(order.parentName, 60),
-    clip(order.schoolName || data.schoolName, 50),
-    clip(order.className || data.className, 30),
+    clip(order.parentName, 50),
+    clip(
+      (order.items && order.items.length > 0)
+        ? order.items.map(it => `${it.name} x${it.quantity}`).join(', ')
+        : '-',
+      200
+    ),
+    clip(order.className || data.className, 25),
     `${Number(order.totalAmount).toFixed(2)} TL`
   ])
 
   doc.autoTable({
     startY: 68,
-    head: [['#', 'Siparis No', 'Ogrenci', 'Veli', 'Okul', 'Sinif', 'Tutar']],
+    head: [['#', 'Siparis No', 'Ogrenci', 'Veli', 'Icerik', 'Sinif', 'Tutar']],
     body: tableData,
     theme: 'grid',
     headStyles: {
@@ -92,13 +98,13 @@ export function generateDeliveryPdf(data: DeliveryPdfData): Buffer {
       fontSize: 8
     },
     columnStyles: {
-      0: { cellWidth: 10, halign: 'center' },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 30 },
-      3: { cellWidth: 30 },
-      4: { cellWidth: 35 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 25, halign: 'right' }
+      0: { cellWidth: 8, halign: 'center' },
+      1: { cellWidth: 26 },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 28 },
+      4: { cellWidth: 45 },
+      5: { cellWidth: 16 },
+      6: { cellWidth: 22, halign: 'right' }
     },
     margin: { left: 14, right: 14 }
   })

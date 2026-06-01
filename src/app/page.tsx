@@ -3,10 +3,10 @@ import Hero from '@/components/landing/Hero'
 import BrandScroll from '@/components/landing/BrandScroll'
 import Process from '@/components/landing/Process'
 import Stats from '@/components/landing/Stats'
-import Testimonials from '@/components/landing/Testimonials'
 import FAQ from '@/components/landing/FAQ'
 import CTA from '@/components/landing/CTA'
 import Footer from '@/components/landing/Footer'
+import ChatWidget from '@/components/landing/ChatWidget'
 
 export default function HomePage() {
   return (
@@ -17,11 +17,11 @@ export default function HomePage() {
         <BrandScroll />
         <Process />
         <Stats />
-        <Testimonials />
         <FAQ />
         <CTA />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   )
 }

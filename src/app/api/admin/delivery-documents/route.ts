@@ -23,18 +23,33 @@ export async function GET() {
             parentName: true,
             status: true,
             totalAmount: true,
+            items: { select: { name: true, quantity: true }, orderBy: { createdAt: 'asc' } },
             class: {
               select: {
                 name: true,
                 school: { select: { name: true } }
               }
-            }
+            },
+            package: { select: { items: { select: { name: true, quantity: true } } } }
           }
         }
       }
     })
 
-    return NextResponse.json({ documents })
+    // Teslimat/fulfillment icin yetkili icerik: siparisin kendi kalemleri,
+    // yoksa (eski siparisler) paketin sabit kalemleri.
+    const documentsWithItems = documents.map(doc => ({
+      ...doc,
+      orders: doc.orders.map(order => {
+        const { package: pkg, ...rest } = order
+        return {
+          ...rest,
+          items: (order.items && order.items.length > 0 ? order.items : (pkg?.items || [])),
+        }
+      }),
+    }))
+
+    return NextResponse.json({ documents: documentsWithItems })
   } catch (error) {
     console.error('Teslim tutanaklari yuklenemedi:', error)
     return NextResponse.json({ error: 'Veri yuklenemedi' }, { status: 500 })

@@ -27,6 +27,7 @@ export async function GET() {
       note: pkg.note,
       basePrice: Number(pkg.price),
       isActive: pkg.isActive,
+      isCustomizable: pkg.isCustomizable,
       items: pkg.items.map(item => ({
         id: item.id,
         name: item.name,
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, basePrice, price, items } = body
+    const { name, description, basePrice, price, isCustomizable, items } = body
 
     // basePrice veya price kabul et (frontend uyumlulugu)
     const finalPrice = basePrice !== undefined ? basePrice : price
@@ -135,6 +136,7 @@ export async function POST(request: Request) {
         description: description || null,
         note: body.note || null,
         price: finalPrice,
+        isCustomizable: Boolean(isCustomizable),
         items: {
           create: items?.map((item: { name: string; quantity: number; unitPrice?: number; price?: number }) => ({
             name: item.name,

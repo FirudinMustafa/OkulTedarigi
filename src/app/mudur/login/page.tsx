@@ -170,7 +170,6 @@ export default function MudurLoginPage() {
 function LoginHeader() {
   const navLinks = [
     { label: 'Nasıl Çalışır', href: '/#nasil-calisir' },
-    { label: 'Referanslar', href: '/#referanslar' },
     { label: 'S.S.S', href: '/#sss' },
     { label: 'Sipariş Takibi', href: '/siparis-takip' },
   ]

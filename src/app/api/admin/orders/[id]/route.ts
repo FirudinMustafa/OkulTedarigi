@@ -26,6 +26,10 @@ export async function GET(
             package: { include: { items: true } }
           }
         },
+        items: {
+          select: { id: true, name: true, quantity: true, price: true },
+          orderBy: { createdAt: 'asc' },
+        },
         cancelRequest: true
       }
     })

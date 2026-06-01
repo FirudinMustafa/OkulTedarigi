@@ -51,17 +51,18 @@ model Class {
 }
 
 model Package {
-  id          String        @id @default(cuid())
-  name        String
-  description String?       @db.Text
-  note        String?       @db.Text
-  price       Decimal       @db.Decimal(10, 2)
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  classes     Class[]
-  orders      Order[]
-  items       PackageItem[]
+  id             String        @id @default(cuid())
+  name           String
+  description    String?       @db.Text
+  note           String?       @db.Text
+  price          Decimal       @db.Decimal(10, 2)
+  isActive       Boolean       @default(true)
+  isCustomizable Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  classes        Class[]
+  orders         Order[]
+  items          PackageItem[]
 
   @@map("packages")
 }
@@ -130,6 +131,7 @@ model Order {
   deliveryDocument   DeliveryDocument? @relation(fields: [deliveryDocumentId], references: [id])
   package            Package           @relation(fields: [packageId], references: [id])
   students           OrderStudent[]
+  items              OrderItem[]
 
   @@unique([classId, taxNumber], map: "orders_class_tax_unique")
   @@index([classId])
@@ -152,6 +154,22 @@ model OrderStudent {
 
   @@index([orderId])
   @@map("order_students")
+}
+
+// Siparis aninda velinin sectigi paket kalemlerinin snapshot'i.
+// Ozellestirilebilir paketlerde veli kalem cikarabildigi icin, teslimat/fatura
+// dogru icerigi bilsin diye secilen kalemler burada saklanir.
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  name      String
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2) // birim fiyat (snapshot)
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
 }
 
 model CancelRequest {

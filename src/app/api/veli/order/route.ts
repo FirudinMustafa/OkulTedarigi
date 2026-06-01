@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       taxNumber,
       taxOffice,
       orderNote,
-      discountCode
+      discountCode,
+      selectedItemIds
     } = parsed.data
 
     // Ilk ogrenci geri uyumluluk icin Order.studentName / studentSection alanlarina yazilir
@@ -121,8 +122,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Toplam fiyat = paket fiyati × ogrenci sayisi
-    const unitPrice = Number(classData.package.price)
+    // Fiyat hesabi: ozellestirilebilir pakette secili kalemlerden, aksi halde paket fiyatindan.
+    // selectedItemIds client'tan gelir ama gercek paket kalemlerine gore SUNUCUDA dogrulanir.
+    let unitPrice: number
+    let orderItemsSnapshot: { name: string; quantity: number; price: number }[] = []
+    if (classData.package.isCustomizable) {
+      const allItems = classData.package.items
+      const requestedIds = Array.isArray(selectedItemIds) && selectedItemIds.length > 0
+        ? selectedItemIds
+        : allItems.map(it => it.id)
+      const chosen = allItems.filter(it => requestedIds.includes(it.id))
+      if (chosen.length === 0) {
+        await recordFailedAttempt(rlIdentifier)
+        return NextResponse.json(
+          { error: 'En az bir urun secmelisiniz' },
+          { status: 400 }
+        )
+      }
+      unitPrice = chosen.reduce((sum, it) => sum + Number(it.price) * it.quantity, 0)
+      orderItemsSnapshot = chosen.map(it => ({ name: it.name, quantity: it.quantity, price: Number(it.price) }))
+    } else {
+      unitPrice = Number(classData.package.price)
+      orderItemsSnapshot = classData.package.items.map(it => ({ name: it.name, quantity: it.quantity, price: Number(it.price) }))
+    }
     let finalAmount = Math.round(unitPrice * studentCount * 100) / 100
     let discountAmount: number | null = null
     let validDiscountCode: string | null = null
@@ -231,6 +253,13 @@ export async function POST(request: Request) {
                 lastName: s.lastName.trim(),
                 section: s.section || null,
               }))
+            },
+            items: {
+              create: orderItemsSnapshot.map(it => ({
+                name: it.name,
+                quantity: it.quantity,
+                price: it.price,
+              }))
             }
           }
         })
@@ -269,9 +298,9 @@ export async function POST(request: Request) {
       buyerEmail: email || `${phone}@temp.com`,
       buyerPhone: phone,
       buyerAddress: address,
-      items: classData.package.items.map(item => ({
+      items: orderItemsSnapshot.map(item => ({
         name: item.name,
-        price: Number(item.price),
+        price: item.price,
         quantity: item.quantity
       }))
     })

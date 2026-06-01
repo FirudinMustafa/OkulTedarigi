@@ -29,6 +29,7 @@ interface PackageType {
   note: string | null
   basePrice: number
   isActive: boolean
+  isCustomizable?: boolean
   items: PackageItem[]
   _count: { classes: number }
 }
@@ -48,7 +49,8 @@ export default function PaketlerPage() {
     name: "",
     description: "",
     note: "",
-    basePrice: ""
+    basePrice: "",
+    isCustomizable: false
   })
   const [items, setItems] = useState<{ name: string; quantity: string; unitPrice: string }[]>([
     { name: "", quantity: "1", unitPrice: "" }
@@ -89,6 +91,7 @@ export default function PaketlerPage() {
           description: formData.description,
           note: formData.note,
           basePrice: parseFloat(formData.basePrice) || 0,
+          isCustomizable: formData.isCustomizable,
           items: validItems.map(item => ({
             name: item.name,
             quantity: parseInt(item.quantity) || 1,
@@ -113,7 +116,8 @@ export default function PaketlerPage() {
       name: pkg.name,
       description: pkg.description || "",
       note: pkg.note || "",
-      basePrice: pkg.basePrice.toString()
+      basePrice: pkg.basePrice.toString(),
+      isCustomizable: pkg.isCustomizable ?? false
     })
     setItems(
       pkg.items.length > 0
@@ -191,7 +195,8 @@ export default function PaketlerPage() {
       name: "",
       description: "",
       note: "",
-      basePrice: ""
+      basePrice: "",
+      isCustomizable: false
     })
     setItems([{ name: "", quantity: "1", unitPrice: "" }])
   }
@@ -263,7 +268,14 @@ export default function PaketlerPage() {
               <TableBody>
                 {filteredPackages.map((pkg) => (
                   <TableRow key={pkg.id}>
-                    <TableCell className="font-medium">{pkg.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{pkg.name}</span>
+                        {pkg.isCustomizable && (
+                          <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded">Ozellestirilebilir</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {pkg.description || "-"}
                     </TableCell>
@@ -400,6 +412,23 @@ export default function PaketlerPage() {
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                   rows={2}
                 />
+              </div>
+
+              {/* Ozellestirilebilir */}
+              <div className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <input
+                  id="isCustomizable"
+                  type="checkbox"
+                  checked={formData.isCustomizable}
+                  onChange={(e) => setFormData({ ...formData, isCustomizable: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="isCustomizable" className="text-sm text-gray-700 cursor-pointer">
+                  <span className="font-medium">Veliler kalem cikarabilsin (ozellestirilebilir)</span>
+                  <span className="block text-gray-500 mt-0.5">
+                    Acuksa veli istemedigi kalemleri cikarabilir ve toplam fiyat secilen kalemlere gore hesaplanir. Bu durumda taban fiyat yerine kalem fiyatlarinin toplami gecerli olur.
+                  </span>
+                </label>
               </div>
 
               <div className="border-t pt-4 mt-2">

@@ -40,6 +40,7 @@ export async function GET(
       note: pkg.note,
       basePrice: Number(pkg.price),
       isActive: pkg.isActive,
+      isCustomizable: pkg.isCustomizable,
       items: pkg.items.map(item => ({
         id: item.id,
         name: item.name,
@@ -74,7 +75,7 @@ export async function PUT(
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
     }
-    const { items, basePrice, ...otherData } = body
+    const { items, basePrice, isCustomizable, ...otherData } = body
 
     // Izin verilen alanlari filtrele
     const allowedFields = ['name', 'description', 'note', 'isActive']
@@ -107,6 +108,11 @@ export async function PUT(
         return NextResponse.json({ error: 'Fiyat 0 ile 1.000.000 arasinda olmali' }, { status: 400 })
       }
       packageData.price = numericPrice
+    }
+
+    // isCustomizable opsiyonel; gonderildiyse guncelle
+    if (isCustomizable !== undefined) {
+      packageData.isCustomizable = Boolean(isCustomizable)
     }
 
     // Items validation
