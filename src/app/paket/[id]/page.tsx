@@ -508,7 +508,7 @@ export default function PaketPage() {
     //  - Kargo teslimat (sevk adresi gerekli)
     //  - Bireysel fatura (fatura/iletisim adresi gerekli)
     //  - Kurumsal fatura (firma adresi gerekli)
-    if (!country || !streetAddress || !postalCode) {
+    if (!country || !streetAddress || !streetAddress2) {
       setError("Lütfen adres bilgilerinizi eksiksiz doldurun")
       return false
     }
@@ -520,7 +520,7 @@ export default function PaketPage() {
 
     // Kargo teslim için alternatif adres seçiliyse kontrol et
     if (classData?.school.deliveryType === "CARGO" && shipToDifferentAddress) {
-      if (!altCountry || !altStreetAddress || !altPostalCode) {
+      if (!altCountry || !altStreetAddress || !altStreetAddress2) {
         setError("Alternatif teslimat adresi bilgilerini eksiksiz doldurun")
         return false
       }
@@ -540,14 +540,14 @@ export default function PaketPage() {
 
     // Bireysel fatura icin fatura adresi farkli secilmisse kontrol
     if (invoiceType === 'bireysel' && !invoiceAddressSame) {
-      if (!invoiceStreetAddress || !invoiceSelectedIl || !invoiceSelectedIlce || !invoicePostalCode) {
+      if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
         setError("Fatura adresi bilgilerini eksiksiz doldurun")
         return false
       }
     }
     // Kurumsal fatura adresi kontrolu (kargo ise)
     if (invoiceType === 'kurumsal' && !invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
-      if (!invoiceStreetAddress || !invoiceSelectedIl || !invoiceSelectedIlce || !invoicePostalCode) {
+      if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
         setError("Fatura adresi bilgilerini eksiksiz doldurun")
         return false
       }
@@ -586,7 +586,8 @@ export default function PaketPage() {
       if (country === "Türkiye") {
         addressParts.push(selectedIlce, selectedIl)
       }
-      addressParts.push(postalCode, country)
+      if (postalCode) addressParts.push(postalCode)
+      addressParts.push(country)
       const fullAddress = addressParts.join(', ')
 
       // Alternatif teslimat adresi oluştur
@@ -597,7 +598,8 @@ export default function PaketPage() {
         if (altCountry === "Türkiye") {
           altParts.push(altSelectedIlce, altSelectedIl)
         }
-        altParts.push(altPostalCode, altCountry)
+        if (altPostalCode) altParts.push(altPostalCode)
+        altParts.push(altCountry)
         altAddress = altParts.join(', ')
       }
 
@@ -607,7 +609,8 @@ export default function PaketPage() {
         const invParts = [invoiceStreetAddress]
         if (invoiceStreetAddress2) invParts.push(invoiceStreetAddress2)
         invParts.push(invoiceSelectedIlce, invoiceSelectedIl)
-        invParts.push(invoicePostalCode, 'Türkiye')
+        if (invoicePostalCode) invParts.push(invoicePostalCode)
+        invParts.push('Türkiye')
         invoiceAddr = invParts.join(', ')
       }
 
@@ -760,24 +763,24 @@ export default function PaketPage() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. (Opsiyonel)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. *</label>
         <input
           type="text"
           value={streetAddress2}
           onChange={(e) => setStreetAddress2(e.target.value)}
           placeholder="Apartman adı, kat, daire no, vb."
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu (Opsiyonel)</label>
         <input
           type="text"
           value={postalCode}
           onChange={(e) => setPostalCode(e.target.value)}
           placeholder="34000"
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-w-[200px]"
-          required
         />
       </div>
     </div>
@@ -1010,24 +1013,24 @@ export default function PaketPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. (Opsiyonel)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. *</label>
                         <input
                           type="text"
                           value={altStreetAddress2}
                           onChange={(e) => setAltStreetAddress2(e.target.value)}
                           placeholder="Apartman adı, kat, daire no, vb."
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required={shipToDifferentAddress}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu (Opsiyonel)</label>
                         <input
                           type="text"
                           value={altPostalCode}
                           onChange={(e) => setAltPostalCode(e.target.value)}
                           placeholder="34000"
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-w-[200px]"
-                          required
                         />
                       </div>
                     </div>
@@ -1317,23 +1320,23 @@ export default function PaketPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire vb. (Opsiyonel)</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire vb. *</label>
                           <input
                             type="text"
                             value={invoiceStreetAddress2}
                             onChange={(e) => setInvoiceStreetAddress2(e.target.value)}
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                            required={!invoiceAddressSame}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu (Opsiyonel)</label>
                           <input
                             type="text"
                             value={invoicePostalCode}
                             onChange={(e) => setInvoicePostalCode(e.target.value)}
                             placeholder="34000"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 max-w-[200px]"
-                            required={!invoiceAddressSame}
                           />
                         </div>
                       </div>

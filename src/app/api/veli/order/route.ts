@@ -101,27 +101,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Ayni TC ile tekrar siparis kontrolu (TC daha güvenilir bir tekillik anahtarı)
-    const existingOrder = await prisma.order.findFirst({
-      where: {
-        classId,
-        taxNumber: String(taxNumber),
-        status: {
-          notIn: ['CANCELLED']
-        }
-      }
-    })
-
-    if (existingOrder) {
-      return NextResponse.json(
-        {
-          error: 'Bu ogrenci icin zaten bir siparis mevcut',
-          orderNumber: existingOrder.orderNumber
-        },
-        { status: 409 }
-      )
-    }
-
     // Fiyat hesabi: ozellestirilebilir pakette secili kalemlerden, aksi halde paket fiyatindan.
     // selectedItemIds client'tan gelir ama gercek paket kalemlerine gore SUNUCUDA dogrulanir.
     let unitPrice: number
@@ -344,14 +323,6 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    // DB-level (classId, taxNumber) unique cakismasi — race penceresi veya iptal-sonrasi tekrar.
-    // existingOrder check'i (notIn:CANCELLED) racede atlanabilir; DB unique son savunma.
-    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
-      return NextResponse.json(
-        { error: 'Bu sinif icin TC/Vergi numaraniz ile bir siparis zaten mevcut. Iptal ettiyseniz destek hatti ile iletisime gecin.' },
-        { status: 409 }
-      )
-    }
     console.error('Siparis olusturma hatasi:', error)
     return NextResponse.json(
       { error: 'Siparis olusturulamadi' },

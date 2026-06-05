@@ -133,7 +133,6 @@ model Order {
   students           OrderStudent[]
   items              OrderItem[]
 
-  @@unique([classId, taxNumber], map: "orders_class_tax_unique")
   @@index([classId])
   @@index([packageId])
   @@index([orderNumber])
