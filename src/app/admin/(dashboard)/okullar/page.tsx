@@ -42,6 +42,7 @@ export default function OkullarPage() {
   const [schoolToDelete, setSchoolToDelete] = useState<SchoolType | null>(null)
   const [editingSchool, setEditingSchool] = useState<SchoolType | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -50,7 +51,8 @@ export default function OkullarPage() {
     deliveryType: "SCHOOL_DELIVERY",
     directorName: "",
     directorEmail: "",
-    directorPassword: ""
+    directorPassword: "",
+    password: ""
   })
 
   useEffect(() => {
@@ -71,17 +73,19 @@ export default function OkullarPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFormError(null)
 
     try {
       const url = editingSchool
         ? `/api/admin/schools/${editingSchool.id}`
         : "/api/admin/schools"
 
-      // Duzenleme sirasinda bos sifre gonderme
-      const { directorPassword, ...restData } = formData
-      const payload = directorPassword.trim()
-        ? { ...restData, directorPassword }
-        : restData
+      // Bos sifreleri gonderme: directorPassword bos -> degismez; password bos ->
+      // create'de otomatik uretilir, edit'te degismez.
+      const { directorPassword, password, ...restData } = formData
+      const payload: Record<string, unknown> = { ...restData }
+      if (directorPassword.trim()) payload.directorPassword = directorPassword
+      if (password.trim()) payload.password = password
 
       const res = await fetch(url, {
         method: editingSchool ? "PUT" : "POST",
@@ -94,14 +98,19 @@ export default function OkullarPage() {
         fetchSchools()
         setDialogOpen(false)
         resetForm()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setFormError(data.error || "Kayit basarisiz. Lutfen bilgileri kontrol edin.")
       }
     } catch (error) {
       console.error("Kayit hatasi:", error)
+      setFormError("Bir hata olustu. Lutfen tekrar deneyin.")
     }
   }
 
   const handleEdit = (school: SchoolType) => {
     setEditingSchool(school)
+    setFormError(null)
     setFormData({
       name: school.name,
       address: school.address || "",
@@ -110,7 +119,8 @@ export default function OkullarPage() {
       deliveryType: school.deliveryType,
       directorName: school.directorName || "",
       directorEmail: school.directorEmail,
-      directorPassword: ""
+      directorPassword: "",
+      password: ""
     })
     setDialogOpen(true)
   }
@@ -193,6 +203,7 @@ export default function OkullarPage() {
 
   const resetForm = () => {
     setEditingSchool(null)
+    setFormError(null)
     setFormData({
       name: "",
       address: "",
@@ -201,7 +212,8 @@ export default function OkullarPage() {
       deliveryType: "SCHOOL_DELIVERY",
       directorName: "",
       directorEmail: "",
-      directorPassword: ""
+      directorPassword: "",
+      password: ""
     })
   }
 
@@ -395,6 +407,21 @@ export default function OkullarPage() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Veli Giris Sifresi</Label>
+                <Input
+                  id="password"
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value.toUpperCase() })}
+                  placeholder={editingSchool ? "Bos birakirsaniz degismez" : "Bos birakirsaniz otomatik olusturulur"}
+                  minLength={8}
+                  className="font-mono"
+                />
+                <p className="text-xs text-gray-500">
+                  En az 8 karakter. Bos birakilirsa sistem otomatik uretir. Veliler bu sifre ile giris yapar.
+                </p>
+              </div>
               <div className="border-t pt-4 mt-2">
                 <h4 className="font-medium mb-3">Mudur Bilgileri</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -437,6 +464,11 @@ export default function OkullarPage() {
                 </div>
               </div>
             </div>
+            {formError && (
+              <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{formError}</p>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Iptal

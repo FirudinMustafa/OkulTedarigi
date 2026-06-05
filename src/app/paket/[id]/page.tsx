@@ -460,10 +460,21 @@ export default function PaketPage() {
     }
   }
 
+  // Dogrulama hatasinda eksik/hatali alana smooth scroll + focus (ozellikle mobil icin).
+  const scrollToField = (id: string) => {
+    const el = typeof document !== 'undefined' ? document.getElementById(id) : null
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => {
+      try { (el as HTMLElement).focus({ preventScroll: true }) } catch {}
+    }, 350)
+  }
+
   const validateForm = (): boolean => {
     // Kişisel bilgiler
     if (!firstName || !lastName || !phone || !email) {
       setError("Lütfen zorunlu kişisel bilgileri doldurun")
+      scrollToField(!firstName ? 'f-firstName' : !lastName ? 'f-lastName' : !phone ? 'f-phone' : 'f-email')
       return false
     }
 
@@ -472,6 +483,7 @@ export default function PaketPage() {
     const normalizedPhone = phone.replace(/[\s\-()]/g, '')
     if (!phoneRegex.test(normalizedPhone)) {
       setError("Lütfen geçerli bir telefon numarası girin (05XX XXX XX XX)")
+      scrollToField('f-phone')
       return false
     }
 
@@ -479,16 +491,19 @@ export default function PaketPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setError("Lütfen geçerli bir e-posta adresi girin")
+      scrollToField('f-email')
       return false
     }
 
     // Öğrenci bilgileri (cogul)
     if (students.length === 0) {
       setError("En az bir öğrenci eklemelisiniz")
+      scrollToField('f-students')
       return false
     }
     if (students.some(s => !s.firstName.trim() || !s.lastName.trim())) {
       setError("Lütfen tüm öğrencilerin ad ve soyadını doldurun")
+      scrollToField('f-students')
       return false
     }
 
@@ -496,10 +511,12 @@ export default function PaketPage() {
     if (invoiceType === 'bireysel') {
       if (!tcNumber) {
         setError("TC Kimlik Numarası zorunludur")
+        scrollToField('f-tcNumber')
         return false
       }
       if (!isValidTCKimlik(tcNumber)) {
         setError("Geçerli bir TC Kimlik Numarası giriniz")
+        scrollToField('f-tcNumber')
         return false
       }
     }
@@ -510,11 +527,13 @@ export default function PaketPage() {
     //  - Kurumsal fatura (firma adresi gerekli)
     if (!country || !streetAddress || !streetAddress2) {
       setError("Lütfen adres bilgilerinizi eksiksiz doldurun")
+      scrollToField(!country ? 'f-country' : !streetAddress ? 'f-streetAddress' : 'f-streetAddress2')
       return false
     }
     // Türkiye seçiliyse il/ilçe zorunlu
     if (country === "Türkiye" && (!selectedIl || !selectedIlce)) {
       setError("Lütfen il ve ilçe seçiniz")
+      scrollToField(!selectedIl ? 'f-il' : 'f-ilce')
       return false
     }
 
@@ -522,10 +541,12 @@ export default function PaketPage() {
     if (classData?.school.deliveryType === "CARGO" && shipToDifferentAddress) {
       if (!altCountry || !altStreetAddress || !altStreetAddress2) {
         setError("Alternatif teslimat adresi bilgilerini eksiksiz doldurun")
+        scrollToField(!altCountry ? 'f-altCountry' : !altStreetAddress ? 'f-altStreetAddress' : 'f-altStreetAddress2')
         return false
       }
       if (altCountry === "Türkiye" && (!altSelectedIl || !altSelectedIlce)) {
         setError("Alternatif adres için il ve ilçe seçiniz")
+        scrollToField(!altSelectedIl ? 'f-altIl' : 'f-altIlce')
         return false
       }
     }
@@ -534,6 +555,7 @@ export default function PaketPage() {
     if (invoiceType === 'kurumsal') {
       if (!taxNumber || !taxOffice || !companyTitle) {
         setError("Kurumsal fatura için Vergi No, Firma Ünvanı ve Vergi Dairesi zorunludur")
+        scrollToField(!companyTitle ? 'f-companyTitle' : !taxNumber ? 'f-taxNumber' : 'f-taxOffice')
         return false
       }
     }
@@ -542,6 +564,7 @@ export default function PaketPage() {
     if (invoiceType === 'bireysel' && !invoiceAddressSame) {
       if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
         setError("Fatura adresi bilgilerini eksiksiz doldurun")
+        scrollToField(!invoiceStreetAddress ? 'f-invoiceStreetAddress' : !invoiceStreetAddress2 ? 'f-invoiceStreetAddress2' : !invoiceSelectedIl ? 'f-invoiceIl' : 'f-invoiceIlce')
         return false
       }
     }
@@ -549,6 +572,7 @@ export default function PaketPage() {
     if (invoiceType === 'kurumsal' && !invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
       if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
         setError("Fatura adresi bilgilerini eksiksiz doldurun")
+        scrollToField(!invoiceStreetAddress ? 'f-invoiceStreetAddress' : !invoiceStreetAddress2 ? 'f-invoiceStreetAddress2' : !invoiceSelectedIl ? 'f-invoiceIl' : 'f-invoiceIlce')
         return false
       }
     }
@@ -556,6 +580,7 @@ export default function PaketPage() {
     // Yasal onaylar
     if (!acceptMesafeliSatis || !acceptKVKK) {
       setError("Devam etmek için sözleşmeleri kabul etmeniz gerekmektedir")
+      scrollToField('f-legal')
       return false
     }
 
@@ -706,6 +731,7 @@ export default function PaketPage() {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Ülke *</label>
         <select
+          id="f-country"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
           className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -721,6 +747,7 @@ export default function PaketPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">İl *</label>
             <select
+              id="f-il"
               value={selectedIl}
               onChange={(e) => setSelectedIl(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -735,6 +762,7 @@ export default function PaketPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">İlçe / Semt *</label>
             <select
+              id="f-ilce"
               value={selectedIlce}
               onChange={(e) => setSelectedIlce(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -755,6 +783,7 @@ export default function PaketPage() {
         <label className="block text-sm font-medium text-gray-700 mb-1">Sokak Adresi *</label>
         <input
           type="text"
+          id="f-streetAddress"
           value={streetAddress}
           onChange={(e) => setStreetAddress(e.target.value)}
           placeholder="Bina numarası ve sokak adı"
@@ -766,6 +795,7 @@ export default function PaketPage() {
         <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. *</label>
         <input
           type="text"
+          id="f-streetAddress2"
           value={streetAddress2}
           onChange={(e) => setStreetAddress2(e.target.value)}
           placeholder="Apartman adı, kat, daire no, vb."
@@ -864,6 +894,7 @@ export default function PaketPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ad *</label>
                     <input
                       type="text"
+                      id="f-firstName"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -874,6 +905,7 @@ export default function PaketPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Soyad *</label>
                     <input
                       type="text"
+                      id="f-lastName"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -884,6 +916,7 @@ export default function PaketPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Telefon *</label>
                     <input
                       type="tel"
+                      id="f-phone"
                       value={phone}
                       onChange={(e) => { setPhone(e.target.value); if (fieldErrors.phone) validatePhone(e.target.value) }}
                       onBlur={(e) => validatePhone(e.target.value)}
@@ -898,6 +931,7 @@ export default function PaketPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">E-posta *</label>
                     <input
                       type="email"
+                      id="f-email"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) validateEmail(e.target.value) }}
                       onBlur={(e) => validateEmail(e.target.value)}
@@ -956,6 +990,7 @@ export default function PaketPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ülke *</label>
                         <select
+                          id="f-altCountry"
                           value={altCountry}
                           onChange={(e) => setAltCountry(e.target.value)}
                           className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -971,6 +1006,7 @@ export default function PaketPage() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">İl *</label>
                             <select
+                              id="f-altIl"
                               value={altSelectedIl}
                               onChange={(e) => setAltSelectedIl(e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -985,6 +1021,7 @@ export default function PaketPage() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">İlçe / Semt *</label>
                             <select
+                              id="f-altIlce"
                               value={altSelectedIlce}
                               onChange={(e) => setAltSelectedIlce(e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -1005,6 +1042,7 @@ export default function PaketPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Sokak Adresi *</label>
                         <input
                           type="text"
+                          id="f-altStreetAddress"
                           value={altStreetAddress}
                           onChange={(e) => setAltStreetAddress(e.target.value)}
                           placeholder="Bina numarası ve sokak adı"
@@ -1016,6 +1054,7 @@ export default function PaketPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire, oda vb. *</label>
                         <input
                           type="text"
+                          id="f-altStreetAddress2"
                           value={altStreetAddress2}
                           onChange={(e) => setAltStreetAddress2(e.target.value)}
                           placeholder="Apartman adı, kat, daire no, vb."
@@ -1039,7 +1078,7 @@ export default function PaketPage() {
               )}
 
               {/* 🎓 Öğrenci Bilgileri */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div id="f-students" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h3 className="text-lg font-semibold text-gray-900">
                     🎓 Öğrenci Bilgileri
@@ -1177,6 +1216,7 @@ export default function PaketPage() {
                         <input
                           type="text"
                           inputMode="numeric"
+                          id="f-tcNumber"
                           value={tcNumber}
                           onChange={(e) => {
                             const v = e.target.value.replace(/\D/g, '').slice(0, 11)
@@ -1208,6 +1248,7 @@ export default function PaketPage() {
                         <input
                           type="text"
                           inputMode="numeric"
+                          id="f-taxNumber"
                           value={taxNumber}
                           onChange={(e) => {
                             const v = e.target.value.replace(/\D/g, '').slice(0, 11)
@@ -1226,6 +1267,7 @@ export default function PaketPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Firma Ünvanı *</label>
                         <input
                           type="text"
+                          id="f-companyTitle"
                           value={companyTitle}
                           onChange={(e) => setCompanyTitle(e.target.value)}
                           placeholder="Şirket veya şahıs ismi"
@@ -1237,6 +1279,7 @@ export default function PaketPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vergi Dairesi *</label>
                         <input
                           type="text"
+                          id="f-taxOffice"
                           value={taxOffice}
                           onChange={(e) => setTaxOffice(e.target.value)}
                           placeholder="Vergi dairesi adı"
@@ -1279,6 +1322,7 @@ export default function PaketPage() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">İl *</label>
                             <select
+                              id="f-invoiceIl"
                               value={invoiceSelectedIl}
                               onChange={(e) => setInvoiceSelectedIl(e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -1293,6 +1337,7 @@ export default function PaketPage() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">İlçe *</label>
                             <select
+                              id="f-invoiceIlce"
                               value={invoiceSelectedIlce}
                               onChange={(e) => setInvoiceSelectedIlce(e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -1312,6 +1357,7 @@ export default function PaketPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Sokak Adresi *</label>
                           <input
                             type="text"
+                            id="f-invoiceStreetAddress"
                             value={invoiceStreetAddress}
                             onChange={(e) => setInvoiceStreetAddress(e.target.value)}
                             placeholder="Bina numarası ve sokak adı"
@@ -1323,6 +1369,7 @@ export default function PaketPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Apartman, daire vb. *</label>
                           <input
                             type="text"
+                            id="f-invoiceStreetAddress2"
                             value={invoiceStreetAddress2}
                             onChange={(e) => setInvoiceStreetAddress2(e.target.value)}
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -1372,7 +1419,7 @@ export default function PaketPage() {
               </div>
 
               {/* ✅ Yasal Onaylar */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div id="f-legal" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">✅ Yasal Onaylar</h3>
                 <div className="space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer">
