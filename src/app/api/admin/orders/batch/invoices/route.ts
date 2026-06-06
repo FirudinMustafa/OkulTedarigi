@@ -44,6 +44,8 @@ export async function POST(request: Request) {
         invoiceNo: null
       },
       include: {
+        items: true,
+        students: { select: { id: true } },
         class: {
           include: {
             school: true,
@@ -66,6 +68,19 @@ export async function POST(request: Request) {
     // Tek bir siparis icin fatura kesim islemi (paralel calisacak)
     async function processOne(order: typeof orders[number]): Promise<BatchResult> {
       try {
+        // Fatura kalemleri: velinin sectigi kalemler order.items (OrderItem snapshot) icinden.
+        // Eski snapshot'siz siparisler icin paket listesine fallback. Adetler ogrenci sayisiyla carpilir.
+        const studentCount = Math.max(1, order.students.length)
+        const snapshotItems = order.items.length > 0
+          ? order.items
+          : (order.class.package?.items ?? [])
+        const invoiceItems = snapshotItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity * studentCount,
+          unitPrice: Number(item.price),
+          totalPrice: Number(item.price) * item.quantity * studentCount,
+        }))
+
         const invoiceResult = await createInvoice({
           orderNumber: order.orderNumber,
           customerName: order.parentName,
@@ -75,12 +90,9 @@ export async function POST(request: Request) {
           isCorporate: order.isCorporateInvoice,
           taxNumber: order.taxNumber || undefined,
           taxOffice: order.taxOffice || undefined,
-          items: order.class.package?.items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            unitPrice: Number(item.price),
-            totalPrice: Number(item.price) * item.quantity
-          })) || [],
+          city: order.city || undefined,
+          district: order.district || undefined,
+          items: invoiceItems,
           totalAmount: Number(order.totalAmount)
         })
 

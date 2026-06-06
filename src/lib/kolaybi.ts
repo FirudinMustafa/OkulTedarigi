@@ -33,6 +33,8 @@ export interface InvoiceData {
   isCorporate: boolean
   taxNumber?: string  // TCKN (11 hane bireysel) veya VKN (10 hane kurumsal)
   taxOffice?: string  // Sadece kurumsal
+  city?: string       // Fatura adresi ili (yapisal)
+  district?: string   // Fatura adresi ilcesi (yapisal)
   items: {
     name: string
     quantity: number
@@ -270,11 +272,11 @@ async function createAssociateForOrder(data: InvoiceData): Promise<{ contactId: 
   if (data.isCorporate && data.taxOffice) {
     associateBody.tax_office = data.taxOffice
   }
-  if (data.customerAddress) {
+  if (data.customerAddress || data.city || data.district) {
     associateBody.addresses = {
-      address: data.customerAddress.slice(0, 500),
-      city: '-',
-      district: '-',
+      address: (data.customerAddress || '').slice(0, 500) || '-',
+      city: data.city || '-',
+      district: data.district || '-',
       country: 'Turkiye',
     }
   }

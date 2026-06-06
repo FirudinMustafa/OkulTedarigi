@@ -20,6 +20,8 @@ export async function POST(
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
+        items: true,
+        students: { select: { id: true } },
         class: {
           include: {
             school: true,
@@ -64,22 +66,33 @@ export async function POST(
       )
     }
 
-    // Mock fatura olustur
+    // Fatura kalemleri: velinin gercekten sectigi kalemler order.items (OrderItem snapshot)
+    // icinde saklidir. Ozellestirilebilir pakette veli kalem cikarabildigi icin paketin sabit
+    // listesi yerine snapshot kullanilir. Eski (snapshot'siz) siparisler icin paket listesine
+    // fallback yapilir. Adetler ogrenci sayisiyla carpilir (totalAmount = birim x ogrenci).
+    const studentCount = Math.max(1, order.students.length)
+    const snapshotItems = order.items.length > 0
+      ? order.items
+      : (order.class.package?.items ?? [])
+    const invoiceItems = snapshotItems.map(item => ({
+      name: item.name,
+      quantity: item.quantity * studentCount,
+      unitPrice: Number(item.price),
+      totalPrice: Number(item.price) * item.quantity * studentCount,
+    }))
+
     const invoiceResult = await createInvoice({
       orderNumber: order.orderNumber,
       customerName: order.parentName,
       customerEmail: order.email || undefined,
       customerPhone: order.phone,
-      customerAddress: order.address || order.class.school.address || undefined,
+      customerAddress: order.invoiceAddress || order.address || order.class.school.address || undefined,
       isCorporate: order.isCorporateInvoice,
       taxNumber: order.taxNumber || undefined,
       taxOffice: order.taxOffice || undefined,
-      items: order.class.package?.items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: Number(item.price),
-        totalPrice: Number(item.price) * item.quantity
-      })) || [],
+      city: order.city || undefined,
+      district: order.district || undefined,
+      items: invoiceItems,
       totalAmount: Number(order.totalAmount)
     })
 

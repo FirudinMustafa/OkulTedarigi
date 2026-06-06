@@ -35,7 +35,9 @@ export async function POST(request: Request) {
       taxOffice,
       orderNote,
       discountCode,
-      selectedItemIds
+      selectedItemIds,
+      city,
+      district
     } = parsed.data
 
     // Ilk ogrenci geri uyumluluk icin Order.studentName / studentSection alanlarina yazilir
@@ -214,6 +216,8 @@ export async function POST(request: Request) {
             deliveryAddress: deliveryAddress || null,
             invoiceAddress: invoiceAddress || null,
             invoiceAddressSame: invoiceAddressSame ?? true,
+            city: city || null,
+            district: district || null,
             orderNote: orderNote || null,
             totalAmount: effectiveTotal,
             discountCode: effectiveDiscountCode,

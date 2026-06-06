@@ -120,6 +120,8 @@ model Order {
   invoiceAddress     String? @db.Text // Fatura adresi
   orderNote          String? @db.Text // Siparis notu
   invoiceAddressSame Boolean @default(true) // Fatura ayni adrese mi
+  city               String? // Fatura adresi ili (KolayBi associate icin yapisal il)
+  district           String? // Fatura adresi ilcesi (KolayBi associate icin yapisal ilce)
 
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt

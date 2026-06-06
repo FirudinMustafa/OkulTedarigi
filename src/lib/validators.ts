@@ -191,6 +191,8 @@ export const veliOrderBodySchema = z.object({
   deliveryAddress: z.string().trim().max(1000).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   invoiceAddress: z.string().trim().max(1000).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   invoiceAddressSame: z.boolean().optional(),
+  city: z.string().trim().max(100).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
+  district: z.string().trim().max(100).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   isCorporateInvoice: z.boolean().optional(),
   companyTitle: z.string().trim().max(200).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   taxNumber: z.string().trim().min(10).max(11).regex(/^\d+$/, 'Vergi/TC No sadece rakam icerebilir'),

@@ -656,6 +656,10 @@ export default function PaketPage() {
           deliveryAddress: shipToDifferentAddress ? altAddress : null,
           invoiceAddress: invoiceAddr,
           invoiceAddressSame,
+          // Yapisal il/ilce — KolayBi fatura adresi icin. Fatura adresi farkliysa
+          // fatura il/ilcesini, degilse ana adresinkini gonder (customerAddress mantigiyla tutarli).
+          city: (invoiceAddressSame ? selectedIl : invoiceSelectedIl) || null,
+          district: (invoiceAddressSame ? selectedIlce : invoiceSelectedIlce) || null,
           isCorporateInvoice: invoiceType === 'kurumsal',
           companyTitle: invoiceType === 'kurumsal' ? companyTitle : null,
           taxNumber: invoiceType === 'kurumsal' ? taxNumber : (tcNumber || null),
