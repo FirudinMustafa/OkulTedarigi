@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { List, X, Storefront, ArrowRight } from '@phosphor-icons/react'
+import { List, X, ArrowRight } from '@phosphor-icons/react'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -59,18 +59,10 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Sağ pill — Okul Paneli + Sipariş Ver (daha küçük) */}
+          {/* Sağ pill — Sipariş Ver */}
           <div
             className="pointer-events-auto hidden sm:flex items-center gap-2 h-12 pl-4 pr-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
           >
-            <Link
-              href="/mudur/login"
-              className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-normal text-apple-ink/80 hover:text-apple-ink transition-colors pr-1"
-            >
-              <Storefront weight="regular" className="w-4 h-4" />
-              Okul Paneli
-            </Link>
-
             <Link
               href="/siparis"
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[13px] font-medium transition-colors"
@@ -113,14 +105,6 @@ export default function Header() {
                   {link.label}
                 </a>
               ))}
-              <Link
-                href="/mudur/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-3 text-[15px] font-medium text-apple-ink hover:text-apple-blue transition-colors inline-flex items-center gap-2 rounded-xl"
-              >
-                <Storefront weight="regular" className="w-4 h-4" />
-                Okul Paneli
-              </Link>
               <div className="pt-3">
                 <Link
                   href="/siparis"

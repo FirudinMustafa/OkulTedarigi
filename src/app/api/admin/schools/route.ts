@@ -77,13 +77,7 @@ export async function POST(request: Request) {
     // Veli giris sifresi - verilmediyse otomatik olustur
     let schoolPassword: string = password?.toUpperCase()?.trim() || ''
     if (schoolPassword) {
-      // Manuel girilen sifre — minimum guvenlik kontrolu
-      if (schoolPassword.length < 8) {
-        return NextResponse.json(
-          { error: 'Veli sifresi en az 8 karakter olmali' },
-          { status: 400 }
-        )
-      }
+      // Manuel girilen sifre — minimum uzunluk siniri yok (bos olamaz, benzersiz olmali)
       const conflict = await prisma.school.findFirst({
         where: { password: schoolPassword }
       })

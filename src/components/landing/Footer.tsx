@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import {
-  Phone,
+  WhatsappLogo,
   EnvelopeSimple,
   Storefront,
   InstagramLogo,
@@ -107,13 +107,10 @@ export default function Footer() {
             </h4>
             <ul className="space-y-4 text-[14px]">
               <li>
-                <a
-                  href="tel:+905497747137"
-                  className="inline-flex items-center gap-2.5 text-apple-gray hover:text-apple-ink transition-colors"
-                >
-                  <Phone weight="regular" className="w-4 h-4" />
-                  +90 549 774 71 37
-                </a>
+                <span className="inline-flex items-center gap-2.5 text-apple-gray">
+                  <WhatsappLogo weight="regular" className="w-4 h-4" />
+                  WhatsApp Hattımızdan iletişim kurabilirsiniz
+                </span>
               </li>
               <li>
                 <a

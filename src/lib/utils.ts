@@ -5,6 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Arama için metni normalize eder: büyük/küçük harf + Türkçe aksan duyarsız.
+// "ALİ", "ali", "ALI" -> "ali"; "Ayşe" -> "ayse"; "Güneş" -> "gunes".
+// Admin arama kutularında hem aranan terime hem alanlara uygulanır.
+export function normalizeSearch(value: string | null | undefined): string {
+  if (!value) return ''
+  return value
+    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+    .replace(/Ş/g, 's').replace(/ş/g, 's')
+    .replace(/Ğ/g, 'g').replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'u').replace(/ü/g, 'u')
+    .replace(/Ö/g, 'o').replace(/ö/g, 'o')
+    .replace(/Ç/g, 'c').replace(/ç/g, 'c')
+    .toLowerCase()
+}
+
 export function formatCurrency(amount: number | string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
   return new Intl.NumberFormat('tr-TR', {

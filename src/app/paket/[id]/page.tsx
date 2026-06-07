@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import ilIlceData from "@/data/il-ilce.json"
 import { formatPrice, isValidTCKimlik } from "@/lib/utils"
+import { CHECKOUT_DRAFT_KEY } from "@/lib/constants"
 
 interface PackageItem {
   id: string
@@ -88,7 +89,6 @@ export default function PaketPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   // Form state - Kişisel Bilgiler
   const [firstName, setFirstName] = useState("")
@@ -334,24 +334,6 @@ export default function PaketPage() {
     setInvoiceSelectedIlce("")
   }, [invoiceSelectedIl])
 
-  // Modal: Escape tusu ile kapat (a11y)
-  useEffect(() => {
-    if (!showPaymentModal) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) {
-        setShowPaymentModal(false)
-      }
-    }
-    document.addEventListener('keydown', handleKey)
-    // Modal acikken body scroll'u kilitle
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = prevOverflow
-    }
-  }, [showPaymentModal, submitting])
-
   const loadClassData = () => {
     try {
       // Önce sessionStorage'dan oku (sifre dogrulama sonrasi kaydedilmis)
@@ -460,14 +442,20 @@ export default function PaketPage() {
     }
   }
 
-  // Dogrulama hatasinda eksik/hatali alana smooth scroll + focus (ozellikle mobil icin).
+  // Dogrulama hatasinda eksik/hatali alana smooth scroll + focus + gecici kirmizi ring
+  // (ozellikle mobil icin; kullanici hangi alanin eksik oldugunu net gorsun).
   const scrollToField = (id: string) => {
     const el = typeof document !== 'undefined' ? document.getElementById(id) : null
     if (!el) return
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const ringClasses = ['ring-2', 'ring-red-500', 'ring-offset-2', 'rounded-lg']
+    el.classList.add(...ringClasses)
     setTimeout(() => {
       try { (el as HTMLElement).focus({ preventScroll: true }) } catch {}
     }, 350)
+    setTimeout(() => {
+      try { el.classList.remove(...ringClasses) } catch {}
+    }, 2200)
   }
 
   const validateForm = (): boolean => {
@@ -587,108 +575,97 @@ export default function PaketPage() {
     return true
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-
     if (!validateForm()) return
-
-    // Ödeme modalını aç
-    setShowPaymentModal(true)
+    goToPayment()
   }
 
-  const handlePaymentConfirm = async () => {
+  // Siparis ARTIK burada olusturulmaz. Form dogrulanir, tum veri + tutar bir "checkout
+  // draft" olarak sessionStorage'a yazilir ve /odeme sayfasina gecilir. Siparis SADECE
+  // /odeme'de odeme basariliysa olusur (POST /api/veli/checkout).
+  const goToPayment = () => {
     setSubmitting(true)
-    setShowPaymentModal(false)
 
-    try {
-      // Adres her durumda olusturulur:
-      //  - Kargo teslim: sevk + iletisim adresi
-      //  - Bireysel fatura: fatura/iletisim adresi
-      //  - Kurumsal fatura: firma adresi
-      const addressParts = [streetAddress]
-      if (streetAddress2) addressParts.push(streetAddress2)
-      if (country === "Türkiye") {
-        addressParts.push(selectedIlce, selectedIl)
-      }
-      if (postalCode) addressParts.push(postalCode)
-      addressParts.push(country)
-      const fullAddress = addressParts.join(', ')
-
-      // Alternatif teslimat adresi oluştur
-      let altAddress = null
-      if (shipToDifferentAddress && classData?.school.deliveryType === "CARGO") {
-        const altParts = [altStreetAddress]
-        if (altStreetAddress2) altParts.push(altStreetAddress2)
-        if (altCountry === "Türkiye") {
-          altParts.push(altSelectedIlce, altSelectedIl)
-        }
-        if (altPostalCode) altParts.push(altPostalCode)
-        altParts.push(altCountry)
-        altAddress = altParts.join(', ')
-      }
-
-      // Fatura adresi oluştur (farklı adres seçildiyse)
-      let invoiceAddr = null
-      if (!invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
-        const invParts = [invoiceStreetAddress]
-        if (invoiceStreetAddress2) invParts.push(invoiceStreetAddress2)
-        invParts.push(invoiceSelectedIlce, invoiceSelectedIl)
-        if (invoicePostalCode) invParts.push(invoicePostalCode)
-        invParts.push('Türkiye')
-        invoiceAddr = invParts.join(', ')
-      }
-
-      const res = await fetch("/api/veli/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          classId,
-          parentName: `${firstName} ${lastName}`,
-          students: students.map(s => ({
-            firstName: s.firstName.trim(),
-            lastName: s.lastName.trim(),
-            section: s.section.trim() || null,
-          })),
-          phone: phone.replace(/\s/g, ''),
-          email,
-          address: fullAddress,
-          deliveryAddress: shipToDifferentAddress ? altAddress : null,
-          invoiceAddress: invoiceAddr,
-          invoiceAddressSame,
-          // Yapisal il/ilce — KolayBi fatura adresi icin. Fatura adresi farkliysa
-          // fatura il/ilcesini, degilse ana adresinkini gonder (customerAddress mantigiyla tutarli).
-          city: (invoiceAddressSame ? selectedIl : invoiceSelectedIl) || null,
-          district: (invoiceAddressSame ? selectedIlce : invoiceSelectedIlce) || null,
-          isCorporateInvoice: invoiceType === 'kurumsal',
-          companyTitle: invoiceType === 'kurumsal' ? companyTitle : null,
-          taxNumber: invoiceType === 'kurumsal' ? taxNumber : (tcNumber || null),
-          taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
-          orderNote,
-          discountCode: discountApplied ? discountApplied.code : null,
-          selectedItemIds: classData?.package.isCustomizable ? selectedItemIds : undefined,
-        })
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || "Sipariş oluşturulamadı")
-        setSubmitting(false)
-        return
-      }
-
-      // Basarili siparis sonrasi form draft'ini temizle (F5 koruma kaydi)
-      try { localStorage.removeItem(FORM_STORAGE_KEY) } catch {}
-
-      // Kredi karti odeme sayfasina yonlendir (accessToken ile — F-04 IDOR koruması)
-      const tokenParam = data.accessToken ? `?t=${encodeURIComponent(data.accessToken)}` : ''
-      router.push(`/odeme/${data.orderId}${tokenParam}`)
-
-    } catch {
-      setError("Sipariş oluşturulurken hata oluştu")
-      setSubmitting(false)
+    // Adres her durumda olusturulur:
+    //  - Kargo teslim: sevk + iletisim adresi
+    //  - Bireysel fatura: fatura/iletisim adresi
+    //  - Kurumsal fatura: firma adresi
+    const addressParts = [streetAddress]
+    if (streetAddress2) addressParts.push(streetAddress2)
+    if (country === "Türkiye") {
+      addressParts.push(selectedIlce, selectedIl)
     }
+    if (postalCode) addressParts.push(postalCode)
+    addressParts.push(country)
+    const fullAddress = addressParts.join(', ')
+
+    // Alternatif teslimat adresi oluştur
+    let altAddress = null
+    if (shipToDifferentAddress && classData?.school.deliveryType === "CARGO") {
+      const altParts = [altStreetAddress]
+      if (altStreetAddress2) altParts.push(altStreetAddress2)
+      if (altCountry === "Türkiye") {
+        altParts.push(altSelectedIlce, altSelectedIl)
+      }
+      if (altPostalCode) altParts.push(altPostalCode)
+      altParts.push(altCountry)
+      altAddress = altParts.join(', ')
+    }
+
+    // Fatura adresi oluştur (farklı adres seçildiyse)
+    let invoiceAddr = null
+    if (!invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
+      const invParts = [invoiceStreetAddress]
+      if (invoiceStreetAddress2) invParts.push(invoiceStreetAddress2)
+      invParts.push(invoiceSelectedIlce, invoiceSelectedIl)
+      if (invoicePostalCode) invParts.push(invoicePostalCode)
+      invParts.push('Türkiye')
+      invoiceAddr = invParts.join(', ')
+    }
+
+    const primaryStudent = students[0]
+    const payload = {
+      classId,
+      parentName: `${firstName} ${lastName}`,
+      students: students.map(s => ({
+        firstName: s.firstName.trim(),
+        lastName: s.lastName.trim(),
+        section: s.section.trim() || null,
+      })),
+      phone: phone.replace(/\s/g, ''),
+      email,
+      address: fullAddress,
+      deliveryAddress: shipToDifferentAddress ? altAddress : null,
+      invoiceAddress: invoiceAddr,
+      invoiceAddressSame,
+      // Yapisal il/ilce — KolayBi fatura adresi icin.
+      city: (invoiceAddressSame ? selectedIl : invoiceSelectedIl) || null,
+      district: (invoiceAddressSame ? selectedIlce : invoiceSelectedIlce) || null,
+      isCorporateInvoice: invoiceType === 'kurumsal',
+      companyTitle: invoiceType === 'kurumsal' ? companyTitle : null,
+      taxNumber: invoiceType === 'kurumsal' ? taxNumber : (tcNumber || null),
+      taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
+      orderNote,
+      discountCode: discountApplied ? discountApplied.code : null,
+      selectedItemIds: classData?.package.isCustomizable ? selectedItemIds : undefined,
+    }
+
+    const draft = {
+      payload,
+      summary: {
+        totalAmount: getFinalPrice(),
+        studentName: `${primaryStudent.firstName.trim()} ${primaryStudent.lastName.trim()}`.trim(),
+        studentCount: students.length,
+        packageName: classData?.package?.name || '',
+        discountCode: discountApplied ? discountApplied.code : null,
+        discountAmount: discountApplied ? discountApplied.discountAmount : null,
+      }
+    }
+
+    try { sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify(draft)) } catch {}
+    router.push('/odeme')
   }
 
   if (loading) {
@@ -1655,7 +1632,7 @@ export default function PaketPage() {
                           <span>İşleniyor...</span>
                         </>
                       ) : (
-                        <span>Ödemeyi Tamamla</span>
+                        <span>Ödemeye Geç</span>
                       )}
                     </button>
                   </div>
@@ -1665,61 +1642,6 @@ export default function PaketPage() {
           </div>
         </form>
       </main>
-
-      {/* Mock Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="font-semibold text-yellow-800">Test Ödemesi</h3>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="text-yellow-600 hover:text-yellow-800"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-gray-600 mb-6">
-                <span className="font-semibold text-gray-900">Gerçek ödeme alınmamaktadır.</span><br />
-                Bu bir test ödemesidir. Onayladığınızda siparişiniz oluşturulacaktır.
-              </p>
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-500">Ödenecek Tutar</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {formatPrice(getFinalPrice())} TL
-                </p>
-                {discountApplied && (
-                  <p className="text-xs text-green-600 mt-1">
-                    {discountApplied.code} kodu ile {formatPrice(discountApplied.discountAmount)} TL indirim
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPaymentModal(false)}
-                  className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  İptal
-                </button>
-                <button
-                  onClick={handlePaymentConfirm}
-                  disabled={submitting}
-                  className="flex-1 py-3 px-4 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {submitting ? <Spinner /> : null}
-                  Ödemeyi Onayla
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

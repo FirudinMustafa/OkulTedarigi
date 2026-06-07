@@ -405,6 +405,7 @@ const STATUS_COUNTS: Record<OrderStatus, number> = {
   COMPLETED: 35,
   CANCELLED: 15,
   REFUNDED: 10,
+  UNDELIVERED: 10,
 }
 
 async function createOrders(

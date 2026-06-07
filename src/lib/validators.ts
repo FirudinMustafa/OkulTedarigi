@@ -218,6 +218,17 @@ export const veliPaymentBodySchema = z.object({
   { message: 'Siparis ID veya numarasi gerekli', path: ['orderId'] }
 )
 
+// Veli checkout body — siparis + kart tek istekte (siparis SADECE odeme basariliysa olusur)
+// veliOrderBodySchema alanlari + kart bilgileri. accessToken/orderId YOK (henuz order yok).
+export const veliCheckoutBodySchema = veliOrderBodySchema.extend({
+  cardNumber: z.string().trim().regex(/^\d{13,19}$/, 'Gecersiz kart numarasi'),
+  cardHolder: z.string().trim().min(3).max(50),
+  expiry: z.string().trim().regex(/^(0[1-9]|1[0-2])\/?\d{2,4}$/, 'Gecersiz son kullanma tarihi'),
+  cvv: z.string().trim().regex(/^\d{3,4}$/, 'Gecersiz CVV'),
+})
+
+export type VeliCheckoutBody = z.infer<typeof veliCheckoutBodySchema>
+
 // Veli discount validation body
 export const veliDiscountBodySchema = z.object({
   code: discountCodeSchema,

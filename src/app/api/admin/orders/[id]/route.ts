@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { VALID_STATUS_TRANSITIONS } from '@/lib/constants'
-import { sendDeliveryConfirmation } from '@/lib/email'
 
 export async function GET(
   request: Request,
@@ -172,15 +171,7 @@ export async function PUT(
       }
     })
 
-    // Manuel DELIVERED'a geciste teslim onay maili (best-effort)
-    if (updateData.status === 'DELIVERED' && order.email && previousOrder.status !== 'DELIVERED') {
-      sendDeliveryConfirmation({
-        email: order.email,
-        orderNumber: order.orderNumber,
-        parentName: order.parentName,
-        deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-      }).catch(err => console.error('[email] sendDeliveryConfirmation manuel hatasi:', err))
-    }
+    // Veliye durum gecislerinde mail GONDERILMEZ (yalnizca odeme sonrasi tek mail gider).
 
     return NextResponse.json({ order })
   } catch (error) {

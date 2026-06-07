@@ -23,7 +23,7 @@ import {
   Search, Eye, FileText, Truck, X, ArrowRight,
   CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox
 } from "lucide-react"
-import { formatDateTime, formatPrice } from "@/lib/utils"
+import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants"
 import {
   previewShippingLabel, printBulkLabels,
@@ -68,68 +68,72 @@ interface OrderType {
 }
 
 // ============================================================
-// İş akışı: durum gruplari ve sonraki adim mantigi
+// İş akışı: yeni 4-asamali model
 // ============================================================
 //
-// CARGO    : NEW → PAYMENT_PENDING → PAID → CONFIRMED → INVOICED → SHIPPED → DELIVERED → COMPLETED
-// OKULA    : NEW → PAYMENT_PENDING → PAID → CONFIRMED → INVOICED → DELIVERED → COMPLETED
-// İPTAL    : herhangi bir aşamada → CANCELLED → (opsiyonel) REFUNDED
+//   Gelen Sipariş (PAID) → [Onayla] → Hazırlanıyor (CONFIRMED)
+//     → [Kargola | Okula Teslim Et] → Dağıtımda (SHIPPED)   (KolayBi odeme aninda gonderildi)
+//     → [Tamamlandı (COMPLETED)] veya [Teslim Edilemeyen (UNDELIVERED)]
+//   UNDELIVERED → [Tekrar Dağıtıma Çıkar] → SHIPPED
+//   İptal: PAID/CONFIRMED → CANCELLED → (opsiyonel) REFUNDED
 //
-// Mock ödeme aktif olduğu icin admin manuel olarak NEW → PAID gecisini de yapabilir.
+// Odenmemis (NEW/PAYMENT_PENDING) siparis API tarafindan hic donmez.
 
-// Sayfanin ust kismindaki sekmeler (akilli gruplama)
+// Sayfanin ust kismindaki sekmeler
 const TABS = [
-  { id: 'aktif',     label: 'Aktif',           statuses: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED'] as string[] },
-  { id: 'sevkiyat',  label: 'Sevkiyatta',      statuses: ['SHIPPED'] as string[] },
-  { id: 'teslim',    label: 'Teslim Edildi',   statuses: ['DELIVERED'] as string[] },
-  { id: 'tamam',     label: 'Tamamlanan',      statuses: ['COMPLETED'] as string[] },
-  { id: 'iptal',     label: 'İptal/İade',      statuses: ['CANCELLED', 'REFUNDED'] as string[] },
-  { id: 'tumu',      label: 'Tümü',            statuses: [] as string[] },
+  { id: 'gelen',             label: 'Gelen Sipariş',     statuses: ['PAID'] as string[] },
+  { id: 'hazirlaniyor',      label: 'Hazırlanıyor',      statuses: ['CONFIRMED'] as string[] },
+  { id: 'dagitimda',         label: 'Dağıtımda',         statuses: ['SHIPPED'] as string[] },
+  { id: 'teslim_edilemeyen', label: 'Teslim Edilemeyen', statuses: ['UNDELIVERED'] as string[] },
+  { id: 'tamamlandi',        label: 'Tamamlandı',        statuses: ['COMPLETED'] as string[] },
+  { id: 'iptal',             label: 'İptal/İade',        statuses: ['CANCELLED', 'REFUNDED'] as string[] },
+  { id: 'tumu',              label: 'Tümü',              statuses: [] as string[] },
 ] as const
 
 type TabId = typeof TABS[number]['id']
 
-// Sipariste bir sonraki adim ne? (durum + teslimat tipine gore)
+// Sipariste bir sonraki birincil adim (durum + teslimat tipine gore)
 type NextStep =
   | { kind: 'none' }
-  | { kind: 'pay';     label: string; targetStatus: 'PAID' }
-  | { kind: 'confirm'; label: string; targetStatus: 'CONFIRMED' }
-  | { kind: 'invoice'; label: string }    // /invoice endpoint
-  | { kind: 'ship';    label: string }    // /shipment endpoint
-  | { kind: 'deliver'; label: string }    // /deliveries/batch DELIVERED
-  | { kind: 'complete'; label: string }   // /deliveries/batch COMPLETED
+  | { kind: 'confirm';         label: string }  // PAID -> CONFIRMED (PUT)
+  | { kind: 'ship';            label: string }  // CARGO CONFIRMED -> SHIPPED (/shipment)
+  | { kind: 'school_dispatch'; label: string }  // SCHOOL CONFIRMED -> SHIPPED (deliveries/batch SCHOOL_DISPATCH)
+  | { kind: 'complete';        label: string }  // SHIPPED -> COMPLETED (deliveries/batch COMPLETED)
+  | { kind: 'redispatch';      label: string }  // UNDELIVERED -> SHIPPED (deliveries/batch REDISPATCH)
 
 function getNextStep(order: OrderType): NextStep {
   const isCargo = order.deliveryType === 'CARGO'
   switch (order.status) {
-    case 'NEW':
-    case 'PAYMENT_PENDING':
-      return { kind: 'pay', label: 'Ödendi İşaretle', targetStatus: 'PAID' }
     case 'PAID':
-      return { kind: 'confirm', label: 'Onayla', targetStatus: 'CONFIRMED' }
+      return { kind: 'confirm', label: 'Onayla' }
     case 'CONFIRMED':
-      return { kind: 'invoice', label: 'Fatura Kes' }
-    case 'INVOICED':
       return isCargo
         ? { kind: 'ship', label: 'Kargola' }
-        : { kind: 'deliver', label: 'Okula Teslim Et' }
+        : { kind: 'school_dispatch', label: 'Okula Teslim Et' }
     case 'SHIPPED':
-      return { kind: 'deliver', label: 'Teslim Edildi' }
-    case 'DELIVERED':
-      return { kind: 'complete', label: 'Tamamla' }
+      return { kind: 'complete', label: 'Tamamlandı' }
+    case 'UNDELIVERED':
+      return { kind: 'redispatch', label: 'Tekrar Dağıtıma Çıkar' }
     default:
       return { kind: 'none' }
   }
 }
 
-// Toplu islem secenekleri (her aksiyonun hangi durumlarda uygun oldugu)
-type BulkActionKey = 'invoice' | 'shipment' | 'deliver' | 'complete'
+// Toplu islem secenekleri (durum + opsiyonel teslimat tipi)
+type BulkActionKey = 'confirm' | 'ship' | 'school_dispatch' | 'complete' | 'undeliver' | 'redispatch'
 
-const BULK_ACTIONS: Record<BulkActionKey, { label: string; eligibleStatuses: string[]; icon: typeof FileText }> = {
-  invoice:  { label: 'Toplu Fatura Kes',  eligibleStatuses: ['CONFIRMED'],                   icon: FileText },
-  shipment: { label: 'Toplu Kargola',     eligibleStatuses: ['INVOICED', 'CONFIRMED'],       icon: Truck },
-  deliver:  { label: 'Toplu Teslim Et',   eligibleStatuses: ['INVOICED', 'SHIPPED'],         icon: CheckCircle },
-  complete: { label: 'Toplu Tamamla',     eligibleStatuses: ['DELIVERED'],                   icon: CheckCheck },
+const BULK_ACTIONS: Record<BulkActionKey, {
+  label: string
+  eligibleStatuses: string[]
+  deliveryType?: 'CARGO' | 'SCHOOL_DELIVERY'
+  icon: typeof FileText
+}> = {
+  confirm:         { label: 'Toplu Onayla',            eligibleStatuses: ['PAID'],        icon: CheckCircle },
+  ship:            { label: 'Toplu Kargola',           eligibleStatuses: ['CONFIRMED'],   deliveryType: 'CARGO',           icon: Truck },
+  school_dispatch: { label: 'Toplu Okula Teslim Et',   eligibleStatuses: ['CONFIRMED'],   deliveryType: 'SCHOOL_DELIVERY', icon: ArrowRight },
+  complete:        { label: 'Toplu Tamamla',           eligibleStatuses: ['SHIPPED'],     icon: CheckCheck },
+  undeliver:       { label: 'Toplu Teslim Edilemeyen', eligibleStatuses: ['SHIPPED'],     icon: RotateCcw },
+  redispatch:      { label: 'Toplu Tekrar Dağıtıma',   eligibleStatuses: ['UNDELIVERED'], icon: RefreshCw },
 }
 
 // ============================================================
@@ -140,11 +144,17 @@ export default function SiparislerPage() {
   const [loading, setLoading] = useState(true)
 
   // Filtreler
-  const [activeTab, setActiveTab] = useState<TabId>('aktif')
+  const [activeTab, setActiveTab] = useState<TabId>('gelen')
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDelivery, setFilterDelivery] = useState<"" | "CARGO" | "SCHOOL_DELIVERY">("")
+  // Liste tarih filtresi (sunucu tarafi)
+  const [listStart, setListStart] = useState<string>("")
+  const [listEnd, setListEnd] = useState<string>("")
 
-  // Okul Teslim Raporu filtreleri
+  // Secili siparisleri indirme (teslim excel)
+  const [downloadingSelected, setDownloadingSelected] = useState(false)
+
+  // Teslim Listesi raporu filtreleri
   const [reportSchools, setReportSchools] = useState<Array<{ id: string; name: string }>>([])
   const [reportSchoolId, setReportSchoolId] = useState<string>("")
   const [reportStart, setReportStart] = useState<string>("")
@@ -188,7 +198,10 @@ export default function SiparislerPage() {
   // ============================================================
   const fetchOrders = async () => {
     try {
-      const res = await fetch("/api/admin/orders", { credentials: 'include' })
+      const qs = new URLSearchParams({ limit: '100' })
+      if (listStart) qs.set('start', listStart)
+      if (listEnd) qs.set('end', listEnd)
+      const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
       const data = await res.json()
       setOrders(data.orders || [])
     } catch (error) {
@@ -198,7 +211,8 @@ export default function SiparislerPage() {
     }
   }
 
-  useEffect(() => { fetchOrders() }, [])
+  // Tarih filtresi degisince yeniden yukle
+  useEffect(() => { fetchOrders() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/api/admin/schools', { credentials: 'include' })
@@ -221,31 +235,30 @@ export default function SiparislerPage() {
     try {
       let res: Response | null = null
 
-      if (step.kind === 'pay' || step.kind === 'confirm') {
-        // Status guncelle (PUT)
+      if (step.kind === 'confirm') {
+        // PAID -> CONFIRMED (PUT)
         res = await fetch(`/api/admin/orders/${order.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ status: step.targetStatus })
-        })
-      } else if (step.kind === 'invoice') {
-        res = await fetch(`/api/admin/orders/${order.id}/invoice`, {
-          method: 'POST', credentials: 'include'
+          body: JSON.stringify({ status: 'CONFIRMED' })
         })
       } else if (step.kind === 'ship') {
+        // CARGO CONFIRMED -> SHIPPED (+ kargo/trackingNo)
         res = await fetch(`/api/admin/orders/${order.id}/shipment`, {
           method: 'POST', credentials: 'include'
         })
-      } else if (step.kind === 'deliver' || step.kind === 'complete') {
+      } else {
+        // school_dispatch / complete / redispatch -> deliveries/batch
+        const action =
+          step.kind === 'school_dispatch' ? 'SCHOOL_DISPATCH'
+          : step.kind === 'complete' ? 'COMPLETED'
+          : 'REDISPATCH'
         res = await fetch('/api/admin/deliveries/batch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({
-            orderIds: [order.id],
-            action: step.kind === 'deliver' ? 'DELIVERED' : 'COMPLETED'
-          })
+          body: JSON.stringify({ orderIds: [order.id], action })
         })
       }
 
@@ -310,16 +323,21 @@ export default function SiparislerPage() {
     }
   }
 
-  // Fatura iptal (INVOICED siparisleri geri alma)
-  const cancelInvoice = async (order: OrderType) => {
-    if (!confirm('Bu siparişin faturasını iptal etmek istediğinize emin misiniz?')) return
-    setOrderBusy(order.id, 'Fatura İptal')
+  // Teslim Edilemeyen olarak isaretle (Dagitimda/SHIPPED siparisler icin)
+  const markUndelivered = async (order: OrderType) => {
+    if (!confirm(`${order.orderNumber} numaralı sipariş "Teslim Edilemeyen" olarak işaretlenecek. Onaylıyor musunuz?`)) return
+    setOrderBusy(order.id, 'Teslim Edilemeyen')
     try {
-      const res = await fetch(`/api/admin/orders/${order.id}/invoice-cancel`, {
-        method: 'POST', credentials: 'include'
+      const res = await fetch('/api/admin/deliveries/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderIds: [order.id], action: 'UNDELIVERED' })
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) alert(data.error || 'Fatura iptal edilemedi')
+      if (!res.ok || (data.summary && data.summary.success === 0)) {
+        alert(data.results?.[0]?.error || data.error || 'İşlem başarısız oldu')
+      }
       await fetchOrders()
     } finally {
       clearOrderBusy(order.id)
@@ -335,8 +353,12 @@ export default function SiparislerPage() {
     setBulkLoading(true)
     setBulkResult(null)
 
-    // Sadece UYGUN durumdaki siparisleri gonder
-    const eligible = orders.filter(o => selectedOrders.has(o.id) && action.eligibleStatuses.includes(o.status))
+    // Sadece UYGUN (durum + teslimat tipi) siparisleri gonder
+    const eligible = orders.filter(o =>
+      selectedOrders.has(o.id) &&
+      action.eligibleStatuses.includes(o.status) &&
+      (!action.deliveryType || o.deliveryType === action.deliveryType)
+    )
     const ids = eligible.map(o => o.id)
     const skipped = selectedOrders.size - ids.length
 
@@ -351,12 +373,21 @@ export default function SiparislerPage() {
     }
 
     try {
-      let endpoint = ''
+      let endpoint = '/api/admin/deliveries/batch'
       let body: Record<string, unknown> = { orderIds: ids }
-      if (bulkAction === 'invoice')  endpoint = '/api/admin/orders/batch/invoices'
-      if (bulkAction === 'shipment') endpoint = '/api/admin/orders/batch/shipments'
-      if (bulkAction === 'deliver')  { endpoint = '/api/admin/deliveries/batch'; body = { orderIds: ids, action: 'DELIVERED' } }
-      if (bulkAction === 'complete') { endpoint = '/api/admin/deliveries/batch'; body = { orderIds: ids, action: 'COMPLETED' } }
+      if (bulkAction === 'ship') {
+        endpoint = '/api/admin/orders/batch/shipments'
+      } else if (bulkAction === 'confirm') {
+        body = { orderIds: ids, action: 'CONFIRM' }
+      } else if (bulkAction === 'school_dispatch') {
+        body = { orderIds: ids, action: 'SCHOOL_DISPATCH' }
+      } else if (bulkAction === 'complete') {
+        body = { orderIds: ids, action: 'COMPLETED' }
+      } else if (bulkAction === 'undeliver') {
+        body = { orderIds: ids, action: 'UNDELIVERED' }
+      } else if (bulkAction === 'redispatch') {
+        body = { orderIds: ids, action: 'REDISPATCH' }
+      }
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -470,7 +501,7 @@ export default function SiparislerPage() {
   // Filtreleme + sekme bazli sayim
   // ============================================================
   const tabCounts = useMemo(() => {
-    const counts: Record<TabId, number> = { aktif: 0, sevkiyat: 0, teslim: 0, tamam: 0, iptal: 0, tumu: 0 }
+    const counts: Record<TabId, number> = { gelen: 0, hazirlaniyor: 0, dagitimda: 0, teslim_edilemeyen: 0, tamamlandi: 0, iptal: 0, tumu: 0 }
     counts.tumu = orders.length
     for (const o of orders) {
       for (const tab of TABS) {
@@ -483,34 +514,71 @@ export default function SiparislerPage() {
 
   const filteredOrders = useMemo(() => {
     const tab = TABS.find(t => t.id === activeTab)!
-    const term = searchTerm.toLowerCase()
+    const term = normalizeSearch(searchTerm)
     return orders.filter(o => {
       if (tab.statuses.length > 0 && !tab.statuses.includes(o.status)) return false
       if (filterDelivery && o.deliveryType !== filterDelivery) return false
       if (term) {
         const hit =
-          o.orderNumber.toLowerCase().includes(term) ||
-          o.studentName.toLowerCase().includes(term) ||
-          o.parentName.toLowerCase().includes(term) ||
-          o.class.school.name.toLowerCase().includes(term) ||
-          (o.trackingNo?.toLowerCase().includes(term) ?? false)
+          normalizeSearch(o.orderNumber).includes(term) ||
+          normalizeSearch(o.studentName).includes(term) ||
+          normalizeSearch(o.parentName).includes(term) ||
+          normalizeSearch(o.class.school.name).includes(term) ||
+          (o.trackingNo ? normalizeSearch(o.trackingNo).includes(term) : false)
         if (!hit) return false
       }
       return true
     })
   }, [orders, activeTab, searchTerm, filterDelivery])
 
-  // Toplu islem icin kac siparis uygun?
+  // Toplu islem icin kac siparis uygun? (durum + teslimat tipi)
   const bulkEligibility = useMemo(() => {
-    const result: Record<BulkActionKey, number> = { invoice: 0, shipment: 0, deliver: 0, complete: 0 }
+    const result: Record<BulkActionKey, number> = {
+      confirm: 0, ship: 0, school_dispatch: 0, complete: 0, undeliver: 0, redispatch: 0
+    }
     for (const o of orders) {
       if (!selectedOrders.has(o.id)) continue
       for (const key of Object.keys(BULK_ACTIONS) as BulkActionKey[]) {
-        if (BULK_ACTIONS[key].eligibleStatuses.includes(o.status)) result[key]++
+        const def = BULK_ACTIONS[key]
+        if (def.eligibleStatuses.includes(o.status) && (!def.deliveryType || o.deliveryType === def.deliveryType)) {
+          result[key]++
+        }
       }
     }
     return result
   }, [orders, selectedOrders])
+
+  // Secili siparisleri Teslim Excel'i olarak indir (POST -> blob)
+  const downloadSelectedTeslim = async () => {
+    const ids = Array.from(selectedOrders)
+    if (ids.length === 0) return
+    setDownloadingSelected(true)
+    try {
+      const res = await fetch('/api/admin/orders/export-teslim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderIds: ids })
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'İndirme başarısız')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `teslim_listesi_secili_${new Date().toISOString().slice(0, 10)}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Secili teslim indirme hatasi:', e)
+      alert('İndirme sırasında hata oluştu')
+    } finally {
+      setDownloadingSelected(false)
+    }
+  }
 
   // Secim
   const toggleSelectAll = () => {
@@ -537,10 +605,10 @@ export default function SiparislerPage() {
       )
     }
     const step = getNextStep(order)
-    const canCancel = !['CANCELLED', 'REFUNDED', 'COMPLETED'].includes(order.status)
+    const canCancel = ['PAID', 'CONFIRMED'].includes(order.status)
     const canRefund = order.status === 'CANCELLED'
     const showLabel = !!order.trackingNo
-    const showInvoiceCancel = order.status === 'INVOICED'
+    const showUndeliver = order.status === 'SHIPPED'
 
     return (
       <div className="flex items-center gap-1">
@@ -562,13 +630,13 @@ export default function SiparislerPage() {
             <ArrowRight className="h-3 w-3 ml-1" />
           </Button>
         )}
-        {showInvoiceCancel && (
+        {showUndeliver && (
           <Button
-            size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
-            onClick={() => cancelInvoice(order)}
-            title="Faturayı İptal Et"
+            size="sm" variant="outline" className="h-7 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+            onClick={() => markUndelivered(order)}
+            title="Teslim Edilemeyen olarak işaretle"
           >
-            <X className="h-3 w-3 mr-1" />Fatura İptal
+            <RotateCcw className="h-3 w-3 mr-1" />Teslim Edilemeyen
           </Button>
         )}
         {canRefund && (
@@ -622,10 +690,10 @@ export default function SiparislerPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2 text-emerald-700">
             <FileText className="h-5 w-5" />
-            <h2 className="text-lg font-semibold text-gray-900">Okul Teslim Raporu</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Teslim Listesi</h2>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Öğrenci bazlı rapor — okul ve tarih aralığı seçerek Excel indirin.
+            Öğrenci bazlı teslim listesi — okul ve tarih/saat aralığı seçerek Excel indirin (teslim tarihi sütunu boş gelir, elle işaretlenir).
           </p>
         </CardHeader>
         <CardContent>
@@ -724,6 +792,33 @@ export default function SiparislerPage() {
                 <SelectItem value="SCHOOL_DELIVERY">Okula Teslim</SelectItem>
               </SelectContent>
             </Select>
+            {/* Tarih araligi filtresi (sunucu tarafi) */}
+            <div className="flex items-center gap-1.5">
+              <input
+                type="datetime-local"
+                value={listStart}
+                onChange={(e) => setListStart(e.target.value)}
+                title="Başlangıç tarihi"
+                className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              <span className="text-gray-400 text-sm">–</span>
+              <input
+                type="datetime-local"
+                value={listEnd}
+                onChange={(e) => setListEnd(e.target.value)}
+                title="Bitiş tarihi"
+                className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              {(listStart || listEnd) && (
+                <Button
+                  size="icon" variant="ghost" className="h-8 w-8 text-gray-500"
+                  onClick={() => { setListStart(""); setListEnd("") }}
+                  title="Tarih filtresini temizle"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Toplu İşlem Çubuğu — sadece secim varken */}
@@ -767,6 +862,15 @@ export default function SiparislerPage() {
               >
                 <Printer className="h-3 w-3 mr-1" />
                 Barkodları Yazdır
+              </Button>
+
+              <Button
+                size="sm" variant="outline" className="text-xs"
+                onClick={downloadSelectedTeslim}
+                disabled={bulkLoading || downloadingSelected}
+              >
+                {downloadingSelected ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
+                Seçilenleri İndir
               </Button>
 
               <Button
@@ -863,9 +967,6 @@ export default function SiparislerPage() {
                           <Badge className={ORDER_STATUS_COLORS[order.status] || ""}>
                             {ORDER_STATUS_LABELS[order.status] || order.status}
                           </Badge>
-                          {order.invoiceNo && (
-                            <p className="text-[10px] text-indigo-600 font-mono mt-1">#{order.invoiceNo}</p>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">{formatDateTime(order.createdAt)}</TableCell>
@@ -1000,9 +1101,6 @@ export default function SiparislerPage() {
                   )}
                   <p><span className="text-gray-500">Yöntem:</span> {selectedOrder.paymentMethod === "CREDIT_CARD" ? "Kredi Kartı" : selectedOrder.paymentMethod || "-"}</p>
                   <p><span className="text-gray-500">Durum:</span> <Badge className={ORDER_STATUS_COLORS[selectedOrder.status] || ""}>{ORDER_STATUS_LABELS[selectedOrder.status] || selectedOrder.status}</Badge></p>
-                  {selectedOrder.invoiceNo && (
-                    <p><span className="text-gray-500">Fatura No:</span> <span className="font-mono">{selectedOrder.invoiceNo}</span></p>
-                  )}
                 </div>
               </div>
             </div>
@@ -1053,9 +1151,9 @@ export default function SiparislerPage() {
                         </span>
                       )}
                     </p>
-                    {bulkAction === 'shipment' && (
+                    {bulkAction === 'ship' && (
                       <p className="text-amber-600 bg-amber-50 p-2 rounded text-sm">
-                        Not: Faturalanmamış siparişler için otomatik fatura kesilecektir.
+                        Not: Yalnızca kargo teslimat tipindeki siparişler için kargo (barkod) oluşturulur.
                       </p>
                     )}
                   </div>

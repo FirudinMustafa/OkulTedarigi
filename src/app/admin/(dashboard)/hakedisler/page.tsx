@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Search, DollarSign, CheckCircle, Clock, Building2, Download } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { formatDate, normalizeSearch } from "@/lib/utils"
 
 interface SchoolPayment {
   id: string
@@ -146,8 +146,9 @@ export default function HakedislerPage() {
     }
   }
 
+  const q = normalizeSearch(searchTerm)
   const filteredPayments = payments.filter(p => {
-    const matchesSearch = p.school.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = normalizeSearch(p.school.name).includes(q)
     const matchesStatus = !filterStatus || p.status === filterStatus
     return matchesSearch && matchesStatus
   })

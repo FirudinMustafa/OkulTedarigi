@@ -50,7 +50,7 @@ interface DashboardData {
   }>
   deliveryStats: {
     shipped: number
-    delivered: number
+    undelivered: number
     completed: number
   }
 }
@@ -162,7 +162,7 @@ export default function DashboardCharts() {
             <Link href="/admin/siparisler">
               <Button size="sm" variant="outline" className="text-orange-700 border-orange-300 bg-orange-50 hover:bg-orange-100">
                 <Truck className="w-4 h-4 mr-1.5" />
-                {data.deliveryStats.shipped} Kargoda
+                {data.deliveryStats.shipped} Dağıtımda
               </Button>
             </Link>
           )}
@@ -566,24 +566,24 @@ export default function DashboardCharts() {
                 <Truck className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-purple-700 font-medium">Kargoda</p>
+                <p className="text-sm text-purple-700 font-medium">Dağıtımda</p>
                 <p className="text-3xl font-bold text-purple-900">{data.deliveryStats.shipped}</p>
-                <p className="text-xs text-purple-600">siparis yolda</p>
+                <p className="text-xs text-purple-600">siparis dagitimda</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-green-200">
+        <Card className="bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/30">
+              <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30">
                 <School className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-green-700 font-medium">Teslim Edildi</p>
-                <p className="text-3xl font-bold text-green-900">{data.deliveryStats.delivered}</p>
-                <p className="text-xs text-green-600">siparis teslim edildi</p>
+                <p className="text-sm text-rose-700 font-medium">Teslim Edilemeyen</p>
+                <p className="text-3xl font-bold text-rose-900">{data.deliveryStats.undelivered}</p>
+                <p className="text-xs text-rose-600">tekrar dagitima cikacak</p>
               </div>
             </div>
           </CardContent>

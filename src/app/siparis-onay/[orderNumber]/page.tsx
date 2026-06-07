@@ -250,7 +250,7 @@ export default function SiparisOnayPage() {
           <ul className="text-blue-700 text-sm space-y-2">
             <li>• Lütfen sipariş numaranızı kaydedin — siparişinizi takip için bu numaraya ihtiyacınız olacak.</li>
             <li>• <Link href={`/siparis-takip?orderNumber=${order.orderNumber}`} className="underline font-medium hover:text-blue-900">Sipariş Takip</Link> sayfasından durum güncellemelerini görüntüleyebilirsiniz.</li>
-            <li>• Sorularınız için destek hattımızı arayabilirsiniz: <a href="tel:+905497747137" className="font-semibold underline">+90 549 774 71 37</a></li>
+            <li>• Sorularınız için WhatsApp Hattımızdan iletişim kurabilirsiniz.</li>
           </ul>
         </div>
 

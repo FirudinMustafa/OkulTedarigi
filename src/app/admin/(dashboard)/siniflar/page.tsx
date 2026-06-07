@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { normalizeSearch } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -191,9 +192,10 @@ export default function SiniflarPage() {
     })
   }
 
+  const q = normalizeSearch(searchTerm)
   const filteredClasses = classes.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.school.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = normalizeSearch(c.name).includes(q) ||
+      normalizeSearch(c.school.name).includes(q)
     const matchesSchool = !filterSchool || c.school.id === filterSchool
     return matchesSearch && matchesSchool
   })

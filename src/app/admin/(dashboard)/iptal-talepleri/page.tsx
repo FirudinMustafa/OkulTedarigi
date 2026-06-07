@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Search, XCircle, CheckCircle, Clock, AlertCircle } from "lucide-react"
-import { formatDateTime } from "@/lib/utils"
+import { formatDateTime, normalizeSearch } from "@/lib/utils"
 
 interface CancelRequest {
   id: string
@@ -105,11 +105,12 @@ export default function IptalTalepleriPage() {
     }
   }
 
+  const q = normalizeSearch(searchTerm)
   const filteredRequests = requests.filter(r => {
     const matchesSearch =
-      r.order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.order.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.order.parentName.toLowerCase().includes(searchTerm.toLowerCase())
+      normalizeSearch(r.order.orderNumber).includes(q) ||
+      normalizeSearch(r.order.studentName).includes(q) ||
+      normalizeSearch(r.order.parentName).includes(q)
     const matchesStatus = !filterStatus || r.status === filterStatus
     return matchesSearch && matchesStatus
   })

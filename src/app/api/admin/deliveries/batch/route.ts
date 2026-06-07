@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { sendDeliveryConfirmation } from '@/lib/email'
 
 interface BatchResult {
   orderId: string
@@ -11,6 +10,11 @@ interface BatchResult {
   error?: string
 }
 
+// Toplu durum gecisleri (yeni 4-asamali model). Veliye mail GONDERILMEZ.
+//   SCHOOL_DISPATCH : Okula Teslim Et   — SCHOOL_DELIVERY, CONFIRMED -> SHIPPED (Dagitimda)
+//   COMPLETED       : Tamamlandi        — SHIPPED -> COMPLETED
+//   UNDELIVERED     : Teslim Edilemeyen — SHIPPED -> UNDELIVERED
+//   REDISPATCH      : Tekrar Dagitima   — UNDELIVERED -> SHIPPED
 export async function POST(request: Request) {
   try {
     const session = await getAdminSession()
@@ -25,45 +29,50 @@ export async function POST(request: Request) {
     const { orderIds, action } = body
 
     if (!Array.isArray(orderIds) || orderIds.length === 0 || orderIds.length > 500) {
-      return NextResponse.json(
-        { error: 'Siparis ID listesi gerekli (max 500)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Siparis ID listesi gerekli (max 500)' }, { status: 400 })
     }
     if (!orderIds.every(id => typeof id === 'string' && id.length > 0 && id.length <= 40)) {
       return NextResponse.json({ error: 'Gecersiz siparis ID' }, { status: 400 })
     }
 
-    const validActions = ['DELIVERED', 'COMPLETED']
+    const validActions = ['CONFIRM', 'SCHOOL_DISPATCH', 'COMPLETED', 'UNDELIVERED', 'REDISPATCH']
     if (!validActions.includes(action)) {
       return NextResponse.json({ error: 'Gecersiz aksiyon' }, { status: 400 })
     }
 
-    // Siparisleri getir
     const orders = await prisma.order.findMany({
       where: { id: { in: orderIds } },
-      include: {
-        class: {
-          include: { school: true }
-        }
-      }
+      include: { class: { include: { school: true } } }
     })
 
     const results: BatchResult[] = []
 
     for (const order of orders) {
       try {
-        // Durum gecislerini kontrol et
-        let canUpdate = false
         const deliveryType = order.class.school.deliveryType
+        let canUpdate = false
+        const fromStatus = order.status
+        const updateData: Record<string, unknown> = {}
 
-        if (action === 'DELIVERED') {
-          // Teslim edildi: SCHOOL_DELIVERY (CONFIRMED/INVOICED) veya CARGO (SHIPPED)
-          canUpdate = (deliveryType === 'SCHOOL_DELIVERY' && ['CONFIRMED', 'INVOICED'].includes(order.status)) ||
-                      (deliveryType === 'CARGO' && order.status === 'SHIPPED')
+        if (action === 'CONFIRM') {
+          canUpdate = order.status === 'PAID'
+          updateData.status = 'CONFIRMED'
+          updateData.confirmedAt = new Date()
+        } else if (action === 'SCHOOL_DISPATCH') {
+          canUpdate = deliveryType === 'SCHOOL_DELIVERY' && order.status === 'CONFIRMED'
+          updateData.status = 'SHIPPED'
+          updateData.shippedAt = new Date()
         } else if (action === 'COMPLETED') {
-          // Tamamla: DELIVERED durumundakiler
-          canUpdate = order.status === 'DELIVERED'
+          canUpdate = order.status === 'SHIPPED'
+          updateData.status = 'COMPLETED'
+          updateData.deliveredAt = new Date()
+        } else if (action === 'UNDELIVERED') {
+          canUpdate = order.status === 'SHIPPED'
+          updateData.status = 'UNDELIVERED'
+        } else if (action === 'REDISPATCH') {
+          canUpdate = order.status === 'UNDELIVERED'
+          updateData.status = 'SHIPPED'
+          updateData.shippedAt = new Date()
         }
 
         if (!canUpdate) {
@@ -71,40 +80,27 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: `Bu siparis ${action} durumuna gecirilemez (mevcut: ${order.status})`
+            error: `Bu siparis "${action}" islemine uygun degil (mevcut: ${order.status})`
           })
           continue
         }
 
-        // Durumu guncelle
-        const updateData: Record<string, unknown> = {
-          status: action
-        }
-
-        if (action === 'DELIVERED') {
-          updateData.deliveredAt = new Date()
-        }
-
-        await prisma.order.update({
-          where: { id: order.id },
+        // Atomic: yalnizca durumu hala beklenen degerdeyken guncelle
+        const upd = await prisma.order.updateMany({
+          where: { id: order.id, status: fromStatus },
           data: updateData
         })
-
-        // Teslim onay maili (best-effort, sadece DELIVERED durumunda)
-        if (action === 'DELIVERED' && order.email) {
-          sendDeliveryConfirmation({
-            email: order.email,
+        if (upd.count === 0) {
+          results.push({
+            orderId: order.id,
             orderNumber: order.orderNumber,
-            parentName: order.parentName,
-            deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-          }).catch(err => console.error('[email] sendDeliveryConfirmation batch hatasi:', err))
+            success: false,
+            error: 'Siparis durumu degismis, sayfayi yenileyin'
+          })
+          continue
         }
 
-        results.push({
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          success: true
-        })
+        results.push({ orderId: order.id, orderNumber: order.orderNumber, success: true })
 
         await logAction({
           userId: session.id,
@@ -112,13 +108,8 @@ export async function POST(request: Request) {
           action: 'BATCH_DELIVERY_UPDATE',
           entity: 'ORDER',
           entityId: order.id,
-          details: {
-            orderNumber: order.orderNumber,
-            newStatus: action,
-            batchOperation: true
-          }
+          details: { orderNumber: order.orderNumber, action, newStatus: updateData.status, batchOperation: true }
         })
-
       } catch (error) {
         results.push({
           orderId: order.id,
@@ -132,7 +123,6 @@ export async function POST(request: Request) {
     const successCount = results.filter(r => r.success).length
     const failCount = results.filter(r => !r.success).length
 
-    // Toplu islem logu
     await logAction({
       userId: session.id,
       userType: 'ADMIN',
@@ -148,26 +138,22 @@ export async function POST(request: Request) {
     })
 
     const actionLabels: Record<string, string> = {
-      'DELIVERED': 'teslim edildi',
-      'COMPLETED': 'tamamlandi'
+      CONFIRM: 'onaylandi',
+      SCHOOL_DISPATCH: 'okula teslime cikarildi',
+      COMPLETED: 'tamamlandi',
+      UNDELIVERED: 'teslim edilemeyen olarak isaretlendi',
+      REDISPATCH: 'tekrar dagitima cikarildi',
     }
 
     return NextResponse.json({
       success: true,
       message: `${successCount} siparis ${actionLabels[action]}${failCount > 0 ? `, ${failCount} hata` : ''}`,
       results,
-      summary: {
-        total: orders.length,
-        success: successCount,
-        failed: failCount
-      }
+      summary: { total: orders.length, success: successCount, failed: failCount }
     })
 
   } catch (error) {
     console.error('Toplu teslimat guncelleme hatasi:', error)
-    return NextResponse.json(
-      { error: 'Toplu teslimat guncellenemedi' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Toplu teslimat guncellenemedi' }, { status: 500 })
   }
 }

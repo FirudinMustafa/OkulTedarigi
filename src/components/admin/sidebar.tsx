@@ -4,10 +4,10 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard, School, Users, Package, ShoppingCart,
-  DollarSign, XCircle, BarChart3, Tag, FileText,
+  DollarSign, XCircle, BarChart3, Tag,
   LogOut, Menu, X
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -24,7 +24,6 @@ const menuItems = [
   { href: "/admin/siniflar", label: "Siniflar", icon: Users },
   { href: "/admin/paketler", label: "Paketler", icon: Package },
   { href: "/admin/siparisler", label: "Siparisler", icon: ShoppingCart },
-  { href: "/admin/teslim-tutanaklari", label: "Teslim Tutanaklari", icon: FileText },
   { href: "/admin/hakedisler", label: "Hakedisler", icon: DollarSign },
   { href: "/admin/indirimler", label: "Indirimler", icon: Tag },
   { href: "/admin/iptal-talepleri", label: "Iptal Talepleri", icon: XCircle },
@@ -35,6 +34,23 @@ export default function AdminSidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Yeni (Gelen Siparis = PAID) siparis sayisi — sidebar rozeti, ~30 sn'de bir yenilenir
+  const [newOrderCount, setNewOrderCount] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      try {
+        const res = await fetch('/api/admin/orders?status=PAID&limit=1', { credentials: 'include' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (active) setNewOrderCount(data?.pagination?.total ?? 0)
+      } catch {}
+    }
+    load()
+    const id = setInterval(load, 30000)
+    return () => { active = false; clearInterval(id) }
+  }, [pathname])
 
   const handleLogout = async () => {
     await fetch("/api/admin/auth/logout", { method: "POST", credentials: 'include' })
@@ -81,6 +97,11 @@ export default function AdminSidebar({ user }: SidebarProps) {
             >
               <item.icon className="h-5 w-5" />
               {item.label}
+              {item.href === "/admin/siparisler" && newOrderCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                  {newOrderCount}
+                </span>
+              )}
             </Link>
           )
         })}

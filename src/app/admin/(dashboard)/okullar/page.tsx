@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { normalizeSearch } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -217,9 +218,10 @@ export default function OkullarPage() {
     })
   }
 
+  const q = normalizeSearch(searchTerm)
   const filteredSchools = schools.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.address && s.address.toLowerCase().includes(searchTerm.toLowerCase()))
+    normalizeSearch(s.name).includes(q) ||
+    (s.address ? normalizeSearch(s.address).includes(q) : false)
   )
 
   return (
@@ -415,11 +417,10 @@ export default function OkullarPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value.toUpperCase() })}
                   placeholder={editingSchool ? "Bos birakirsaniz degismez" : "Bos birakirsaniz otomatik olusturulur"}
-                  minLength={8}
                   className="font-mono"
                 />
                 <p className="text-xs text-gray-500">
-                  En az 8 karakter. Bos birakilirsa sistem otomatik uretir. Veliler bu sifre ile giris yapar.
+                  Bos birakilirsa sistem otomatik uretir. Veliler bu sifre ile giris yapar.
                 </p>
               </div>
               <div className="border-t pt-4 mt-2">

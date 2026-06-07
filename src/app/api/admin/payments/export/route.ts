@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
+import { COMMISSION_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 import ExcelJS from 'exceljs'
 
 const safe = escapeCsvValue
@@ -22,7 +24,7 @@ export async function GET() {
             orders: {
               where: {
                 status: {
-                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+                  in: COMMISSION_STATUSES as OrderStatus[]
                 }
               }
             }

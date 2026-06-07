@@ -76,25 +76,25 @@ export async function PUT(
       }
     }
 
-    // Veli sifresi degisiyorsa: minimum guvenlik + collision check
+    // Veli sifresi degisiyorsa: minimum uzunluk siniri yok. Bos birakilirsa "degismedi"
+    // anlamina gelir (mevcut sifre korunur). Dolu ise benzersizlik kontrolu yapilir.
     if (typeof updateData.password === 'string') {
       const newPwd = (updateData.password as string).toUpperCase().trim()
-      if (newPwd.length < 8) {
-        return NextResponse.json(
-          { error: 'Veli sifresi en az 8 karakter olmali' },
-          { status: 400 }
-        )
+      if (!newPwd) {
+        // Bos -> sifreyi degistirme
+        delete updateData.password
+      } else {
+        const conflict = await prisma.school.findFirst({
+          where: { password: newPwd, NOT: { id } }
+        })
+        if (conflict) {
+          return NextResponse.json(
+            { error: 'Bu sifre baska bir okulda kullaniliyor' },
+            { status: 409 }
+          )
+        }
+        updateData.password = newPwd
       }
-      const conflict = await prisma.school.findFirst({
-        where: { password: newPwd, NOT: { id } }
-      })
-      if (conflict) {
-        return NextResponse.json(
-          { error: 'Bu sifre baska bir okulda kullaniliyor' },
-          { status: 409 }
-        )
-      }
-      updateData.password = newPwd
     }
 
     // directorEmail degisiyorsa lowercase

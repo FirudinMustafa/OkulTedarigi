@@ -2,20 +2,20 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { createInvoice } from '@/lib/kolaybi'
 import { createShipment } from '@/lib/aras-kargo'
-import { sendCargoNotification, sendInvoiceCreated } from '@/lib/email'
 
 interface BatchResult {
   orderId: string
   orderNumber: string
   success: boolean
   trackingNo?: string
-  invoiceNo?: string
-  autoInvoiced?: boolean
   error?: string
 }
 
+// Toplu Kargola: CARGO teslimat tipindeki Hazirlaniyor (CONFIRMED) siparisleri
+// Dagitimda (SHIPPED) durumuna alir + kargo (trackingNo) olusturur.
+// NOT: Fatura/KolayBi artik odeme aninda (checkout) gonderilir; burada fatura YOK.
+// Veliye mail GONDERILMEZ.
 export async function POST(request: Request) {
   try {
     const session = await getAdminSession()
@@ -30,111 +30,29 @@ export async function POST(request: Request) {
     const { orderIds } = body
 
     if (!Array.isArray(orderIds) || orderIds.length === 0 || orderIds.length > 500) {
-      return NextResponse.json(
-        { error: 'Siparis ID listesi gerekli (max 500)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Siparis ID listesi gerekli (max 500)' }, { status: 400 })
     }
     if (!orderIds.every(id => typeof id === 'string' && id.length > 0 && id.length <= 40)) {
       return NextResponse.json({ error: 'Gecersiz siparis ID' }, { status: 400 })
     }
 
-    // Kargo gonderimi yapilabilecek siparisleri getir
-    // PAID/CONFIRMED → otomatik fatura kesilir; INVOICED → direkt kargolanir
+    // Kargolanabilir siparisler: CONFIRMED (Hazirlaniyor)
     const orders = await prisma.order.findMany({
-      where: {
-        id: { in: orderIds },
-        status: { in: ['PAID', 'CONFIRMED', 'INVOICED'] }
-      },
-      include: {
-        class: {
-          include: {
-            school: true,
-            package: { include: { items: true } }
-          }
-        }
-      }
+      where: { id: { in: orderIds }, status: 'CONFIRMED' },
+      include: { class: { include: { school: true } } }
     })
 
-    // Sadece CARGO teslimat tipindeki siparisleri filtrele
+    // Sadece CARGO teslimat tipindekiler
     const cargoOrders = orders.filter(o => o.class.school.deliveryType === 'CARGO')
 
     if (cargoOrders.length === 0) {
-      return NextResponse.json(
-        { error: 'Kargo gonderilebilir siparis bulunamadi' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Kargolanabilir siparis bulunamadi' }, { status: 400 })
     }
 
-    // Closure icinde session non-null olsun diye id'yi onceden yakala
     const sessionId = session.id
 
-    // Tek bir siparis icin kargo+otomatik fatura akisi
     async function processOne(order: typeof cargoOrders[number]): Promise<BatchResult> {
       try {
-        let invoiceNo: string | null | undefined = order.invoiceNo
-        let autoInvoiced = false
-
-        // OTOMATIK FATURA: Henuz faturalanmamis siparisler icin once fatura kes
-        if (order.status === 'PAID' && !order.invoiceNo) {
-          const invoiceResult = await createInvoice({
-            orderNumber: order.orderNumber,
-            customerName: order.parentName,
-            customerEmail: order.email || undefined,
-            customerPhone: order.phone,
-            customerAddress: order.invoiceAddress || order.address || order.class.school.address || undefined,
-            isCorporate: order.isCorporateInvoice,
-            taxNumber: order.taxNumber || undefined,
-            taxOffice: order.taxOffice || undefined,
-            items: order.class.package?.items.map(item => ({
-              name: item.name,
-              quantity: item.quantity,
-              unitPrice: Number(item.price),
-              totalPrice: Number(item.price) * item.quantity
-            })) || [],
-            totalAmount: Number(order.totalAmount)
-          })
-
-          if (!invoiceResult.success) {
-            return {
-              orderId: order.id,
-              orderNumber: order.orderNumber,
-              success: false,
-              error: `Otomatik fatura olusturulamadi: ${invoiceResult.errorMessage || 'Bilinmeyen hata'}`
-            }
-          }
-
-          // Idempotent atomic update: invoiceNo bos olanlar icin
-          const claim = await prisma.order.updateMany({
-            where: { id: order.id, invoiceNo: null },
-            data: {
-              invoiceNo: invoiceResult.invoiceNo,
-              invoicePdfPath: invoiceResult.invoiceUrl,
-              invoiceDate: new Date(),
-              invoicedAt: new Date()
-            }
-          })
-          if (claim.count > 0) {
-            invoiceNo = invoiceResult.invoiceNo
-            autoInvoiced = true
-
-            logAction({
-              userId: sessionId,
-              userType: 'ADMIN',
-              action: 'AUTO_INVOICE_CREATED',
-              entity: 'ORDER',
-              entityId: order.id,
-              details: {
-                orderNumber: order.orderNumber,
-                invoiceNo: invoiceResult.invoiceNo,
-                autoCreated: true,
-                batchOperation: true
-              }
-            }).catch(err => console.error('Auto invoice log error:', err))
-          }
-        }
-
-        // Kargo olustur
         const shipmentResult = await createShipment({
           orderNumber: order.orderNumber,
           receiverName: order.parentName,
@@ -150,15 +68,13 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            invoiceNo: invoiceNo || undefined,
-            autoInvoiced,
             error: shipmentResult.errorMessage || 'Kargo olusturulamadi'
           }
         }
 
-        // Siparis durumunu guncelle (trackingNo bos olanlari atomic guncelle)
+        // Atomic: trackingNo bos + status hala CONFIRMED olanlari guncelle
         const shipUpdate = await prisma.order.updateMany({
-          where: { id: order.id, trackingNo: null },
+          where: { id: order.id, status: 'CONFIRMED', trackingNo: null },
           data: {
             status: 'SHIPPED',
             trackingNo: shipmentResult.trackingNo,
@@ -183,38 +99,15 @@ export async function POST(request: Request) {
           details: {
             orderNumber: order.orderNumber,
             trackingNo: shipmentResult.trackingNo,
-            autoInvoiced,
             batchOperation: true
           }
         }).catch(err => console.error('Batch shipment log error:', err))
-
-        // Best-effort email gonderimi (basarisiz olsa bile sevkiyat etkilenmez)
-        if (order.email && shipmentResult.trackingNo) {
-          sendCargoNotification({
-            email: order.email,
-            orderNumber: order.orderNumber,
-            parentName: order.parentName,
-            trackingNo: shipmentResult.trackingNo,
-            trackingUrl: shipmentResult.trackingUrl || `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${shipmentResult.trackingNo}`
-          }).catch(err => console.error('[email] sendCargoNotification batch hatasi:', err))
-        }
-        if (autoInvoiced && invoiceNo && order.email) {
-          sendInvoiceCreated({
-            email: order.email,
-            orderNumber: order.orderNumber,
-            parentName: order.parentName,
-            invoiceNo,
-            totalAmount: Number(order.totalAmount)
-          }).catch(err => console.error('[email] sendInvoiceCreated batch hatasi:', err))
-        }
 
         return {
           orderId: order.id,
           orderNumber: order.orderNumber,
           success: true,
           trackingNo: shipmentResult.trackingNo,
-          invoiceNo: invoiceNo || undefined,
-          autoInvoiced
         }
       } catch (error) {
         return {
@@ -226,7 +119,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Chunk paralelizasyon: 10'arli paralel calistir (3rd-party rate-limit korunur)
+    // 10'arli paralel (3rd-party rate-limit korunur)
     const CONCURRENCY = 10
     const results: BatchResult[] = []
     for (let i = 0; i < cargoOrders.length; i += CONCURRENCY) {
@@ -237,9 +130,7 @@ export async function POST(request: Request) {
 
     const successCount = results.filter(r => r.success).length
     const failCount = results.filter(r => !r.success).length
-    const autoInvoicedCount = results.filter(r => r.autoInvoiced).length
 
-    // Toplu islem logu
     await logAction({
       userId: session.id,
       userType: 'ADMIN',
@@ -249,28 +140,19 @@ export async function POST(request: Request) {
         totalOrders: cargoOrders.length,
         successCount,
         failCount,
-        autoInvoicedCount,
         orderIds: results.filter(r => r.success).map(r => r.orderId)
       }
     })
 
     return NextResponse.json({
       success: true,
-      message: `${successCount} kargo olusturuldu${autoInvoicedCount > 0 ? ` (${autoInvoicedCount} otomatik fatura)` : ''}${failCount > 0 ? `, ${failCount} hata` : ''}`,
+      message: `${successCount} kargo olusturuldu${failCount > 0 ? `, ${failCount} hata` : ''}`,
       results,
-      summary: {
-        total: cargoOrders.length,
-        success: successCount,
-        failed: failCount,
-        autoInvoiced: autoInvoicedCount
-      }
+      summary: { total: cargoOrders.length, success: successCount, failed: failCount }
     })
 
   } catch (error) {
     console.error('Toplu kargo olusturulamadi:', error)
-    return NextResponse.json(
-      { error: 'Toplu kargo olusturulamadi' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Toplu kargo olusturulamadi' }, { status: 500 })
   }
 }

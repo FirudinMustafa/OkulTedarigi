@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { normalizeSearch } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -215,8 +216,9 @@ export default function PaketlerPage() {
     setItems(newItems)
   }
 
+  const q = normalizeSearch(searchTerm)
   const filteredPackages = packages.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeSearch(p.name).includes(q)
   )
 
   return (

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { ACTIVE_SCHOOL_WHERE } from '@/lib/constants'
+import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -31,7 +32,7 @@ export async function GET() {
     ] = await Promise.all([
       prisma.order.count(),
       prisma.order.count({
-        where: { status: { in: ['NEW', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED', 'INVOICED'] } }
+        where: { status: { in: ['PAID', 'CONFIRMED', 'SHIPPED', 'UNDELIVERED'] } }
       }),
       prisma.order.count({
         where: { status: 'COMPLETED' }
@@ -50,26 +51,26 @@ export async function GET() {
     // Revenue calculations
     const [totalRevenue, monthlyRevenue, lastMonthRevenue, weeklyRevenue] = await Promise.all([
       prisma.order.aggregate({
-        where: { status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } },
+        where: { status: { in: REVENUE_STATUSES as OrderStatus[] } },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: REVENUE_STATUSES as OrderStatus[] },
           createdAt: { gte: startOfMonth }
         },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: REVENUE_STATUSES as OrderStatus[] },
           createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
         },
         _sum: { totalAmount: true }
       }),
       prisma.order.aggregate({
         where: {
-          status: { in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED'] },
+          status: { in: REVENUE_STATUSES as OrderStatus[] },
           createdAt: { gte: startOfWeek }
         },
         _sum: { totalAmount: true }
@@ -156,7 +157,7 @@ export async function GET() {
     // Delivery stats
     const deliveryStats = await Promise.all([
       prisma.order.count({ where: { status: 'SHIPPED' } }),
-      prisma.order.count({ where: { status: 'DELIVERED' } }),
+      prisma.order.count({ where: { status: 'UNDELIVERED' } }),
       prisma.order.count({ where: { status: 'COMPLETED' } })
     ])
 
@@ -211,7 +212,7 @@ export async function GET() {
       })),
       deliveryStats: {
         shipped: deliveryStats[0],
-        delivered: deliveryStats[1],
+        undelivered: deliveryStats[1],
         completed: deliveryStats[2]
       }
     })

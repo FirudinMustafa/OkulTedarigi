@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
+import { COMMISSION_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -17,7 +19,7 @@ export async function GET() {
             orders: {
               where: {
                 status: {
-                  in: ['PAID', 'CONFIRMED', 'INVOICED', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+                  in: COMMISSION_STATUSES as OrderStatus[]
                 }
               }
             }
