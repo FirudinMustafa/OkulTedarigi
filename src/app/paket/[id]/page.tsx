@@ -942,10 +942,7 @@ export default function PaketPage() {
                     <div>
                       <h3 className="font-semibold text-green-900 mb-1">Okula Teslim</h3>
                       <p className="text-green-700 text-sm">
-                        Siparişiniz, okulunuz tarafından belirlenen teslim tarihinde okulunuza teslim edilecektir.
-                      </p>
-                      <p className="text-green-700 text-sm mt-1 font-medium">
-                        (Aşağıdaki teslimat bilgilerini doldurmanız gerekmektedir.)
+                        Satın alacağınız eğitim materyalleri, yeni eğitim-öğretim döneminin başlamasıyla birlikte sınıf ortamında öğrencilere elden teslim edilecektir.
                       </p>
                     </div>
                   </div>
