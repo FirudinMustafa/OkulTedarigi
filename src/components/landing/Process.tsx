@@ -36,7 +36,7 @@ const STEPS = [
   {
     num: '4',
     title: 'Kitaplar teslim edilir',
-    desc: 'Siparişler okula toplu ya da kargo ile eve teslim edilir. Her adım şeffafça takip edilir.',
+    desc: 'Tamamlanan siparişler; okul yönetiminin belirlediği tarihte doğrudan okulda öğrencilerimize teslim edilir veya okul açılış döneminde, sipariş esnasında belirttiğiniz adrese kargo ile ulaştırılır. Sürecin her aşaması, sipariş numaranız ile şeffaf bir şekilde takip edilebilmektedir.',
     iconA: '/images/surec/4.1.png',
     iconB: '/images/surec/4.2.png',
   },
