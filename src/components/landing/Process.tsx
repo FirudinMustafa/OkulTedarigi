@@ -169,8 +169,8 @@ function ProcessCard({
             />
           </div>
 
-          {/* Icon B — bottom-left */}
-          <div className="pointer-events-none absolute bottom-6 left-6 md:bottom-10 md:left-10 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+          {/* Icon B — bottom-left (uzun metinle cakismamasi icin tum ekranlarda biraz sola cekildi) */}
+          <div className="pointer-events-none absolute bottom-6 left-2 md:bottom-10 md:left-4 lg:left-2 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
             <Image
               src={step.iconB}
               alt=""

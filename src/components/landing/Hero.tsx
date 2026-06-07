@@ -135,12 +135,12 @@ export default function Hero() {
               </Link>
               <a
                 href="#nasil-calisir"
-                className="group inline-flex items-center gap-1.5 text-[15px] font-medium text-[#10b981] hover:underline underline-offset-4"
+                className="group inline-flex items-center gap-1.5 text-[15px] font-medium text-[#047857] hover:underline underline-offset-4"
               >
-                Nasıl çalışıyor?
+                <span className="text-gradient-green-dark">Nasıl çalışıyor?</span>
                 <ArrowRight
                   weight="bold"
-                  className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+                  className="w-3.5 h-3.5 text-[#047857] transition-transform group-hover:translate-x-0.5"
                 />
               </a>
             </div>
