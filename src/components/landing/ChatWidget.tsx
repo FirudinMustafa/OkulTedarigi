@@ -132,7 +132,7 @@ export default function ChatWidget() {
               onClick={() => { setOpen(true); setNudge(false) }}
               className="flex items-start gap-2 text-left"
             >
-              <Robot weight="fill" className="w-5 h-5 text-[#10b981] shrink-0 mt-0.5" />
+              <Robot weight="fill" className="w-5 h-5 text-[#2563eb] shrink-0 mt-0.5" />
               <span className="text-[13px] text-apple-ink leading-snug">
                 Bir yardıma ihtiyacınız var mı? 👋
               </span>
@@ -146,7 +146,7 @@ export default function ChatWidget() {
         type="button"
         aria-label={open ? 'Sohbeti kapat' : 'Yardım asistanını aç'}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-[60] flex items-center justify-center w-14 h-14 rounded-full bg-[#10b981] hover:bg-[#059669] text-white shadow-[0_8px_30px_-6px_rgba(16,185,129,0.5)] transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-5 right-5 z-[60] flex items-center justify-center w-14 h-14 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-[0_8px_30px_-6px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
       >
         {open ? (
           <X weight="bold" className="w-6 h-6" />
@@ -170,7 +170,7 @@ export default function ChatWidget() {
         <div className="flex flex-col h-[28rem] max-h-[70vh] bg-white border border-apple-border/60 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] overflow-hidden">
           {/* Başlık */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-apple-border/60 bg-apple-panel">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#10b981] text-white">
+            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2563eb] text-white">
               <Robot weight="fill" className="w-5 h-5" />
             </div>
             <div>
@@ -228,14 +228,14 @@ export default function ChatWidget() {
                 }}
                 rows={1}
                 placeholder="Sorunuzu yazın..."
-                className="flex-1 resize-none max-h-24 px-3.5 py-2.5 rounded-2xl bg-apple-panel text-[13.5px] text-apple-ink placeholder:text-apple-gray focus:outline-none focus:ring-2 focus:ring-[#10b981]/40"
+                className="flex-1 resize-none max-h-24 px-3.5 py-2.5 rounded-2xl bg-apple-panel text-[13.5px] text-apple-ink placeholder:text-apple-gray focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40"
               />
               <button
                 type="button"
                 onClick={send}
                 disabled={loading || !input.trim()}
                 aria-label="Gönder"
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-[#10b981] hover:bg-[#059669] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <PaperPlaneRight weight="fill" className="w-4 h-4" />
               </button>
