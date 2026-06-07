@@ -119,7 +119,7 @@ export default function PaketPage() {
   const [students, setStudents] = useState<StudentRow[]>([{ firstName: '', lastName: '', section: '' }])
 
   const updateStudent = (idx: number, field: keyof StudentRow, value: string) => {
-    setStudents(prev => prev.map((s, i) => i === idx ? { ...s, [field]: field === 'section' ? value.toUpperCase().slice(0, 4) : value } : s))
+    setStudents(prev => prev.map((s, i) => i === idx ? { ...s, [field]: field === 'section' ? value.toUpperCase().slice(0, 1) : value } : s))
   }
   const addStudent = () => {
     setStudents(prev => prev.length >= MAX_STUDENTS ? prev : [...prev, { firstName: '', lastName: '', section: '' }])
@@ -494,6 +494,11 @@ export default function PaketPage() {
       scrollToField('f-students')
       return false
     }
+    if (students.some(s => !s.section.trim())) {
+      setError("Lütfen tüm öğrenciler için şube bilgisini girin")
+      scrollToField('f-students')
+      return false
+    }
 
     // Bireysel fatura: TC kimlik no zorunlu
     if (invoiceType === 'bireysel') {
@@ -632,7 +637,7 @@ export default function PaketPage() {
       students: students.map(s => ({
         firstName: s.firstName.trim(),
         lastName: s.lastName.trim(),
-        section: s.section.trim() || null,
+        section: s.section.trim(),
       })),
       phone: phone.replace(/\s/g, ''),
       email,
@@ -1116,14 +1121,15 @@ export default function PaketPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Şube <span className="text-gray-400 text-xs">(Opsiyonel)</span>
+                            Şube <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
                             value={student.section}
                             onChange={(e) => updateStudent(idx, 'section', e.target.value)}
-                            placeholder="A, B, C..."
-                            maxLength={4}
+                            placeholder="A"
+                            maxLength={1}
+                            required
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
                         </div>

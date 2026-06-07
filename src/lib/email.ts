@@ -225,15 +225,21 @@ export async function sendOrderConfirmation(data: {
   studentName: string
   packageName: string
   totalAmount: number
+  isSchoolDelivery?: boolean
 }): Promise<EmailResult> {
   const safeParent = escapeHtml(data.parentName)
   const safeStudent = escapeHtml(data.studentName)
   const safeOrder = escapeHtml(data.orderNumber)
   const safePackage = escapeHtml(data.packageName)
 
+  // Okula teslim olan okullarda elden teslim notu eklenir
+  const schoolDeliveryNote = data.isSchoolDelivery
+    ? paragraph('Sat\u0131n alaca\u011f\u0131n\u0131z e\u011fitim materyalleri, yeni e\u011fitim-\u00f6\u011fretim d\u00f6neminin ba\u015flamas\u0131yla birlikte s\u0131n\u0131f ortam\u0131nda \u00f6\u011frencilere elden teslim edilecektir.')
+    : ''
+
   const content = `
     ${greeting(safeParent)}
-    ${paragraph(`<strong>${safeStudent}</strong> i\u00e7in sipari\u015finiz ba\u015far\u0131yla olu\u015fturuldu.`)}
+    ${paragraph(`<strong>${safeStudent}</strong> i\u00e7in \u00f6demeniz ba\u015far\u0131yla al\u0131nd\u0131 ve sipari\u015finiz olu\u015fturuldu.`)}
 
     <div style="text-align: center; margin: 24px 0;">
       ${statusBadge('Sipari\u015f Al\u0131nd\u0131', COLORS.primaryLight)}
@@ -248,7 +254,7 @@ export async function sendOrderConfirmation(data: {
 
     ${ctaButton('Sipari\u015fi Takip Et', `${EMAIL_BASE_URL}/siparis-takip`)}
 
-    ${paragraph('Sipari\u015finiz \u00f6deme a\u015famas\u0131na ge\u00e7irildi. \u00d6demenizi tamamlad\u0131\u011f\u0131n\u0131zda sipari\u015finiz haz\u0131rlanmaya ba\u015flayacakt\u0131r.')}
+    ${schoolDeliveryNote}
   `
 
   return sendEmailInternal({

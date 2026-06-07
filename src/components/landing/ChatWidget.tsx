@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChatCircle, X, PaperPlaneRight, Robot } from '@phosphor-icons/react'
+import { X, PaperPlaneRight, Robot } from '@phosphor-icons/react'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
@@ -11,10 +11,24 @@ const WELCOME: Msg = {
     'Merhaba! 👋 OkulTedarigim asistanıyım. Sipariş verme, şifre, teslimat, ödeme veya iade gibi konularda size yardımcı olabilirim. Nasıl yardımcı olabilirim?',
 }
 
-// Yanıt içindeki /siparis, /siparis-takip gibi iç linkleri tıklanabilir yapar.
+// Yanıt içindeki /siparis, /siparis-takip gibi iç linkleri ve WhatsApp (wa.me) linkini
+// tıklanabilir yapar.
 function renderContent(text: string) {
-  const parts = text.split(/(\/(?:siparis-takip|siparis|kvkk|mesafeli-satis)\b|#sss)/g)
+  const parts = text.split(/(\/(?:siparis-takip|siparis|kvkk|mesafeli-satis)\b|#sss|https?:\/\/wa\.me\/\d+)/g)
   return parts.map((part, i) => {
+    if (/^https?:\/\/wa\.me\/\d+$/.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-semibold text-[#10b981] underline underline-offset-2 hover:opacity-80"
+        >
+          WhatsApp Destek Hattı
+        </a>
+      )
+    }
     if (/^\/(siparis-takip|siparis|kvkk|mesafeli-satis)$/.test(part) || part === '#sss') {
       const href = part === '#sss' ? '/#sss' : part
       return (
@@ -36,6 +50,8 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Msg[]>([WELCOME])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [nudge, setNudge] = useState(false)
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -43,6 +59,15 @@ export default function ChatWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, loading, open])
+
+  // "Bir yardıma ihtiyacınız var mı?" bildirim balonu — sayfa açıldıktan ~4 sn sonra,
+  // sohbet açılmamışsa ve kapatılmamışsa bir kez gösterilir.
+  useEffect(() => {
+    if (open) { setNudge(false); return }
+    if (nudgeDismissed) return
+    const t = setTimeout(() => setNudge(true), 4000)
+    return () => clearTimeout(t)
+  }, [open, nudgeDismissed])
 
   const send = async () => {
     const text = input.trim()
@@ -90,7 +115,33 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Yüzen buton */}
+      {/* "Bir yardıma ihtiyacınız var mı?" bildirim balonu */}
+      {nudge && !open && (
+        <div className="fixed bottom-[5.5rem] right-5 z-[60] max-w-[15rem] animate-in fade-in slide-in-from-bottom-2">
+          <div className="relative bg-white border border-apple-border/60 rounded-2xl rounded-br-sm shadow-[0_12px_40px_-12px_rgba(0,0,0,0.25)] px-4 py-3 pr-7">
+            <button
+              type="button"
+              aria-label="Kapat"
+              onClick={() => { setNudge(false); setNudgeDismissed(true) }}
+              className="absolute top-1.5 right-1.5 text-apple-gray hover:text-apple-ink"
+            >
+              <X weight="bold" className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(true); setNudge(false) }}
+              className="flex items-start gap-2 text-left"
+            >
+              <Robot weight="fill" className="w-5 h-5 text-[#10b981] shrink-0 mt-0.5" />
+              <span className="text-[13px] text-apple-ink leading-snug">
+                Bir yardıma ihtiyacınız var mı? 👋
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Yüzen buton (chatbot ikonu) */}
       <button
         type="button"
         aria-label={open ? 'Sohbeti kapat' : 'Yardım asistanını aç'}
@@ -100,7 +151,11 @@ export default function ChatWidget() {
         {open ? (
           <X weight="bold" className="w-6 h-6" />
         ) : (
-          <ChatCircle weight="fill" className="w-7 h-7" />
+          <Robot weight="fill" className="w-7 h-7" />
+        )}
+        {/* Yeni asistan oldugunu vurgulayan kucuk nokta */}
+        {!open && (
+          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-white" />
         )}
       </button>
 

@@ -351,6 +351,7 @@ export async function POST(request: Request) {
         studentName: primaryStudentName,
         packageName: classData.package.name,
         totalAmount: effectiveAmount,
+        isSchoolDelivery: classData.school.deliveryType === 'SCHOOL_DELIVERY',
       }).catch(err => console.error('[email] sendOrderConfirmation hatasi:', err))
     }
 

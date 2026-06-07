@@ -175,7 +175,8 @@ export const MAX_STUDENTS_PER_ORDER = 5
 export const orderStudentSchema = z.object({
   firstName: z.string().trim().min(2, 'Ogrenci adi en az 2 karakter olmali').max(100).regex(NO_HTML_REGEX, NO_HTML_MSG),
   lastName: z.string().trim().min(2, 'Ogrenci soyadi en az 2 karakter olmali').max(100).regex(NO_HTML_REGEX, NO_HTML_MSG),
-  section: studentSectionSchema,
+  // Sube zorunlu — tek harf (A, B, C...)
+  section: z.string().trim().min(1, 'Sube zorunlu').max(1, 'Sube tek harf olmali').regex(NO_HTML_REGEX, NO_HTML_MSG),
 })
 
 // Veli order body — guvenlik kritik (DoS, oversized fields)
