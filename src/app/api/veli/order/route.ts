@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/security'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 // Siparis sorgulama (GET)
 //
@@ -10,6 +12,7 @@ import { getClientIp } from '@/lib/security'
 //
 // Guvenlik notu: orderNumber cryptographic random (32^8 ~= 1.1T) + IP rate-limit ile brute-force engellenir.
 export async function GET(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const { searchParams } = new URL(request.url)
     const orderNumber = searchParams.get('orderNumber')
@@ -17,7 +20,7 @@ export async function GET(request: Request) {
 
     if (!orderNumber && !orderId) {
       return NextResponse.json(
-        { error: 'Siparis numarasi gerekli' },
+        { error: t('veli.orderNumberRequired') },
         { status: 400 }
       )
     }
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
         ? Math.ceil((rateLimitResult.blockedUntil.getTime() - Date.now()) / 60000)
         : 5
       return NextResponse.json(
-        { error: `Cok fazla deneme. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('veli.tooManyAttempts', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -72,7 +75,7 @@ export async function GET(request: Request) {
       // Yanlış sorgu — sayaç artsın (brute-force tespit)
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Siparis bulunamadi' },
+        { error: t('veli.orderNotFound') },
         { status: 404 }
       )
     }
@@ -116,7 +119,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Siparis sorgulama hatasi:', error)
     return NextResponse.json(
-      { error: 'Bir hata olustu' },
+      { error: t('veli.genericError') },
       { status: 500 }
     )
   }

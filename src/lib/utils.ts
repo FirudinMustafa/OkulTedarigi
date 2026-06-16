@@ -20,37 +20,49 @@ export function normalizeSearch(value: string | null | undefined): string {
     .toLowerCase()
 }
 
-export function formatCurrency(amount: number | string): string {
+// Uygulama dil kodunu (tr/en/de/ar) Intl BCP-47 etiketine cevirir.
+// Para birimi her zaman TRY kalir; yalnizca bicimlendirme diline gore degisir.
+const LOCALE_BCP47: Record<string, string> = {
+  tr: 'tr-TR',
+  en: 'en-US',
+  de: 'de-DE',
+  ar: 'ar',
+}
+function bcp47(locale?: string): string {
+  return (locale && LOCALE_BCP47[locale]) || 'tr-TR'
+}
+
+export function formatCurrency(amount: number | string, locale?: string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('tr-TR', {
+  return new Intl.NumberFormat(bcp47(locale), {
     style: 'currency',
     currency: 'TRY',
     minimumFractionDigits: 0,
   }).format(num)
 }
 
-export function formatNumber(amount: number | string): string {
+export function formatNumber(amount: number | string, locale?: string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('tr-TR').format(num)
+  return new Intl.NumberFormat(bcp47(locale)).format(num)
 }
 
-export function formatPrice(amount: number | string): string {
+export function formatPrice(amount: number | string, locale?: string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
+  return new Intl.NumberFormat(bcp47(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string, locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(bcp47(locale), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   }).format(d)
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string, locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(bcp47(locale), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -59,17 +71,17 @@ export function formatDateTime(date: Date | string): string {
   }).format(d)
 }
 
-export function formatDateShort(date: Date | string): string {
+export function formatDateShort(date: Date | string, locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(bcp47(locale), {
     day: '2-digit',
     month: 'short',
   }).format(d)
 }
 
-export function formatDateTimeFull(date: Date | string): string {
+export function formatDateTimeFull(date: Date | string, locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(bcp47(locale), {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

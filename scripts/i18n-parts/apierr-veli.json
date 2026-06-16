@@ -1,0 +1,222 @@
+{
+  "tr": {
+    "apiErrors": {
+      "veli": {
+        "chatUnavailable": "Sohbet asistanı şu an kullanılamıyor.",
+        "chatTooManyMessages": "Çok fazla mesaj gönderildi. {minutes} dakika sonra tekrar deneyin.",
+        "chatEmptyReply": "Şu an yanıt veremiyorum, lütfen tekrar deneyin.",
+        "chatBusy": "Şu an yanıt veremiyorum, lütfen biraz sonra tekrar deneyin.",
+        "tooManyAttempts": "Çok fazla deneme. {minutes} dakika sonra tekrar deneyin.",
+        "tooManyRequests": "Çok fazla istek. {minutes} dakika sonra tekrar deneyin.",
+        "tooManyRequestsWait": "Çok fazla istek. Lütfen biraz bekleyin.",
+        "invalidTcKimlik": "Geçerli bir TC Kimlik Numarası giriniz",
+        "corporateInvoiceRequired": "Kurumsal fatura için Vergi No, Firma Unvanı ve Vergi Dairesi zorunludur",
+        "classOrPackageNotFound": "Sınıf veya paket bulunamadı",
+        "classOrSchoolInactive": "Bu sınıf veya okul aktif değil",
+        "selectAtLeastOneItem": "En az bir ürün seçmelisiniz",
+        "paymentFailed": "Ödeme işlemi başarısız",
+        "orderSaveFailed": "Ödeme alındı ancak sipariş kaydedilemedi. Lütfen destek ile iletişime geçin.",
+        "checkoutFailed": "Sipariş tamamlanamadı",
+        "orderNotFound": "Sipariş bulunamadı",
+        "authFailed": "Kimlik doğrulaması başarısız. Telefon son 4 hane doğru mu?",
+        "orderNotCancellable": "Bu sipariş artık iptal edilemez",
+        "cancelRejectedWait": "Reddedilen talepten sonra {hours} saat beklemelisiniz.",
+        "cancelRequestExists": "Bu sipariş için zaten bir iptal talebi mevcut",
+        "cancelRequestFailed": "İptal talebi oluşturulamadı",
+        "orderIdRequired": "Sipariş ID gerekli",
+        "cancelRequestQueryFailed": "İptal talebi sorgulanamadı",
+        "invalidClassId": "Geçersiz sınıf kimliği",
+        "classNotFound": "Sınıf bulunamadı",
+        "classInactive": "Bu sınıf aktif değil",
+        "schoolInactive": "Bu okul aktif değil",
+        "noClassPackage": "Bu sınıf için paket tanımlanmamış",
+        "invalidDiscount": "Geçersiz indirim kodu",
+        "discountInactive": "Bu indirim kodu artık geçerli değil",
+        "discountExpired": "Bu indirim kodunun geçerlilik süresi dolmuş",
+        "discountLimitReached": "Bu indirim kodu kullanım limitine ulaşmış",
+        "discountMinAmount": "Bu indirim kodu en az {amount} TL sipariş tutarı gerektirir",
+        "orderNumberRequired": "Sipariş numarası gerekli",
+        "invalidPassword": "Geçersiz şifre. Lütfen okulunuzdan aldığınız şifrenizi kontrol edin.",
+        "noActiveClassPackage": "Bu okul için henüz aktif bir sınıf ve paket tanımlanmamış.",
+        "genericError": "Bir hata oluştu",
+        "genericErrorRetry": "Bir hata oluştu. Lütfen tekrar deneyin."
+      },
+      "mudur": {
+        "tooManyFailedAttempts": "Çok fazla başarısız deneme. {minutes} dakika sonra tekrar deneyin.",
+        "invalidCredentials": "Geçersiz email veya şifre",
+        "loginFailed": "Giriş yapılamadı",
+        "logoutFailed": "Çıkış yapılamadı",
+        "exportFailed": "Dışa aktarma başarısız",
+        "schoolNotFound": "Okul bulunamadı"
+      },
+      "common": {
+        "unauthorized": "Yetkisiz erişim"
+      }
+    }
+  },
+  "en": {
+    "apiErrors": {
+      "veli": {
+        "chatUnavailable": "The chat assistant is currently unavailable.",
+        "chatTooManyMessages": "Too many messages sent. Please try again in {minutes} minutes.",
+        "chatEmptyReply": "I can't respond right now, please try again.",
+        "chatBusy": "I can't respond right now, please try again shortly.",
+        "tooManyAttempts": "Too many attempts. Please try again in {minutes} minutes.",
+        "tooManyRequests": "Too many requests. Please try again in {minutes} minutes.",
+        "tooManyRequestsWait": "Too many requests. Please wait a moment.",
+        "invalidTcKimlik": "Please enter a valid Turkish ID number",
+        "corporateInvoiceRequired": "Tax Number, Company Name and Tax Office are required for a corporate invoice",
+        "classOrPackageNotFound": "Class or package not found",
+        "classOrSchoolInactive": "This class or school is not active",
+        "selectAtLeastOneItem": "You must select at least one item",
+        "paymentFailed": "Payment failed",
+        "orderSaveFailed": "Payment was received but the order could not be saved. Please contact support.",
+        "checkoutFailed": "The order could not be completed",
+        "orderNotFound": "Order not found",
+        "authFailed": "Identity verification failed. Are the last 4 digits of your phone number correct?",
+        "orderNotCancellable": "This order can no longer be cancelled",
+        "cancelRejectedWait": "You must wait {hours} hours after a rejected request.",
+        "cancelRequestExists": "A cancellation request already exists for this order",
+        "cancelRequestFailed": "The cancellation request could not be created",
+        "orderIdRequired": "Order ID is required",
+        "cancelRequestQueryFailed": "The cancellation request could not be queried",
+        "invalidClassId": "Invalid class ID",
+        "classNotFound": "Class not found",
+        "classInactive": "This class is not active",
+        "schoolInactive": "This school is not active",
+        "noClassPackage": "No package is defined for this class",
+        "invalidDiscount": "Invalid discount code",
+        "discountInactive": "This discount code is no longer valid",
+        "discountExpired": "This discount code has expired",
+        "discountLimitReached": "This discount code has reached its usage limit",
+        "discountMinAmount": "This discount code requires a minimum order amount of {amount} TL",
+        "orderNumberRequired": "Order number is required",
+        "invalidPassword": "Invalid password. Please check the password you received from your school.",
+        "noActiveClassPackage": "No active class and package has been defined for this school yet.",
+        "genericError": "An error occurred",
+        "genericErrorRetry": "An error occurred. Please try again."
+      },
+      "mudur": {
+        "tooManyFailedAttempts": "Too many failed attempts. Please try again in {minutes} minutes.",
+        "invalidCredentials": "Invalid email or password",
+        "loginFailed": "Login failed",
+        "logoutFailed": "Logout failed",
+        "exportFailed": "Export failed",
+        "schoolNotFound": "School not found"
+      },
+      "common": {
+        "unauthorized": "Unauthorized access"
+      }
+    }
+  },
+  "de": {
+    "apiErrors": {
+      "veli": {
+        "chatUnavailable": "Der Chat-Assistent ist derzeit nicht verfügbar.",
+        "chatTooManyMessages": "Zu viele Nachrichten gesendet. Bitte versuchen Sie es in {minutes} Minuten erneut.",
+        "chatEmptyReply": "Ich kann gerade nicht antworten, bitte versuchen Sie es erneut.",
+        "chatBusy": "Ich kann gerade nicht antworten, bitte versuchen Sie es in Kürze erneut.",
+        "tooManyAttempts": "Zu viele Versuche. Bitte versuchen Sie es in {minutes} Minuten erneut.",
+        "tooManyRequests": "Zu viele Anfragen. Bitte versuchen Sie es in {minutes} Minuten erneut.",
+        "tooManyRequestsWait": "Zu viele Anfragen. Bitte warten Sie einen Moment.",
+        "invalidTcKimlik": "Bitte geben Sie eine gültige türkische Personalausweisnummer ein",
+        "corporateInvoiceRequired": "Für eine Firmenrechnung sind Steuernummer, Firmenname und Finanzamt erforderlich",
+        "classOrPackageNotFound": "Klasse oder Paket nicht gefunden",
+        "classOrSchoolInactive": "Diese Klasse oder Schule ist nicht aktiv",
+        "selectAtLeastOneItem": "Sie müssen mindestens einen Artikel auswählen",
+        "paymentFailed": "Zahlung fehlgeschlagen",
+        "orderSaveFailed": "Die Zahlung wurde erhalten, aber die Bestellung konnte nicht gespeichert werden. Bitte kontaktieren Sie den Support.",
+        "checkoutFailed": "Die Bestellung konnte nicht abgeschlossen werden",
+        "orderNotFound": "Bestellung nicht gefunden",
+        "authFailed": "Identitätsprüfung fehlgeschlagen. Sind die letzten 4 Ziffern Ihrer Telefonnummer korrekt?",
+        "orderNotCancellable": "Diese Bestellung kann nicht mehr storniert werden",
+        "cancelRejectedWait": "Nach einer abgelehnten Anfrage müssen Sie {hours} Stunden warten.",
+        "cancelRequestExists": "Für diese Bestellung besteht bereits eine Stornierungsanfrage",
+        "cancelRequestFailed": "Die Stornierungsanfrage konnte nicht erstellt werden",
+        "orderIdRequired": "Bestell-ID erforderlich",
+        "cancelRequestQueryFailed": "Die Stornierungsanfrage konnte nicht abgefragt werden",
+        "invalidClassId": "Ungültige Klassen-ID",
+        "classNotFound": "Klasse nicht gefunden",
+        "classInactive": "Diese Klasse ist nicht aktiv",
+        "schoolInactive": "Diese Schule ist nicht aktiv",
+        "noClassPackage": "Für diese Klasse ist kein Paket definiert",
+        "invalidDiscount": "Ungültiger Rabattcode",
+        "discountInactive": "Dieser Rabattcode ist nicht mehr gültig",
+        "discountExpired": "Dieser Rabattcode ist abgelaufen",
+        "discountLimitReached": "Dieser Rabattcode hat sein Nutzungslimit erreicht",
+        "discountMinAmount": "Dieser Rabattcode erfordert einen Mindestbestellwert von {amount} TL",
+        "orderNumberRequired": "Bestellnummer erforderlich",
+        "invalidPassword": "Ungültiges Passwort. Bitte überprüfen Sie das Passwort, das Sie von Ihrer Schule erhalten haben.",
+        "noActiveClassPackage": "Für diese Schule wurde noch keine aktive Klasse und kein Paket definiert.",
+        "genericError": "Ein Fehler ist aufgetreten",
+        "genericErrorRetry": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      },
+      "mudur": {
+        "tooManyFailedAttempts": "Zu viele fehlgeschlagene Versuche. Bitte versuchen Sie es in {minutes} Minuten erneut.",
+        "invalidCredentials": "Ungültige E-Mail oder ungültiges Passwort",
+        "loginFailed": "Anmeldung fehlgeschlagen",
+        "logoutFailed": "Abmeldung fehlgeschlagen",
+        "exportFailed": "Export fehlgeschlagen",
+        "schoolNotFound": "Schule nicht gefunden"
+      },
+      "common": {
+        "unauthorized": "Nicht autorisierter Zugriff"
+      }
+    }
+  },
+  "ar": {
+    "apiErrors": {
+      "veli": {
+        "chatUnavailable": "مساعد المحادثة غير متاح حاليًا.",
+        "chatTooManyMessages": "تم إرسال عدد كبير جدًا من الرسائل. يرجى المحاولة مرة أخرى بعد {minutes} دقيقة.",
+        "chatEmptyReply": "لا يمكنني الرد الآن، يرجى المحاولة مرة أخرى.",
+        "chatBusy": "لا يمكنني الرد الآن، يرجى المحاولة مرة أخرى بعد قليل.",
+        "tooManyAttempts": "محاولات كثيرة جدًا. يرجى المحاولة مرة أخرى بعد {minutes} دقيقة.",
+        "tooManyRequests": "طلبات كثيرة جدًا. يرجى المحاولة مرة أخرى بعد {minutes} دقيقة.",
+        "tooManyRequestsWait": "طلبات كثيرة جدًا. يرجى الانتظار قليلًا.",
+        "invalidTcKimlik": "يرجى إدخال رقم هوية تركي صحيح",
+        "corporateInvoiceRequired": "الرقم الضريبي واسم الشركة ومكتب الضرائب مطلوبة للفاتورة المؤسسية",
+        "classOrPackageNotFound": "لم يتم العثور على الصف أو الحزمة",
+        "classOrSchoolInactive": "هذا الصف أو المدرسة غير نشط",
+        "selectAtLeastOneItem": "يجب اختيار منتج واحد على الأقل",
+        "paymentFailed": "فشلت عملية الدفع",
+        "orderSaveFailed": "تم استلام الدفع ولكن تعذّر حفظ الطلب. يرجى التواصل مع الدعم.",
+        "checkoutFailed": "تعذّر إتمام الطلب",
+        "orderNotFound": "لم يتم العثور على الطلب",
+        "authFailed": "فشل التحقق من الهوية. هل آخر 4 أرقام من رقم هاتفك صحيحة؟",
+        "orderNotCancellable": "لم يعد بالإمكان إلغاء هذا الطلب",
+        "cancelRejectedWait": "يجب الانتظار {hours} ساعة بعد الطلب المرفوض.",
+        "cancelRequestExists": "يوجد بالفعل طلب إلغاء لهذا الطلب",
+        "cancelRequestFailed": "تعذّر إنشاء طلب الإلغاء",
+        "orderIdRequired": "معرّف الطلب مطلوب",
+        "cancelRequestQueryFailed": "تعذّر الاستعلام عن طلب الإلغاء",
+        "invalidClassId": "معرّف صف غير صالح",
+        "classNotFound": "لم يتم العثور على الصف",
+        "classInactive": "هذا الصف غير نشط",
+        "schoolInactive": "هذه المدرسة غير نشطة",
+        "noClassPackage": "لا توجد حزمة معرّفة لهذا الصف",
+        "invalidDiscount": "رمز خصم غير صالح",
+        "discountInactive": "لم يعد رمز الخصم هذا صالحًا",
+        "discountExpired": "انتهت صلاحية رمز الخصم هذا",
+        "discountLimitReached": "وصل رمز الخصم هذا إلى حدّ الاستخدام",
+        "discountMinAmount": "يتطلب رمز الخصم هذا حدًا أدنى لمبلغ الطلب قدره {amount} ليرة تركية",
+        "orderNumberRequired": "رقم الطلب مطلوب",
+        "invalidPassword": "كلمة مرور غير صحيحة. يرجى التحقق من كلمة المرور التي حصلت عليها من مدرستك.",
+        "noActiveClassPackage": "لم يتم بعد تعريف صف وحزمة نشطين لهذه المدرسة.",
+        "genericError": "حدث خطأ",
+        "genericErrorRetry": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      },
+      "mudur": {
+        "tooManyFailedAttempts": "محاولات فاشلة كثيرة جدًا. يرجى المحاولة مرة أخرى بعد {minutes} دقيقة.",
+        "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+        "loginFailed": "فشل تسجيل الدخول",
+        "logoutFailed": "فشل تسجيل الخروج",
+        "exportFailed": "فشل التصدير",
+        "schoolNotFound": "لم يتم العثور على المدرسة"
+      },
+      "common": {
+        "unauthorized": "وصول غير مصرّح به"
+      }
+    }
+  }
+}

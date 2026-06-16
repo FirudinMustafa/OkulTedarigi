@@ -3,15 +3,19 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { adminClassUpdateSchema, formatZodError } from '@/lib/validators'
+import { buildTranslationData } from '@/lib/i18n-content'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -29,14 +33,14 @@ export async function GET(
     })
 
     if (!classData) {
-      return NextResponse.json({ error: 'Sinif bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.classNotFound') }, { status: 404 })
     }
 
     return NextResponse.json({ class: classData })
   } catch (error) {
     console.error('Sinif getirilemedi:', error)
     return NextResponse.json(
-      { error: 'Sinif yuklenemedi' },
+      { error: t('catalog.classLoadFailed') },
       { status: 500 }
     )
   }
@@ -46,10 +50,11 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -57,7 +62,7 @@ export async function PUT(
     const parsed = adminClassUpdateSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -72,6 +77,16 @@ export async function PUT(
       }
     }
 
+    // Cok dilli sinif adi cevirileri (varsa) — bos string -> null
+    const pdata = parsed.data as Record<string, unknown>
+    if ('name_en' in pdata || 'name_de' in pdata || 'name_ar' in pdata) {
+      Object.assign(updateData, buildTranslationData('name', {
+        en: pdata.name_en as string | null | undefined,
+        de: pdata.name_de as string | null | undefined,
+        ar: pdata.name_ar as string | null | undefined,
+      }))
+    }
+
     // packageId bos string ise null yap
     if (updateData.packageId === "") {
       updateData.packageId = null
@@ -79,12 +94,12 @@ export async function PUT(
 
     // Validation: name, commissionAmount
     if (typeof updateData.name === 'string' && (!updateData.name.trim() || updateData.name.length > 100)) {
-      return NextResponse.json({ error: 'Sinif adi 1-100 karakter olmali' }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.classNameLength') }, { status: 400 })
     }
     if (updateData.commissionAmount !== undefined) {
       const c = Number(updateData.commissionAmount)
       if (!isFinite(c) || c < 0 || c > 1_000_000) {
-        return NextResponse.json({ error: 'Komisyon 0 ile 1.000.000 arasinda olmali' }, { status: 400 })
+        return NextResponse.json({ error: t('catalog.commissionRange') }, { status: 400 })
       }
       updateData.commissionAmount = c
     }
@@ -96,7 +111,7 @@ export async function PUT(
         select: { id: true }
       })
       if (!school) {
-        return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+        return NextResponse.json({ error: t('catalog.schoolNotFound') }, { status: 404 })
       }
     }
     if (typeof updateData.packageId === 'string') {
@@ -105,12 +120,12 @@ export async function PUT(
         select: { id: true }
       })
       if (!pkg) {
-        return NextResponse.json({ error: 'Paket bulunamadi' }, { status: 404 })
+        return NextResponse.json({ error: t('catalog.packageNotFound') }, { status: 404 })
       }
     }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'Guncellenecek alan bulunamadi' }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.noFieldsToUpdate') }, { status: 400 })
     }
 
     const classData = await prisma.class.update({
@@ -131,7 +146,7 @@ export async function PUT(
   } catch (error) {
     console.error('Sinif guncellenemedi:', error)
     return NextResponse.json(
-      { error: 'Sinif guncellenemedi' },
+      { error: t('catalog.classUpdateFailed') },
       { status: 500 }
     )
   }
@@ -141,10 +156,11 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -155,7 +171,7 @@ export async function DELETE(
     })
 
     if (!classData) {
-      return NextResponse.json({ error: 'Sinif bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.classNotFound') }, { status: 404 })
     }
 
     // Aktif (iptal edilmemis ve iade edilmemis) siparis varsa hard delete reddet
@@ -169,7 +185,7 @@ export async function DELETE(
     if (activeOrderCount > 0) {
       return NextResponse.json(
         {
-          error: `Bu sinifa bagli ${activeOrderCount} aktif siparis var. Once siparisleri iptal etmeli veya sinifi pasiflestirmelisiniz.`,
+          error: t('catalog.classHasActiveOrders', { count: activeOrderCount }),
           activeOrderCount
         },
         { status: 409 }
@@ -212,11 +228,11 @@ export async function DELETE(
       details: { name: classData.name, reason: 'historical_orders_exist', historicalOrderCount: totalOrderCount }
     })
 
-    return NextResponse.json({ success: true, mode: 'soft_delete', message: 'Sinif gecmis siparis icerdigi icin pasiflestirildi.' })
+    return NextResponse.json({ success: true, mode: 'soft_delete', message: t('catalog.classDeactivated') })
   } catch (error) {
     console.error('Sinif silinemedi:', error)
     return NextResponse.json(
-      { error: 'Sinif silinemedi' },
+      { error: t('catalog.classDeleteFailed') },
       { status: 500 }
     )
   }

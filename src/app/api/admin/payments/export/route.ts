@@ -5,14 +5,17 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import { COMMISSION_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
 import ExcelJS from 'exceljs'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 const safe = escapeCsvValue
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     // Tum aktif okullari hesapla
@@ -230,6 +233,6 @@ export async function GET() {
 
   } catch (error) {
     console.error('Hakedis export hatasi:', error)
-    return NextResponse.json({ error: 'Export basarisiz' }, { status: 500 })
+    return NextResponse.json({ error: t('adminMisc.exportFailed') }, { status: 500 })
   }
 }

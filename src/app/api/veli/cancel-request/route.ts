@@ -5,14 +5,17 @@ import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-
 import { getClientIp, verifyOrderAccessToken } from '@/lib/security'
 import { veliCancelRequestBodySchema, formatZodError } from '@/lib/validators'
 import { sendAdminNewCancelRequest } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const body = await request.json().catch(() => null)
     const parsed = veliCancelRequestBodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -27,7 +30,7 @@ export async function POST(request: Request) {
         ? Math.ceil((rateLimitResult.blockedUntil.getTime() - Date.now()) / 60000)
         : 10
       return NextResponse.json(
-        { error: `Cok fazla istek. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('veli.tooManyRequests', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
     if (!order) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Siparis bulunamadi' },
+        { error: t('veli.orderNotFound') },
         { status: 404 }
       )
     }
@@ -59,14 +62,14 @@ export async function POST(request: Request) {
     if (!authorized) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Kimlik dogrulamasi basarisiz. Telefon son 4 hane dogru mu?' },
+        { error: t('veli.authFailed') },
         { status: 403 }
       )
     }
 
     if (!CANCELLABLE_STATUSES.includes(order.status)) {
       return NextResponse.json(
-        { error: 'Bu siparis artik iptal edilemez' },
+        { error: t('veli.orderNotCancellable') },
         { status: 400 }
       )
     }
@@ -83,7 +86,7 @@ export async function POST(request: Request) {
             (existingRequest.processedAt.getTime() + 24 * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000)
           )
           return NextResponse.json(
-            { error: `Reddedilen talepten sonra ${hoursLeft} saat beklemelisiniz.` },
+            { error: t('veli.cancelRejectedWait', { hours: hoursLeft }) },
             { status: 429 }
           )
         }
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
         })
       } else {
         return NextResponse.json(
-          { error: 'Bu siparis icin zaten bir iptal talebi mevcut' },
+          { error: t('veli.cancelRequestExists') },
           { status: 400 }
         )
       }
@@ -130,20 +133,21 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Iptal talebi hatasi:', error)
     return NextResponse.json(
-      { error: 'Iptal talebi olusturulamadi' },
+      { error: t('veli.cancelRequestFailed') },
       { status: 500 }
     )
   }
 }
 
 export async function GET(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const { searchParams } = new URL(request.url)
     const orderId = searchParams.get('orderId')
 
     if (!orderId || orderId.length > 40) {
       return NextResponse.json(
-        { error: 'Siparis ID gerekli' },
+        { error: t('veli.orderIdRequired') },
         { status: 400 }
       )
     }
@@ -154,7 +158,7 @@ export async function GET(request: Request) {
     const rateLimitResult = await checkRateLimit(rlIdentifier, 60, 5)
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { error: 'Cok fazla istek. Lutfen biraz bekleyin.' },
+        { error: t('veli.tooManyRequestsWait') },
         { status: 429 }
       )
     }
@@ -168,7 +172,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Iptal talebi sorgulama hatasi:', error)
     return NextResponse.json(
-      { error: 'Iptal talebi sorgulanamadi' },
+      { error: t('veli.cancelRequestQueryFailed') },
       { status: 500 }
     )
   }

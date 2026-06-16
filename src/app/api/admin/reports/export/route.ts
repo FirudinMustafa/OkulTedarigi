@@ -4,14 +4,17 @@ import { getAdminSession } from '@/lib/auth'
 import { ORDER_STATUS_LABELS } from '@/lib/constants'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 const safe = escapeCsvValue
 
 export async function GET(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -261,6 +264,6 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Admin rapor export hatasi:', error)
-    return NextResponse.json({ error: 'Export basarisiz' }, { status: 500 })
+    return NextResponse.json({ error: t('adminMisc.exportFailed') }, { status: 500 })
   }
 }

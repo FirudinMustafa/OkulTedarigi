@@ -4,6 +4,9 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { z } from 'zod'
 import { NO_HTML_REGEX, NO_HTML_MSG } from '@/lib/validators'
+import { buildTranslationData } from '@/lib/i18n-content'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 // validUntil: gun sonuna ayarla (UTC midnight girilirse 23:59:59.999'a yuvarla)
 function isMidnightUTC(d: Date): boolean {
@@ -39,10 +42,11 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -50,15 +54,29 @@ export async function PUT(
     const parsed = adminDiscountUpdateSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || 'Gecersiz veri' },
+        { error: parsed.error.issues[0]?.message || t('adminMisc.invalidData') },
         { status: 400 }
       )
     }
 
     const updateData = parsed.data as Record<string, unknown>
 
+    // Cevrilebilir aciklama alanlari (validator strict olmadigi icin raw body'den okunur).
+    // Sadece istekte gonderilen ceviri kolonlari guncellenir (kismi update'lerde uzerine yazilmaz).
+    const rawBody = (body ?? {}) as Record<string, unknown>
+    const hasTranslation =
+      'description_en' in rawBody || 'description_de' in rawBody || 'description_ar' in rawBody
+    if (hasTranslation) {
+      const descriptionTranslations = buildTranslationData('description', {
+        en: typeof rawBody.description_en === 'string' ? rawBody.description_en : null,
+        de: typeof rawBody.description_de === 'string' ? rawBody.description_de : null,
+        ar: typeof rawBody.description_ar === 'string' ? rawBody.description_ar : null,
+      })
+      Object.assign(updateData, descriptionTranslations)
+    }
+
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'Guncellenecek alan bulunamadi' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.noFieldsToUpdate') }, { status: 400 })
     }
 
     const discount = await prisma.discount.update({
@@ -79,7 +97,7 @@ export async function PUT(
   } catch (error) {
     console.error('Indirim guncellenemedi:', error)
     return NextResponse.json(
-      { error: 'Indirim guncellenemedi' },
+      { error: t('adminMisc.discountUpdateFailed') },
       { status: 500 }
     )
   }
@@ -89,17 +107,18 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
 
     const discount = await prisma.discount.findUnique({ where: { id } })
     if (!discount) {
-      return NextResponse.json({ error: 'Indirim bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('adminMisc.discountNotFound') }, { status: 404 })
     }
 
     await prisma.discount.delete({ where: { id } })
@@ -117,7 +136,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Indirim silinemedi:', error)
     return NextResponse.json(
-      { error: 'Indirim silinemedi' },
+      { error: t('adminMisc.discountDeleteFailed') },
       { status: 500 }
     )
   }

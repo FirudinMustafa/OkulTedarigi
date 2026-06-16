@@ -4,14 +4,17 @@ import { getMudurSession } from '@/lib/auth'
 import { ORDER_STATUS_LABELS } from '@/lib/constants'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 const safe = escapeCsvValue
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getMudurSession()
     if (!session || !session.schoolId) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('common.unauthorized') }, { status: 401 })
     }
 
     const school = await prisma.school.findUnique({
@@ -30,7 +33,7 @@ export async function GET() {
     })
 
     if (!school) {
-      return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('mudur.schoolNotFound') }, { status: 404 })
     }
 
     const statusLabels: Record<string, string> = { ...ORDER_STATUS_LABELS, REFUNDED: 'Iade' }
@@ -199,6 +202,6 @@ export async function GET() {
 
   } catch (error) {
     console.error('Ogrenci export hatasi:', error)
-    return NextResponse.json({ error: 'Export basarisiz' }, { status: 500 })
+    return NextResponse.json({ error: t('mudur.exportFailed') }, { status: 500 })
   }
 }

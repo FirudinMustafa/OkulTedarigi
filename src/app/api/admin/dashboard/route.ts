@@ -3,12 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     // Get date ranges
@@ -219,7 +222,7 @@ export async function GET() {
   } catch (error) {
     console.error('Dashboard stats error:', error)
     return NextResponse.json(
-      { error: 'Dashboard verileri alinamadi' },
+      { error: t('adminMisc.dashboardLoadFailed') },
       { status: 500 }
     )
   }

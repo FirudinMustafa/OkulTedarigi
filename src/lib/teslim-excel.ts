@@ -24,11 +24,66 @@ export interface TeslimOrder {
  * Sutunlar: Ogrencinin Okulu | Ogrenci Adi | Ogrenci Soyadi | Sinif | Sube |
  *           Siparis Adedi (= o siparisteki ogrenci sayisi) | Teslim Tarihi (BOS) | (✓ bos hucre)
  */
-export async function buildTeslimExcel(orders: TeslimOrder[]): Promise<ArrayBuffer> {
+export type DocLocale = 'tr' | 'en' | 'de' | 'ar'
+
+export async function buildTeslimExcel(
+  orders: TeslimOrder[],
+  locale: DocLocale = 'tr',
+): Promise<ArrayBuffer> {
+  // --- Ceviriler (per-function) ---
+  // Excel/xlsx unicode destekledigi icin Arapca (ar) gercek Arapca basliklarla saglanir.
+  const T = {
+    tr: {
+      sheetName: 'Teslim Listesi',
+      schoolName: 'Öğrencinin Okulu',
+      firstName: 'Öğrenci Adı',
+      lastName: 'Öğrenci Soyadı',
+      classNum: 'Sınıf',
+      section: 'Şube',
+      qty: 'Sipariş Adedi',
+      deliveryDate: 'Teslim Tarihi',
+      check: '✓',
+    },
+    en: {
+      sheetName: 'Delivery List',
+      schoolName: "Student's School",
+      firstName: 'Student First Name',
+      lastName: 'Student Last Name',
+      classNum: 'Class',
+      section: 'Section',
+      qty: 'Order Quantity',
+      deliveryDate: 'Delivery Date',
+      check: '✓',
+    },
+    de: {
+      sheetName: 'Lieferliste',
+      schoolName: 'Schule des Schülers',
+      firstName: 'Vorname des Schülers',
+      lastName: 'Nachname des Schülers',
+      classNum: 'Klasse',
+      section: 'Abteilung',
+      qty: 'Bestellmenge',
+      deliveryDate: 'Lieferdatum',
+      check: '✓',
+    },
+    ar: {
+      sheetName: 'قائمة التسليم',
+      schoolName: 'مدرسة الطالب',
+      firstName: 'اسم الطالب',
+      lastName: 'لقب الطالب',
+      classNum: 'الصف',
+      section: 'الشعبة',
+      qty: 'كمية الطلب',
+      deliveryDate: 'تاريخ التسليم',
+      check: '✓',
+    },
+  }
+  const tr = T[locale] ?? T.tr
+
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Okul Tedarik Sistemi'
 
-  const ws = workbook.addWorksheet('Teslim Listesi')
+  const ws = workbook.addWorksheet(tr.sheetName)
 
   const headerFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: '10B981' } }
   const headerFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: 'FFFFFF' }, size: 11 }
@@ -40,14 +95,14 @@ export async function buildTeslimExcel(orders: TeslimOrder[]): Promise<ArrayBuff
   }
 
   ws.columns = [
-    { header: 'Öğrencinin Okulu', key: 'schoolName', width: 32 },
-    { header: 'Öğrenci Adı', key: 'firstName', width: 18 },
-    { header: 'Öğrenci Soyadı', key: 'lastName', width: 20 },
-    { header: 'Sınıf', key: 'classNum', width: 8 },
-    { header: 'Şube', key: 'section', width: 8 },
-    { header: 'Sipariş Adedi', key: 'qty', width: 14 },
-    { header: 'Teslim Tarihi', key: 'deliveryDate', width: 18 },
-    { header: '✓', key: 'check', width: 6 },
+    { header: tr.schoolName, key: 'schoolName', width: 32 },
+    { header: tr.firstName, key: 'firstName', width: 18 },
+    { header: tr.lastName, key: 'lastName', width: 20 },
+    { header: tr.classNum, key: 'classNum', width: 8 },
+    { header: tr.section, key: 'section', width: 8 },
+    { header: tr.qty, key: 'qty', width: 14 },
+    { header: tr.deliveryDate, key: 'deliveryDate', width: 18 },
+    { header: tr.check, key: 'check', width: 6 },
   ]
 
   const headerRow = ws.getRow(1)

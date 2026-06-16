@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createShipment } from '@/lib/aras-kargo'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 interface BatchResult {
   orderId: string
@@ -17,23 +19,24 @@ interface BatchResult {
 // NOT: Fatura/KolayBi artik odeme aninda (checkout) gonderilir; burada fatura YOK.
 // Veliye mail GONDERILMEZ.
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidRequest') }, { status: 400 })
     }
     const { orderIds } = body
 
     if (!Array.isArray(orderIds) || orderIds.length === 0 || orderIds.length > 500) {
-      return NextResponse.json({ error: 'Siparis ID listesi gerekli (max 500)' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.idListRequired500') }, { status: 400 })
     }
     if (!orderIds.every(id => typeof id === 'string' && id.length > 0 && id.length <= 40)) {
-      return NextResponse.json({ error: 'Gecersiz siparis ID' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidOrderId') }, { status: 400 })
     }
 
     // Kargolanabilir siparisler: CONFIRMED (Hazirlaniyor)
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
     const cargoOrders = orders.filter(o => o.class.school.deliveryType === 'CARGO')
 
     if (cargoOrders.length === 0) {
-      return NextResponse.json({ error: 'Kargolanabilir siparis bulunamadi' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.noShippableOrders') }, { status: 400 })
     }
 
     const sessionId = session.id
@@ -68,7 +71,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: shipmentResult.errorMessage || 'Kargo olusturulamadi'
+            error: shipmentResult.errorMessage || t('orders.shipmentCreateFailed')
           }
         }
 
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: 'Bu siparis icin daha onceden kargo olusturulmus'
+            error: t('orders.shipmentAlreadyCreated')
           }
         }
 
@@ -114,7 +117,7 @@ export async function POST(request: Request) {
           orderId: order.id,
           orderNumber: order.orderNumber,
           success: false,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+          error: error instanceof Error ? error.message : t('orders.unknownError')
         }
       }
     }
@@ -146,13 +149,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `${successCount} kargo olusturuldu${failCount > 0 ? `, ${failCount} hata` : ''}`,
+      message: t('orders.batchShipmentResult', { success: successCount, failed: failCount }),
       results,
       summary: { total: cargoOrders.length, success: successCount, failed: failCount }
     })
 
   } catch (error) {
     console.error('Toplu kargo olusturulamadi:', error)
-    return NextResponse.json({ error: 'Toplu kargo olusturulamadi' }, { status: 500 })
+    return NextResponse.json({ error: t('orders.batchShipmentFailed') }, { status: 500 })
   }
 }

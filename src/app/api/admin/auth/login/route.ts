@@ -6,16 +6,17 @@ import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-
 import { cookies } from 'next/headers'
 import { getClientIp } from '@/lib/security'
 import { loginBodySchema, formatZodError } from '@/lib/validators'
-
-const GENERIC_LOGIN_ERROR = 'Gecersiz email veya sifre'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const body = await request.json().catch(() => null)
     const parsed = loginBodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
         ? Math.ceil((blockedUntil.getTime() - Date.now()) / 60000)
         : 15
       return NextResponse.json(
-        { error: `Cok fazla basarisiz deneme. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('adminMisc.tooManyAttempts', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         recordFailedAttempt(rlGlobal),
       ])
       return NextResponse.json(
-        { error: GENERIC_LOGIN_ERROR },
+        { error: t('adminMisc.invalidCredentials') },
         { status: 401 }
       )
     }
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Admin login hatasi:', error)
     return NextResponse.json(
-      { error: 'Giris yapilamadi' },
+      { error: t('adminMisc.loginFailed') },
       { status: 500 }
     )
   }

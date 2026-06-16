@@ -3,14 +3,17 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/security'
 import { veliDiscountBodySchema, formatZodError } from '@/lib/validators'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const body = await request.json().catch(() => null)
     const parsed = veliDiscountBodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -26,7 +29,7 @@ export async function POST(request: Request) {
         ? Math.ceil((rateLimitResult.blockedUntil.getTime() - Date.now()) / 60000)
         : 5
       return NextResponse.json(
-        { error: `Cok fazla deneme. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('veli.tooManyAttempts', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -38,7 +41,7 @@ export async function POST(request: Request) {
     if (!discount) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Gecersiz indirim kodu' },
+        { error: t('veli.invalidDiscount') },
         { status: 404 }
       )
     }
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
     if (!discount.isActive) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Bu indirim kodu artik gecerli degil' },
+        { error: t('veli.discountInactive') },
         { status: 400 }
       )
     }
@@ -55,21 +58,21 @@ export async function POST(request: Request) {
     if (now < discount.validFrom || now > discount.validUntil) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: 'Bu indirim kodunun gecerlilik suresi dolmus' },
+        { error: t('veli.discountExpired') },
         { status: 400 }
       )
     }
 
     if (discount.usageLimit && discount.usedCount >= discount.usageLimit) {
       return NextResponse.json(
-        { error: 'Bu indirim kodu kullanim limitine ulasmis' },
+        { error: t('veli.discountLimitReached') },
         { status: 400 }
       )
     }
 
     if (discount.minAmount && amount < Number(discount.minAmount)) {
       return NextResponse.json(
-        { error: `Bu indirim kodu en az ${Number(discount.minAmount).toFixed(2)} TL siparis tutari gerektirir` },
+        { error: t('veli.discountMinAmount', { amount: Number(discount.minAmount).toFixed(2) }) },
         { status: 400 }
       )
     }
@@ -105,7 +108,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Indirim kodu dogrulama hatasi:', error)
     return NextResponse.json(
-      { error: 'Bir hata olustu' },
+      { error: t('veli.genericError') },
       { status: 500 }
     )
   }

@@ -3,15 +3,18 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { VALID_STATUS_TRANSITIONS } from '@/lib/constants'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -34,7 +37,7 @@ export async function GET(
     })
 
     if (!order) {
-      return NextResponse.json({ error: 'Siparis bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
     // Map to expected format for admin panel
@@ -50,7 +53,7 @@ export async function GET(
   } catch (error) {
     console.error('Siparis getirilemedi:', error)
     return NextResponse.json(
-      { error: 'Siparis yuklenemedi' },
+      { error: t('orders.orderLoadFailed') },
       { status: 500 }
     )
   }
@@ -60,10 +63,11 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -80,7 +84,7 @@ export async function PUT(
     }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'Guncellenecek alan bulunamadi' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.noFieldsToUpdate') }, { status: 400 })
     }
 
     // Mevcut siparisi tek bir okumayla cek (audit trail icin onceki degerler)
@@ -96,7 +100,7 @@ export async function PUT(
       }
     })
     if (!previousOrder) {
-      return NextResponse.json({ error: 'Siparis bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
     // Status degisikligi varsa gecerli gecis kontrolu
@@ -104,7 +108,7 @@ export async function PUT(
       const allowedTransitions = VALID_STATUS_TRANSITIONS[previousOrder.status] || []
       if (!allowedTransitions.includes(updateData.status as string)) {
         return NextResponse.json(
-          { error: `${previousOrder.status} durumundan ${updateData.status} durumuna gecis yapilamaz` },
+          { error: t('orders.transitionInvalid', { from: previousOrder.status, to: updateData.status as string }) },
           { status: 400 }
         )
       }
@@ -130,7 +134,7 @@ export async function PUT(
       })
       if (lockResult.count === 0) {
         return NextResponse.json(
-          { error: 'Bu siparisin durumu baska bir kullanici tarafindan degistirildi. Sayfayi yenileyip tekrar deneyin.' },
+          { error: t('orders.statusChangedByAnother') },
           { status: 409 }
         )
       }
@@ -143,7 +147,7 @@ export async function PUT(
     }
 
     if (!order) {
-      return NextResponse.json({ error: 'Siparis bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
     // Audit trail: hassas alanlarin oncesi/sonrasi log'a yazilsin
@@ -177,7 +181,7 @@ export async function PUT(
   } catch (error) {
     console.error('Siparis guncellenemedi:', error)
     return NextResponse.json(
-      { error: 'Siparis guncellenemedi' },
+      { error: t('orders.orderUpdateFailed') },
       { status: 500 }
     )
   }

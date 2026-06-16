@@ -38,6 +38,12 @@ export const noHtmlString = (min: number, max: number) =>
   z.string().trim().min(min, `En az ${min} karakter olmali`).max(max, `En fazla ${max} karakter olabilir`)
     .regex(NO_HTML_REGEX, NO_HTML_MSG)
 
+// Cevrilebilir alan (name_en/name_de/name_ar) — opsiyonel, bos olabilir, HTML reddi.
+// DB VarChar(191) sinirina uyacak sekilde max 191.
+export const translationString = z.string().trim().max(191).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable().or(z.literal(''))
+// Uzun cevrilebilir alan (description_*/note_* gibi) — opsiyonel, max 2000.
+export const translationLongString = z.string().trim().max(2000).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable().or(z.literal(''))
+
 // Mudur sifresi - admin tarafi okul olusturma/guncellemede minimum guvenlik
 export const directorPasswordSchema = z.string().min(8, 'Mudur sifresi en az 8 karakter olmali').max(200)
 
@@ -105,6 +111,10 @@ export const adminSchoolCreateSchema = z.object({
   directorEmail: emailSchema,
   directorPassword: directorPasswordSchema,
   password: z.string().trim().max(40).optional().nullable(), // veli sifresi (opsiyonel)
+  // Cok dilli okul adi (opsiyonel) — bos ise TR tabana fallback
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
 })
 export type AdminSchoolCreateBody = z.infer<typeof adminSchoolCreateSchema>
 
@@ -120,6 +130,10 @@ export const adminSchoolUpdateSchema = z.object({
   directorPassword: directorPasswordSchema.optional(),
   password: z.string().trim().max(40).nullable().optional(),
   isActive: z.boolean().optional(),
+  // Cok dilli okul adi (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
 })
 export type AdminSchoolUpdateBody = z.infer<typeof adminSchoolUpdateSchema>
 
@@ -129,6 +143,10 @@ export const adminClassCreateSchema = z.object({
   schoolId: z.string().trim().min(1).max(40),
   packageId: z.string().trim().min(1).max(40).optional().nullable(),
   commissionAmount: z.coerce.number().nonnegative('Komisyon negatif olamaz').max(1_000_000).optional(),
+  // Cok dilli sinif adi (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
 })
 
 // Sinif guncelleme — PUT /api/admin/classes/[id]
@@ -138,11 +156,19 @@ export const adminClassUpdateSchema = z.object({
   packageId: z.string().trim().max(40).nullable().optional().or(z.literal('')),
   commissionAmount: z.coerce.number().nonnegative().max(1_000_000).optional(),
   isActive: z.boolean().optional(),
+  // Cok dilli sinif adi (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
 })
 
 // Paket Item — name HTML reddi
 export const adminPackageItemSchema = z.object({
   name: noHtmlString(1, 200),
+  // Cok dilli urun adi (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
   quantity: z.coerce.number().int().min(1).max(1000).optional(),
   unitPrice: z.coerce.number().nonnegative().max(1_000_000).optional(),
   price: z.coerce.number().nonnegative().max(1_000_000).optional(),
@@ -153,6 +179,16 @@ export const adminPackageCreateSchema = z.object({
   name: noHtmlString(1, 200),
   description: noHtmlString(0, 2000).nullable().optional().or(z.literal('')),
   note: noHtmlString(0, 2000).nullable().optional().or(z.literal('')),
+  // Cok dilli paket alanlari (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
+  description_en: translationLongString,
+  description_de: translationLongString,
+  description_ar: translationLongString,
+  note_en: translationLongString,
+  note_de: translationLongString,
+  note_ar: translationLongString,
   basePrice: z.coerce.number().nonnegative().max(1_000_000).optional(),
   price: z.coerce.number().nonnegative().max(1_000_000).optional(),
   items: z.array(adminPackageItemSchema).min(1, 'Pakette en az bir urun olmalidir').max(100),
@@ -163,6 +199,16 @@ export const adminPackageUpdateSchema = z.object({
   name: noHtmlString(1, 200).optional(),
   description: noHtmlString(0, 2000).nullable().optional(),
   note: noHtmlString(0, 2000).nullable().optional(),
+  // Cok dilli paket alanlari (opsiyonel)
+  name_en: translationString,
+  name_de: translationString,
+  name_ar: translationString,
+  description_en: translationLongString,
+  description_de: translationLongString,
+  description_ar: translationLongString,
+  note_en: translationLongString,
+  note_de: translationLongString,
+  note_ar: translationLongString,
   basePrice: z.coerce.number().nonnegative().max(1_000_000).optional(),
   isActive: z.boolean().optional(),
   items: z.array(adminPackageItemSchema).max(100).optional(),
@@ -261,10 +307,194 @@ export const veliCancelRequestBodySchema = z.object({
 )
 
 /**
- * Hata mesajlarini kullanici dostu sekilde formatla
+ * Sunucu tarafi dogrulama mesajlarinin cok dilli karsiliklari (tr kaynaktir).
+ * Anahtarlar, schema'larda/zod-tr.ts'de gecen TURKCE mesajin TAM string'idir
+ * (diakritiksiz hali nasil yazildiysa aynen) — boylece issue.message lookup eslesir.
+ *
+ * NOT: Schema'lar (z.object/z.string ve .min/.max/.email custom mesajlari)
+ * DEGISTIRILMEDI. Ceviri SADECE bu lookup ile, formatZodError icinde yapilir.
  */
-export function formatZodError(error: z.ZodError): string {
+type ValidationLocale = 'en' | 'de' | 'ar'
+
+export const VALIDATION_I18N: Record<ValidationLocale, Record<string, string>> = {
+  en: {
+    // --- validators.ts custom mesajlari ---
+    'Gecersiz veri': 'Invalid data',
+    'Gecerli bir telefon numarasi giriniz (5xx xxx xx xx)': 'Enter a valid phone number (5xx xxx xx xx)',
+    'Gecerli bir e-posta adresi giriniz': 'Enter a valid email address',
+    'E-posta cok uzun': 'Email is too long',
+    'Gecersiz karakter (< veya > kullanilamaz)': 'Invalid character (< or > cannot be used)',
+    'Mudur sifresi en az 8 karakter olmali': 'Director password must be at least 8 characters',
+    'Indirim kodu en az 3 karakter olmali': 'Discount code must be at least 3 characters',
+    'Indirim kodu cok uzun': 'Discount code is too long',
+    'Indirim kodu sadece harf, rakam, _ ve - icerebilir': 'Discount code may only contain letters, numbers, _ and -',
+    'Deger pozitif olmali': 'Value must be positive',
+    'Bitis tarihi baslangic tarihinden sonra olmali': 'End date must be after the start date',
+    'Yuzde indirim 0 ile 100 arasinda olmali': 'Percentage discount must be between 0 and 100',
+    'Komisyon negatif olamaz': 'Commission cannot be negative',
+    'Pakette en az bir urun olmalidir': 'The package must contain at least one item',
+    'Ogrenci adi en az 2 karakter olmali': 'Student first name must be at least 2 characters',
+    'Ogrenci soyadi en az 2 karakter olmali': 'Student last name must be at least 2 characters',
+    'Sube zorunlu': 'Section is required',
+    'Sube tek harf olmali': 'Section must be a single letter',
+    'Veli adi en az 2 karakter olmali': 'Parent name must be at least 2 characters',
+    'En az bir ogrenci eklenmelidir': 'At least one student must be added',
+    'Adres en az 5 karakter olmali': 'Address must be at least 5 characters',
+    'Vergi/TC No sadece rakam icerebilir': 'Tax/ID number may only contain digits',
+    'Gecersiz erisim anahtari': 'Invalid access key',
+    'Gecersiz kart numarasi': 'Invalid card number',
+    'Gecersiz son kullanma tarihi': 'Invalid expiry date',
+    'Gecersiz CVV': 'Invalid CVV',
+    'Siparis ID veya numarasi gerekli': 'Order ID or number is required',
+    'Sepet tutari pozitif olmalidir': 'Cart total must be positive',
+    'Telefon son 4 hane 4 rakam olmalidir': 'Phone last 4 digits must be 4 numbers',
+    'Iptal nedeni en az 5 karakter olmali': 'Cancellation reason must be at least 5 characters',
+    'Kimlik dogrulamasi gerekli (telefon son 4 hane)': 'Identity verification required (last 4 phone digits)',
+    // En az/En fazla {n} sablonlari (noHtmlString helper + dinamik ogrenci limiti)
+    'En az 1 karakter olmali': 'Must be at least 1 character',
+    'En az 2 karakter olmali': 'Must be at least 2 characters',
+    'En fazla 100 karakter olabilir': 'Must be at most 100 characters',
+    'En fazla 200 karakter olabilir': 'Must be at most 200 characters',
+    'En fazla 500 karakter olabilir': 'Must be at most 500 characters',
+    'En fazla 2000 karakter olabilir': 'Must be at most 2000 characters',
+    'En fazla 5 ogrenci eklenebilir': 'At most 5 students can be added',
+    // --- zod-tr.ts generic defaults ---
+    'Bu alan zorunludur': 'This field is required',
+    'Gecersiz deger': 'Invalid value',
+    'En az 1 oge gerekli': 'At least 1 item is required',
+    'Deger cok kucuk': 'Value is too small',
+    'Deger cok buyuk': 'Value is too large',
+    'Gecerli bir e-posta giriniz': 'Enter a valid email',
+    'Gecerli bir URL giriniz': 'Enter a valid URL',
+    'Gecerli bir kimlik degeri giriniz': 'Enter a valid identifier',
+    'Gecersiz format': 'Invalid format',
+    'Gecersiz secim': 'Invalid selection',
+    'Bilinmeyen alan(lar)': 'Unknown field(s)',
+    'Gecersiz tarih': 'Invalid date',
+  },
+  de: {
+    'Gecersiz veri': 'Ungültige Daten',
+    'Gecerli bir telefon numarasi giriniz (5xx xxx xx xx)': 'Geben Sie eine gültige Telefonnummer ein (5xx xxx xx xx)',
+    'Gecerli bir e-posta adresi giriniz': 'Geben Sie eine gültige E-Mail-Adresse ein',
+    'E-posta cok uzun': 'E-Mail ist zu lang',
+    'Gecersiz karakter (< veya > kullanilamaz)': 'Ungültiges Zeichen (< oder > ist nicht erlaubt)',
+    'Mudur sifresi en az 8 karakter olmali': 'Das Direktor-Passwort muss mindestens 8 Zeichen lang sein',
+    'Indirim kodu en az 3 karakter olmali': 'Der Rabattcode muss mindestens 3 Zeichen lang sein',
+    'Indirim kodu cok uzun': 'Der Rabattcode ist zu lang',
+    'Indirim kodu sadece harf, rakam, _ ve - icerebilir': 'Der Rabattcode darf nur Buchstaben, Zahlen, _ und - enthalten',
+    'Deger pozitif olmali': 'Der Wert muss positiv sein',
+    'Bitis tarihi baslangic tarihinden sonra olmali': 'Das Enddatum muss nach dem Startdatum liegen',
+    'Yuzde indirim 0 ile 100 arasinda olmali': 'Der Prozentrabatt muss zwischen 0 und 100 liegen',
+    'Komisyon negatif olamaz': 'Die Provision darf nicht negativ sein',
+    'Pakette en az bir urun olmalidir': 'Das Paket muss mindestens einen Artikel enthalten',
+    'Ogrenci adi en az 2 karakter olmali': 'Der Vorname des Schülers muss mindestens 2 Zeichen lang sein',
+    'Ogrenci soyadi en az 2 karakter olmali': 'Der Nachname des Schülers muss mindestens 2 Zeichen lang sein',
+    'Sube zorunlu': 'Die Klasse ist erforderlich',
+    'Sube tek harf olmali': 'Die Klasse muss ein einzelner Buchstabe sein',
+    'Veli adi en az 2 karakter olmali': 'Der Name des Erziehungsberechtigten muss mindestens 2 Zeichen lang sein',
+    'En az bir ogrenci eklenmelidir': 'Es muss mindestens ein Schüler hinzugefügt werden',
+    'Adres en az 5 karakter olmali': 'Die Adresse muss mindestens 5 Zeichen lang sein',
+    'Vergi/TC No sadece rakam icerebilir': 'Die Steuer-/ID-Nummer darf nur Ziffern enthalten',
+    'Gecersiz erisim anahtari': 'Ungültiger Zugriffsschlüssel',
+    'Gecersiz kart numarasi': 'Ungültige Kartennummer',
+    'Gecersiz son kullanma tarihi': 'Ungültiges Ablaufdatum',
+    'Gecersiz CVV': 'Ungültiger CVV',
+    'Siparis ID veya numarasi gerekli': 'Bestell-ID oder -nummer ist erforderlich',
+    'Sepet tutari pozitif olmalidir': 'Der Warenkorbbetrag muss positiv sein',
+    'Telefon son 4 hane 4 rakam olmalidir': 'Die letzten 4 Telefonziffern müssen 4 Zahlen sein',
+    'Iptal nedeni en az 5 karakter olmali': 'Der Stornierungsgrund muss mindestens 5 Zeichen lang sein',
+    'Kimlik dogrulamasi gerekli (telefon son 4 hane)': 'Identitätsprüfung erforderlich (letzte 4 Telefonziffern)',
+    'En az 1 karakter olmali': 'Muss mindestens 1 Zeichen lang sein',
+    'En az 2 karakter olmali': 'Muss mindestens 2 Zeichen lang sein',
+    'En fazla 100 karakter olabilir': 'Darf höchstens 100 Zeichen lang sein',
+    'En fazla 200 karakter olabilir': 'Darf höchstens 200 Zeichen lang sein',
+    'En fazla 500 karakter olabilir': 'Darf höchstens 500 Zeichen lang sein',
+    'En fazla 2000 karakter olabilir': 'Darf höchstens 2000 Zeichen lang sein',
+    'En fazla 5 ogrenci eklenebilir': 'Es können höchstens 5 Schüler hinzugefügt werden',
+    'Bu alan zorunludur': 'Dieses Feld ist erforderlich',
+    'Gecersiz deger': 'Ungültiger Wert',
+    'En az 1 oge gerekli': 'Mindestens 1 Element ist erforderlich',
+    'Deger cok kucuk': 'Der Wert ist zu klein',
+    'Deger cok buyuk': 'Der Wert ist zu groß',
+    'Gecerli bir e-posta giriniz': 'Geben Sie eine gültige E-Mail ein',
+    'Gecerli bir URL giriniz': 'Geben Sie eine gültige URL ein',
+    'Gecerli bir kimlik degeri giriniz': 'Geben Sie eine gültige Kennung ein',
+    'Gecersiz format': 'Ungültiges Format',
+    'Gecersiz secim': 'Ungültige Auswahl',
+    'Bilinmeyen alan(lar)': 'Unbekannte(s) Feld(er)',
+    'Gecersiz tarih': 'Ungültiges Datum',
+  },
+  ar: {
+    'Gecersiz veri': 'بيانات غير صالحة',
+    'Gecerli bir telefon numarasi giriniz (5xx xxx xx xx)': 'أدخل رقم هاتف صالح (5xx xxx xx xx)',
+    'Gecerli bir e-posta adresi giriniz': 'أدخل عنوان بريد إلكتروني صالح',
+    'E-posta cok uzun': 'البريد الإلكتروني طويل جدًا',
+    'Gecersiz karakter (< veya > kullanilamaz)': 'حرف غير صالح (لا يمكن استخدام < أو >)',
+    'Mudur sifresi en az 8 karakter olmali': 'يجب أن تتكون كلمة مرور المدير من 8 أحرف على الأقل',
+    'Indirim kodu en az 3 karakter olmali': 'يجب أن يتكون رمز الخصم من 3 أحرف على الأقل',
+    'Indirim kodu cok uzun': 'رمز الخصم طويل جدًا',
+    'Indirim kodu sadece harf, rakam, _ ve - icerebilir': 'يمكن أن يحتوي رمز الخصم على أحرف وأرقام و _ و - فقط',
+    'Deger pozitif olmali': 'يجب أن تكون القيمة موجبة',
+    'Bitis tarihi baslangic tarihinden sonra olmali': 'يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء',
+    'Yuzde indirim 0 ile 100 arasinda olmali': 'يجب أن تكون نسبة الخصم بين 0 و 100',
+    'Komisyon negatif olamaz': 'لا يمكن أن تكون العمولة سالبة',
+    'Pakette en az bir urun olmalidir': 'يجب أن تحتوي الحزمة على عنصر واحد على الأقل',
+    'Ogrenci adi en az 2 karakter olmali': 'يجب أن يتكون الاسم الأول للطالب من حرفين على الأقل',
+    'Ogrenci soyadi en az 2 karakter olmali': 'يجب أن يتكون اسم عائلة الطالب من حرفين على الأقل',
+    'Sube zorunlu': 'الشعبة مطلوبة',
+    'Sube tek harf olmali': 'يجب أن تكون الشعبة حرفًا واحدًا',
+    'Veli adi en az 2 karakter olmali': 'يجب أن يتكون اسم ولي الأمر من حرفين على الأقل',
+    'En az bir ogrenci eklenmelidir': 'يجب إضافة طالب واحد على الأقل',
+    'Adres en az 5 karakter olmali': 'يجب أن يتكون العنوان من 5 أحرف على الأقل',
+    'Vergi/TC No sadece rakam icerebilir': 'يمكن أن يحتوي الرقم الضريبي/الهوية على أرقام فقط',
+    'Gecersiz erisim anahtari': 'مفتاح وصول غير صالح',
+    'Gecersiz kart numarasi': 'رقم بطاقة غير صالح',
+    'Gecersiz son kullanma tarihi': 'تاريخ انتهاء صلاحية غير صالح',
+    'Gecersiz CVV': 'رمز CVV غير صالح',
+    'Siparis ID veya numarasi gerekli': 'معرّف الطلب أو رقمه مطلوب',
+    'Sepet tutari pozitif olmalidir': 'يجب أن يكون مبلغ السلة موجبًا',
+    'Telefon son 4 hane 4 rakam olmalidir': 'يجب أن تكون آخر 4 أرقام من الهاتف 4 أرقام',
+    'Iptal nedeni en az 5 karakter olmali': 'يجب أن يتكون سبب الإلغاء من 5 أحرف على الأقل',
+    'Kimlik dogrulamasi gerekli (telefon son 4 hane)': 'التحقق من الهوية مطلوب (آخر 4 أرقام من الهاتف)',
+    'En az 1 karakter olmali': 'يجب أن يتكون من حرف واحد على الأقل',
+    'En az 2 karakter olmali': 'يجب أن يتكون من حرفين على الأقل',
+    'En fazla 100 karakter olabilir': 'يجب ألا يزيد عن 100 حرف',
+    'En fazla 200 karakter olabilir': 'يجب ألا يزيد عن 200 حرف',
+    'En fazla 500 karakter olabilir': 'يجب ألا يزيد عن 500 حرف',
+    'En fazla 2000 karakter olabilir': 'يجب ألا يزيد عن 2000 حرف',
+    'En fazla 5 ogrenci eklenebilir': 'يمكن إضافة 5 طلاب كحد أقصى',
+    'Bu alan zorunludur': 'هذا الحقل مطلوب',
+    'Gecersiz deger': 'قيمة غير صالحة',
+    'En az 1 oge gerekli': 'مطلوب عنصر واحد على الأقل',
+    'Deger cok kucuk': 'القيمة صغيرة جدًا',
+    'Deger cok buyuk': 'القيمة كبيرة جدًا',
+    'Gecerli bir e-posta giriniz': 'أدخل بريدًا إلكترونيًا صالحًا',
+    'Gecerli bir URL giriniz': 'أدخل عنوان URL صالحًا',
+    'Gecerli bir kimlik degeri giriniz': 'أدخل معرّفًا صالحًا',
+    'Gecersiz format': 'تنسيق غير صالح',
+    'Gecersiz secim': 'اختيار غير صالح',
+    'Bilinmeyen alan(lar)': 'حقل (حقول) غير معروف',
+    'Gecersiz tarih': 'تاريخ غير صالح',
+  },
+}
+
+/**
+ * Tek bir TR mesaji verili locale'e cevir. Eslesme yoksa TR'yi aynen dondur.
+ */
+function translateValidationMessage(message: string, locale: string): string {
+  if (locale === 'tr') return message
+  const table = VALIDATION_I18N[locale as ValidationLocale]
+  if (!table) return message
+  return table[message] ?? message
+}
+
+/**
+ * Hata mesajlarini kullanici dostu sekilde formatla.
+ * locale (tr/en/de/ar) verilirse mesaj cevrilir; eslesme yoksa TR'ye duser.
+ * Varsayilan 'tr' — geriye donuk uyumlu (eski davranis).
+ */
+export function formatZodError(error: z.ZodError, locale: string = 'tr'): string {
   const first = error.issues[0]
-  if (!first) return 'Gecersiz veri'
-  return first.message
+  if (!first) return translateValidationMessage('Gecersiz veri', locale)
+  return translateValidationMessage(first.message, locale)
 }

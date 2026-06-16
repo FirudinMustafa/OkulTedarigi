@@ -3,12 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { COMMISSION_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const schools = await prisma.school.findMany({
@@ -73,7 +76,7 @@ export async function GET() {
   } catch (error) {
     console.error('Ozet hesaplanamadi:', error)
     return NextResponse.json(
-      { error: 'Ozet yuklenemedi' },
+      { error: t('adminMisc.summaryLoadFailed') },
       { status: 500 }
     )
   }

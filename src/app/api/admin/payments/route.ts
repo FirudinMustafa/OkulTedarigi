@@ -4,12 +4,15 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { COMMISSION_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const payments = await prisma.schoolPayment.findMany({
@@ -34,38 +37,39 @@ export async function GET() {
   } catch (error) {
     console.error('Odemeler listelenemedi:', error)
     return NextResponse.json(
-      { error: 'Odemeler yuklenemedi' },
+      { error: t('adminMisc.paymentsLoadFailed') },
       { status: 500 }
     )
   }
 }
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.invalidRequest') }, { status: 400 })
     }
     const { schoolId, amount, description } = body
 
     // Validation
     if (!schoolId || typeof schoolId !== 'string') {
-      return NextResponse.json({ error: 'Okul gerekli' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.schoolRequired') }, { status: 400 })
     }
     const numericAmount = Number(amount)
     if (!isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 10_000_000) {
       return NextResponse.json(
-        { error: 'Tutar 0 ile 10.000.000 TL arasinda olmali' },
+        { error: t('adminMisc.amountOutOfRange') },
         { status: 400 }
       )
     }
     if (description != null && (typeof description !== 'string' || description.length > 500)) {
-      return NextResponse.json({ error: 'Aciklama max 500 karakter olabilir' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.descriptionTooLong') }, { status: 400 })
     }
 
     // Okulu komisyon hesabı için ihtiyaç duyulan ilişkilerle çek
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
       }
     })
     if (!school) {
-      return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('adminMisc.schoolNotFound') }, { status: 404 })
     }
 
     // Server-side over-commitment guard:
@@ -104,9 +108,11 @@ export async function POST(request: Request) {
     if (numericAmount > remaining + 0.001) {
       return NextResponse.json(
         {
-          error: `Tutar kalan hakedişi aşıyor. Toplam komisyon ${totalCommission.toFixed(2)} TL, ` +
-                 `daha önce kayıtlı ${alreadyCommitted.toFixed(2)} TL (PAID+PENDING). ` +
-                 `Bu kayıt için en fazla ${remaining.toFixed(2)} TL girilebilir.`
+          error: t('adminMisc.amountExceedsCommission', {
+            total: totalCommission.toFixed(2),
+            committed: alreadyCommitted.toFixed(2),
+            remaining: remaining.toFixed(2)
+          })
         },
         { status: 400 }
       )
@@ -145,7 +151,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Odeme olusturulamadi:', error)
     return NextResponse.json(
-      { error: 'Odeme olusturulamadi' },
+      { error: t('adminMisc.paymentCreateFailed') },
       { status: 500 }
     )
   }

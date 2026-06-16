@@ -78,6 +78,11 @@
   }
 }
 
+/* Arapca (RTL) icin font: layout body'sine font-arabic sinifi eklenir */
+.font-arabic {
+  font-family: var(--font-arabic), var(--font-geist-sans), system-ui, sans-serif;
+}
+
 /* Native select dropdown fix - ensure dropdowns open properly */
 select {
   -webkit-appearance: menulist-button !important;

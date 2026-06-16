@@ -1,0 +1,754 @@
+{
+  "tr": {
+    "payment": {
+      "title": "Ödeme",
+      "subtitle": "Güvenli ödeme işlemi",
+      "duplicateTab": {
+        "label": "Dikkat:",
+        "message": "Ödeme başka bir sekmede de açılmış. Çift ödeme yapmamak için lütfen sadece bir sekmeden devam edin."
+      },
+      "summary": {
+        "student": "Öğrenci:",
+        "package": "Paket:",
+        "discount": "{code} indirim:",
+        "total": "Toplam:"
+      },
+      "form": {
+        "cardNumber": "Kart Numarası",
+        "cardNumberPlaceholder": "Kart numaranızı giriniz",
+        "cardHolder": "Kart Üzerindeki İsim",
+        "cardHolderPlaceholder": "AD SOYAD",
+        "expiry": "Son Kullanma",
+        "expiryPlaceholder": "AA/YY",
+        "cvv": "CVV",
+        "processing": "İşlem Yapılıyor...",
+        "pay": "{amount} TL Öde",
+        "sslBadge": "256-bit SSL ile güvenli ödeme",
+        "back": "Geri dön"
+      },
+      "success": {
+        "title": "Ödeme Başarılı!",
+        "message": "Siparişini aldık. Sipariş onay sayfasına yönlendiriliyorsunuz...",
+        "orderNoLabel": "Sipariş No:"
+      },
+      "errors": {
+        "failed": "Ödeme işlemi başarısız. Hiçbir ücret alınmadı.",
+        "generic": "Ödeme işlemi sırasında bir hata oluştu. Hiçbir ücret alınmadı."
+      }
+    },
+    "tracking": {
+      "header": {
+        "howItWorks": "Nasıl Çalışır",
+        "faq": "S.S.S",
+        "tracking": "Sipariş Takibi",
+        "homeAriaLabel": "okultedarigim.com ana sayfa",
+        "backHome": "Ana Sayfaya Dön"
+      },
+      "hero": {
+        "eyebrow": "Sipariş Takibi",
+        "title": "Siparişini <accent>sorgula.</accent>",
+        "subtitle": "Sipariş numaranı gir, durumunu ve teslimat detaylarını anında gör."
+      },
+      "search": {
+        "label": "Sipariş Numarası",
+        "placeholder": "Örn: ORD-2026-A8K3M9P2",
+        "searching": "Sorgulanıyor…",
+        "button": "Sorgula"
+      },
+      "status": {
+        "NEW": "Yeni Sipariş",
+        "PAYMENT_PENDING": "Ödeme Bekliyor",
+        "PAID": "Ödeme Alındı",
+        "CONFIRMED": "Onaylandı",
+        "INVOICED": "Fatura Kesildi",
+        "SHIPPED": "Kargoya Verildi",
+        "DELIVERED": "Teslim Edildi",
+        "COMPLETED": "Tamamlandı",
+        "CANCELLED": "İptal Edildi",
+        "REFUNDED": "İade Edildi"
+      },
+      "timeline": {
+        "created": "Sipariş Oluşturuldu",
+        "paid": "Ödeme Alındı",
+        "invoiced": "Fatura Kesildi",
+        "shipped": "Kargoya Verildi",
+        "delivered": "Teslim Edildi",
+        "deliveredSchool": "Okula Teslim Edildi"
+      },
+      "detail": {
+        "orderNo": "Sipariş No",
+        "orderNoInline": "Sipariş No:",
+        "invoiceNo": "Fatura No:",
+        "trackingNo": "Takip No:",
+        "parent": "Veli",
+        "student": "Öğrenci",
+        "schoolClass": "Okul / Sınıf",
+        "package": "Paket",
+        "paymentMethod": "Ödeme Yöntemi",
+        "creditCard": "Kredi Kartı",
+        "invoiceNoLabel": "Fatura No",
+        "totalAmount": "Toplam Tutar",
+        "discount": "İndirim: −{amount} ₺ ({code})",
+        "newSearch": "Yeni sorgulama"
+      },
+      "cancel": {
+        "button": "İptal talebi",
+        "retryButton": "Tekrar iptal talebi",
+        "pending": {
+          "title": "İptal Talebiniz İnceleniyor",
+          "body": "Talebiniz admin tarafından değerlendiriliyor. Sonuç hakkında bilgilendirileceksiniz."
+        },
+        "rejected": {
+          "title": "İptal Talebiniz Reddedildi",
+          "reasonLabel": "Gerekçe:",
+          "retryHint": "İsterseniz yeni bir iptal talebi oluşturabilirsiniz."
+        },
+        "approved": {
+          "title": "İptal Talebiniz Onaylandı",
+          "body": "Siparişiniz iptal edilmiştir. İade işlemi başlatılmıştır."
+        },
+        "modal": {
+          "title": "Sipariş İptal Talebi",
+          "description": "İptal talebiniz admin tarafından incelenecektir.",
+          "phoneLabel": "Telefon son 4 hane",
+          "phonePlaceholder": "Örn: 1234",
+          "phoneHint": "Sipariş verirken kullandığınız telefonun son 4 hanesi.",
+          "reasonLabel": "İptal nedeni",
+          "reasonPlaceholder": "İptal nedeninizi yazın…",
+          "cancelButton": "Vazgeç",
+          "submitButton": "İptal talebi gönder"
+        },
+        "errors": {
+          "phoneLast4": "Telefon numaranızın son 4 hanesini girin",
+          "sendFailed": "İptal talebi gönderilemedi",
+          "sendError": "İptal talebi gönderilirken hata oluştu"
+        }
+      },
+      "errors": {
+        "notFound": "Sipariş bulunamadı",
+        "queryFailed": "Sipariş sorgulanırken hata oluştu",
+        "required": "Sipariş numarası gerekli"
+      }
+    },
+    "orderConfirm": {
+      "loading": "Yükleniyor...",
+      "backHome": "Ana Sayfaya Dön",
+      "successTitle": "Siparişiniz Alındı!",
+      "orderNumberLabel": "Sipariş numaranız:",
+      "orderStatus": "Sipariş Durumu",
+      "trackingNoLabel": "Kargo Takip Numarası",
+      "status": {
+        "NEW": "Yeni",
+        "PAYMENT_PENDING": "Ödeme Bekliyor",
+        "PAID": "Ödeme Alındı",
+        "CONFIRMED": "Onaylandı",
+        "INVOICED": "Fatura Kesildi",
+        "SHIPPED": "Kargoya Verildi",
+        "DELIVERED": "Teslim Edildi",
+        "COMPLETED": "Tamamlandı",
+        "CANCELLED": "İptal Edildi",
+        "REFUNDED": "İade Edildi"
+      },
+      "fields": {
+        "parentName": "Veli Adı",
+        "studentName": "Öğrenci Adı",
+        "school": "Okul",
+        "class": "Sınıf",
+        "package": "Paket",
+        "deliveryMethod": "Teslimat Yöntemi",
+        "paymentMethod": "Ödeme Yöntemi",
+        "orderDate": "Sipariş Tarihi"
+      },
+      "delivery": {
+        "cargo": "📦 Kargo ile Eve",
+        "school": "🏫 Okula Teslim"
+      },
+      "payment": {
+        "creditCard": "💳 Kredi Kartı"
+      },
+      "amount": {
+        "subtotal": "Ara Toplam",
+        "discount": "İndirim ({code})",
+        "total": "Toplam Tutar"
+      },
+      "info": {
+        "title": "Bilgilendirme",
+        "saveNumber": "Lütfen sipariş numaranızı kaydedin — siparişinizi takip için bu numaraya ihtiyacınız olacak.",
+        "trackHint": "<link>Sipariş Takip</link> sayfasından durum güncellemelerini görüntüleyebilirsiniz.",
+        "whatsapp": "Sorularınız için WhatsApp Hattımızdan iletişim kurabilirsiniz."
+      },
+      "buttons": {
+        "track": "Siparişi Takip Et"
+      },
+      "errors": {
+        "notFound": "Sipariş bulunamadı",
+        "notFoundTitle": "Sipariş Bulunamadı",
+        "loadFailed": "Sipariş bilgileri yüklenirken hata oluştu"
+      }
+    }
+  },
+  "en": {
+    "payment": {
+      "title": "Payment",
+      "subtitle": "Secure payment process",
+      "duplicateTab": {
+        "label": "Warning:",
+        "message": "Payment is also open in another tab. To avoid a double payment, please continue from a single tab only."
+      },
+      "summary": {
+        "student": "Student:",
+        "package": "Package:",
+        "discount": "{code} discount:",
+        "total": "Total:"
+      },
+      "form": {
+        "cardNumber": "Card Number",
+        "cardNumberPlaceholder": "Enter your card number",
+        "cardHolder": "Cardholder Name",
+        "cardHolderPlaceholder": "FULL NAME",
+        "expiry": "Expiry Date",
+        "expiryPlaceholder": "MM/YY",
+        "cvv": "CVV",
+        "processing": "Processing...",
+        "pay": "Pay {amount} TL",
+        "sslBadge": "Secure payment with 256-bit SSL",
+        "back": "Go back"
+      },
+      "success": {
+        "title": "Payment Successful!",
+        "message": "We've received your order. You're being redirected to the order confirmation page...",
+        "orderNoLabel": "Order No:"
+      },
+      "errors": {
+        "failed": "Payment failed. No charge was made.",
+        "generic": "An error occurred during payment. No charge was made."
+      }
+    },
+    "tracking": {
+      "header": {
+        "howItWorks": "How It Works",
+        "faq": "FAQ",
+        "tracking": "Order Tracking",
+        "homeAriaLabel": "okultedarigim.com home page",
+        "backHome": "Back to Home"
+      },
+      "hero": {
+        "eyebrow": "Order Tracking",
+        "title": "Track your <accent>order.</accent>",
+        "subtitle": "Enter your order number to see its status and delivery details instantly."
+      },
+      "search": {
+        "label": "Order Number",
+        "placeholder": "e.g. ORD-2026-A8K3M9P2",
+        "searching": "Searching…",
+        "button": "Search"
+      },
+      "status": {
+        "NEW": "New Order",
+        "PAYMENT_PENDING": "Awaiting Payment",
+        "PAID": "Payment Received",
+        "CONFIRMED": "Confirmed",
+        "INVOICED": "Invoiced",
+        "SHIPPED": "Shipped",
+        "DELIVERED": "Delivered",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded"
+      },
+      "timeline": {
+        "created": "Order Created",
+        "paid": "Payment Received",
+        "invoiced": "Invoiced",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "deliveredSchool": "Delivered to School"
+      },
+      "detail": {
+        "orderNo": "Order No",
+        "orderNoInline": "Order No:",
+        "invoiceNo": "Invoice No:",
+        "trackingNo": "Tracking No:",
+        "parent": "Parent",
+        "student": "Student",
+        "schoolClass": "School / Class",
+        "package": "Package",
+        "paymentMethod": "Payment Method",
+        "creditCard": "Credit Card",
+        "invoiceNoLabel": "Invoice No",
+        "totalAmount": "Total Amount",
+        "discount": "Discount: −{amount} ₺ ({code})",
+        "newSearch": "New search"
+      },
+      "cancel": {
+        "button": "Cancellation request",
+        "retryButton": "Request cancellation again",
+        "pending": {
+          "title": "Your Cancellation Request Is Under Review",
+          "body": "Your request is being reviewed by an admin. You will be informed about the outcome."
+        },
+        "rejected": {
+          "title": "Your Cancellation Request Was Rejected",
+          "reasonLabel": "Reason:",
+          "retryHint": "If you wish, you can create a new cancellation request."
+        },
+        "approved": {
+          "title": "Your Cancellation Request Was Approved",
+          "body": "Your order has been cancelled. The refund process has been initiated."
+        },
+        "modal": {
+          "title": "Order Cancellation Request",
+          "description": "Your cancellation request will be reviewed by an admin.",
+          "phoneLabel": "Last 4 digits of phone",
+          "phonePlaceholder": "e.g. 1234",
+          "phoneHint": "The last 4 digits of the phone number you used when placing the order.",
+          "reasonLabel": "Reason for cancellation",
+          "reasonPlaceholder": "Write your reason for cancellation…",
+          "cancelButton": "Cancel",
+          "submitButton": "Send cancellation request"
+        },
+        "errors": {
+          "phoneLast4": "Enter the last 4 digits of your phone number",
+          "sendFailed": "Cancellation request could not be sent",
+          "sendError": "An error occurred while sending the cancellation request"
+        }
+      },
+      "errors": {
+        "notFound": "Order not found",
+        "queryFailed": "An error occurred while querying the order",
+        "required": "Order number is required"
+      }
+    },
+    "orderConfirm": {
+      "loading": "Loading...",
+      "backHome": "Back to Home",
+      "successTitle": "Your Order Has Been Received!",
+      "orderNumberLabel": "Your order number:",
+      "orderStatus": "Order Status",
+      "trackingNoLabel": "Shipment Tracking Number",
+      "status": {
+        "NEW": "New",
+        "PAYMENT_PENDING": "Awaiting Payment",
+        "PAID": "Payment Received",
+        "CONFIRMED": "Confirmed",
+        "INVOICED": "Invoiced",
+        "SHIPPED": "Shipped",
+        "DELIVERED": "Delivered",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded"
+      },
+      "fields": {
+        "parentName": "Parent Name",
+        "studentName": "Student Name",
+        "school": "School",
+        "class": "Class",
+        "package": "Package",
+        "deliveryMethod": "Delivery Method",
+        "paymentMethod": "Payment Method",
+        "orderDate": "Order Date"
+      },
+      "delivery": {
+        "cargo": "📦 Cargo to Home",
+        "school": "🏫 Delivery to School"
+      },
+      "payment": {
+        "creditCard": "💳 Credit Card"
+      },
+      "amount": {
+        "subtotal": "Subtotal",
+        "discount": "Discount ({code})",
+        "total": "Total Amount"
+      },
+      "info": {
+        "title": "Information",
+        "saveNumber": "Please save your order number — you will need it to track your order.",
+        "trackHint": "You can view status updates from the <link>Order Tracking</link> page.",
+        "whatsapp": "For your questions, you can contact us via our WhatsApp line."
+      },
+      "buttons": {
+        "track": "Track Order"
+      },
+      "errors": {
+        "notFound": "Order not found",
+        "notFoundTitle": "Order Not Found",
+        "loadFailed": "An error occurred while loading the order details"
+      }
+    }
+  },
+  "de": {
+    "payment": {
+      "title": "Zahlung",
+      "subtitle": "Sicherer Zahlungsvorgang",
+      "duplicateTab": {
+        "label": "Achtung:",
+        "message": "Die Zahlung ist auch in einem anderen Tab geöffnet. Um eine Doppelzahlung zu vermeiden, fahren Sie bitte nur in einem Tab fort."
+      },
+      "summary": {
+        "student": "Schüler:",
+        "package": "Paket:",
+        "discount": "Rabatt {code}:",
+        "total": "Gesamt:"
+      },
+      "form": {
+        "cardNumber": "Kartennummer",
+        "cardNumberPlaceholder": "Geben Sie Ihre Kartennummer ein",
+        "cardHolder": "Name des Karteninhabers",
+        "cardHolderPlaceholder": "VOR- UND NACHNAME",
+        "expiry": "Gültig bis",
+        "expiryPlaceholder": "MM/JJ",
+        "cvv": "CVV",
+        "processing": "Wird verarbeitet...",
+        "pay": "{amount} TL bezahlen",
+        "sslBadge": "Sichere Zahlung mit 256-Bit-SSL",
+        "back": "Zurück"
+      },
+      "success": {
+        "title": "Zahlung erfolgreich!",
+        "message": "Wir haben Ihre Bestellung erhalten. Sie werden zur Bestellbestätigungsseite weitergeleitet...",
+        "orderNoLabel": "Bestell-Nr.:"
+      },
+      "errors": {
+        "failed": "Zahlung fehlgeschlagen. Es wurde kein Betrag belastet.",
+        "generic": "Bei der Zahlung ist ein Fehler aufgetreten. Es wurde kein Betrag belastet."
+      }
+    },
+    "tracking": {
+      "header": {
+        "howItWorks": "So funktioniert's",
+        "faq": "FAQ",
+        "tracking": "Sendungsverfolgung",
+        "homeAriaLabel": "okultedarigim.com Startseite",
+        "backHome": "Zurück zur Startseite"
+      },
+      "hero": {
+        "eyebrow": "Sendungsverfolgung",
+        "title": "Verfolge deine <accent>Bestellung.</accent>",
+        "subtitle": "Gib deine Bestellnummer ein, um Status und Lieferdetails sofort zu sehen."
+      },
+      "search": {
+        "label": "Bestellnummer",
+        "placeholder": "z. B. ORD-2026-A8K3M9P2",
+        "searching": "Wird abgefragt…",
+        "button": "Suchen"
+      },
+      "status": {
+        "NEW": "Neue Bestellung",
+        "PAYMENT_PENDING": "Zahlung ausstehend",
+        "PAID": "Zahlung erhalten",
+        "CONFIRMED": "Bestätigt",
+        "INVOICED": "Rechnung erstellt",
+        "SHIPPED": "Versandt",
+        "DELIVERED": "Geliefert",
+        "COMPLETED": "Abgeschlossen",
+        "CANCELLED": "Storniert",
+        "REFUNDED": "Erstattet"
+      },
+      "timeline": {
+        "created": "Bestellung erstellt",
+        "paid": "Zahlung erhalten",
+        "invoiced": "Rechnung erstellt",
+        "shipped": "Versandt",
+        "delivered": "Geliefert",
+        "deliveredSchool": "An die Schule geliefert"
+      },
+      "detail": {
+        "orderNo": "Bestell-Nr.",
+        "orderNoInline": "Bestell-Nr.:",
+        "invoiceNo": "Rechnungs-Nr.:",
+        "trackingNo": "Sendungs-Nr.:",
+        "parent": "Erziehungsberechtigter",
+        "student": "Schüler",
+        "schoolClass": "Schule / Klasse",
+        "package": "Paket",
+        "paymentMethod": "Zahlungsart",
+        "creditCard": "Kreditkarte",
+        "invoiceNoLabel": "Rechnungs-Nr.",
+        "totalAmount": "Gesamtbetrag",
+        "discount": "Rabatt: −{amount} ₺ ({code})",
+        "newSearch": "Neue Abfrage"
+      },
+      "cancel": {
+        "button": "Stornierungsantrag",
+        "retryButton": "Erneut stornieren",
+        "pending": {
+          "title": "Ihr Stornierungsantrag wird geprüft",
+          "body": "Ihr Antrag wird von einem Administrator geprüft. Sie werden über das Ergebnis informiert."
+        },
+        "rejected": {
+          "title": "Ihr Stornierungsantrag wurde abgelehnt",
+          "reasonLabel": "Begründung:",
+          "retryHint": "Wenn Sie möchten, können Sie einen neuen Stornierungsantrag stellen."
+        },
+        "approved": {
+          "title": "Ihr Stornierungsantrag wurde genehmigt",
+          "body": "Ihre Bestellung wurde storniert. Die Rückerstattung wurde eingeleitet."
+        },
+        "modal": {
+          "title": "Stornierungsantrag",
+          "description": "Ihr Stornierungsantrag wird von einem Administrator geprüft.",
+          "phoneLabel": "Letzte 4 Telefonziffern",
+          "phonePlaceholder": "z. B. 1234",
+          "phoneHint": "Die letzten 4 Ziffern der bei der Bestellung verwendeten Telefonnummer.",
+          "reasonLabel": "Stornierungsgrund",
+          "reasonPlaceholder": "Schreiben Sie Ihren Stornierungsgrund…",
+          "cancelButton": "Abbrechen",
+          "submitButton": "Stornierungsantrag senden"
+        },
+        "errors": {
+          "phoneLast4": "Geben Sie die letzten 4 Ziffern Ihrer Telefonnummer ein",
+          "sendFailed": "Stornierungsantrag konnte nicht gesendet werden",
+          "sendError": "Beim Senden des Stornierungsantrags ist ein Fehler aufgetreten"
+        }
+      },
+      "errors": {
+        "notFound": "Bestellung nicht gefunden",
+        "queryFailed": "Beim Abfragen der Bestellung ist ein Fehler aufgetreten",
+        "required": "Bestellnummer erforderlich"
+      }
+    },
+    "orderConfirm": {
+      "loading": "Wird geladen...",
+      "backHome": "Zurück zur Startseite",
+      "successTitle": "Ihre Bestellung wurde aufgenommen!",
+      "orderNumberLabel": "Ihre Bestellnummer:",
+      "orderStatus": "Bestellstatus",
+      "trackingNoLabel": "Sendungsverfolgungsnummer",
+      "status": {
+        "NEW": "Neu",
+        "PAYMENT_PENDING": "Zahlung ausstehend",
+        "PAID": "Zahlung erhalten",
+        "CONFIRMED": "Bestätigt",
+        "INVOICED": "Rechnung erstellt",
+        "SHIPPED": "Versandt",
+        "DELIVERED": "Geliefert",
+        "COMPLETED": "Abgeschlossen",
+        "CANCELLED": "Storniert",
+        "REFUNDED": "Erstattet"
+      },
+      "fields": {
+        "parentName": "Name des Erziehungsberechtigten",
+        "studentName": "Name des Schülers",
+        "school": "Schule",
+        "class": "Klasse",
+        "package": "Paket",
+        "deliveryMethod": "Lieferart",
+        "paymentMethod": "Zahlungsart",
+        "orderDate": "Bestelldatum"
+      },
+      "delivery": {
+        "cargo": "📦 Versand nach Hause",
+        "school": "🏫 Lieferung an die Schule"
+      },
+      "payment": {
+        "creditCard": "💳 Kreditkarte"
+      },
+      "amount": {
+        "subtotal": "Zwischensumme",
+        "discount": "Rabatt ({code})",
+        "total": "Gesamtbetrag"
+      },
+      "info": {
+        "title": "Information",
+        "saveNumber": "Bitte speichern Sie Ihre Bestellnummer — Sie benötigen sie, um Ihre Bestellung zu verfolgen.",
+        "trackHint": "Auf der Seite <link>Sendungsverfolgung</link> können Sie Statusaktualisierungen einsehen.",
+        "whatsapp": "Bei Fragen können Sie uns über unsere WhatsApp-Hotline kontaktieren."
+      },
+      "buttons": {
+        "track": "Bestellung verfolgen"
+      },
+      "errors": {
+        "notFound": "Bestellung nicht gefunden",
+        "notFoundTitle": "Bestellung nicht gefunden",
+        "loadFailed": "Beim Laden der Bestelldetails ist ein Fehler aufgetreten"
+      }
+    }
+  },
+  "ar": {
+    "payment": {
+      "title": "الدفع",
+      "subtitle": "عملية دفع آمنة",
+      "duplicateTab": {
+        "label": "تنبيه:",
+        "message": "تم فتح صفحة الدفع في علامة تبويب أخرى أيضًا. لتجنب الدفع المزدوج، يُرجى المتابعة من علامة تبويب واحدة فقط."
+      },
+      "summary": {
+        "student": "الطالب:",
+        "package": "الباقة:",
+        "discount": "خصم {code}:",
+        "total": "الإجمالي:"
+      },
+      "form": {
+        "cardNumber": "رقم البطاقة",
+        "cardNumberPlaceholder": "أدخل رقم بطاقتك",
+        "cardHolder": "الاسم على البطاقة",
+        "cardHolderPlaceholder": "الاسم الكامل",
+        "expiry": "تاريخ الانتهاء",
+        "expiryPlaceholder": "شش/سس",
+        "cvv": "رمز التحقق CVV",
+        "processing": "جارٍ المعالجة...",
+        "pay": "ادفع {amount} ليرة تركية",
+        "sslBadge": "دفع آمن بتشفير SSL بطول 256 بت",
+        "back": "رجوع"
+      },
+      "success": {
+        "title": "تم الدفع بنجاح!",
+        "message": "لقد استلمنا طلبك. تتم إعادة توجيهك إلى صفحة تأكيد الطلب...",
+        "orderNoLabel": "رقم الطلب:"
+      },
+      "errors": {
+        "failed": "فشلت عملية الدفع. لم يتم خصم أي مبلغ.",
+        "generic": "حدث خطأ أثناء عملية الدفع. لم يتم خصم أي مبلغ."
+      }
+    },
+    "tracking": {
+      "header": {
+        "howItWorks": "كيف يعمل",
+        "faq": "الأسئلة الشائعة",
+        "tracking": "تتبّع الطلب",
+        "homeAriaLabel": "الصفحة الرئيسية okultedarigim.com",
+        "backHome": "العودة إلى الصفحة الرئيسية"
+      },
+      "hero": {
+        "eyebrow": "تتبّع الطلب",
+        "title": "تتبّع <accent>طلبك.</accent>",
+        "subtitle": "أدخل رقم طلبك لترى حالته وتفاصيل التسليم على الفور."
+      },
+      "search": {
+        "label": "رقم الطلب",
+        "placeholder": "مثال: ORD-2026-A8K3M9P2",
+        "searching": "جارٍ الاستعلام…",
+        "button": "استعلام"
+      },
+      "status": {
+        "NEW": "طلب جديد",
+        "PAYMENT_PENDING": "بانتظار الدفع",
+        "PAID": "تم استلام الدفع",
+        "CONFIRMED": "تم التأكيد",
+        "INVOICED": "تم إصدار الفاتورة",
+        "SHIPPED": "تم الشحن",
+        "DELIVERED": "تم التسليم",
+        "COMPLETED": "مكتمل",
+        "CANCELLED": "ملغى",
+        "REFUNDED": "تم استرداد المبلغ"
+      },
+      "timeline": {
+        "created": "تم إنشاء الطلب",
+        "paid": "تم استلام الدفع",
+        "invoiced": "تم إصدار الفاتورة",
+        "shipped": "تم الشحن",
+        "delivered": "تم التسليم",
+        "deliveredSchool": "تم التسليم إلى المدرسة"
+      },
+      "detail": {
+        "orderNo": "رقم الطلب",
+        "orderNoInline": "رقم الطلب:",
+        "invoiceNo": "رقم الفاتورة:",
+        "trackingNo": "رقم التتبّع:",
+        "parent": "ولي الأمر",
+        "student": "الطالب",
+        "schoolClass": "المدرسة / الصف",
+        "package": "الباقة",
+        "paymentMethod": "طريقة الدفع",
+        "creditCard": "بطاقة ائتمان",
+        "invoiceNoLabel": "رقم الفاتورة",
+        "totalAmount": "المبلغ الإجمالي",
+        "discount": "الخصم: −{amount} ₺ ({code})",
+        "newSearch": "استعلام جديد"
+      },
+      "cancel": {
+        "button": "طلب إلغاء",
+        "retryButton": "إعادة طلب الإلغاء",
+        "pending": {
+          "title": "طلب الإلغاء الخاص بك قيد المراجعة",
+          "body": "تتم مراجعة طلبك من قِبل المسؤول. سيتم إعلامك بالنتيجة."
+        },
+        "rejected": {
+          "title": "تم رفض طلب الإلغاء الخاص بك",
+          "reasonLabel": "السبب:",
+          "retryHint": "يمكنك إنشاء طلب إلغاء جديد إذا رغبت في ذلك."
+        },
+        "approved": {
+          "title": "تمت الموافقة على طلب الإلغاء الخاص بك",
+          "body": "تم إلغاء طلبك. وقد بدأت عملية استرداد المبلغ."
+        },
+        "modal": {
+          "title": "طلب إلغاء الطلب",
+          "description": "سيتم مراجعة طلب الإلغاء الخاص بك من قِبل المسؤول.",
+          "phoneLabel": "آخر 4 أرقام من الهاتف",
+          "phonePlaceholder": "مثال: 1234",
+          "phoneHint": "آخر 4 أرقام من رقم الهاتف الذي استخدمته عند تقديم الطلب.",
+          "reasonLabel": "سبب الإلغاء",
+          "reasonPlaceholder": "اكتب سبب الإلغاء…",
+          "cancelButton": "تراجع",
+          "submitButton": "إرسال طلب الإلغاء"
+        },
+        "errors": {
+          "phoneLast4": "أدخل آخر 4 أرقام من رقم هاتفك",
+          "sendFailed": "تعذّر إرسال طلب الإلغاء",
+          "sendError": "حدث خطأ أثناء إرسال طلب الإلغاء"
+        }
+      },
+      "errors": {
+        "notFound": "لم يتم العثور على الطلب",
+        "queryFailed": "حدث خطأ أثناء الاستعلام عن الطلب",
+        "required": "رقم الطلب مطلوب"
+      }
+    },
+    "orderConfirm": {
+      "loading": "جارٍ التحميل...",
+      "backHome": "العودة إلى الصفحة الرئيسية",
+      "successTitle": "تم استلام طلبك!",
+      "orderNumberLabel": "رقم طلبك:",
+      "orderStatus": "حالة الطلب",
+      "trackingNoLabel": "رقم تتبّع الشحنة",
+      "status": {
+        "NEW": "جديد",
+        "PAYMENT_PENDING": "بانتظار الدفع",
+        "PAID": "تم استلام الدفع",
+        "CONFIRMED": "تم التأكيد",
+        "INVOICED": "تم إصدار الفاتورة",
+        "SHIPPED": "تم الشحن",
+        "DELIVERED": "تم التسليم",
+        "COMPLETED": "مكتمل",
+        "CANCELLED": "ملغى",
+        "REFUNDED": "تم استرداد المبلغ"
+      },
+      "fields": {
+        "parentName": "اسم ولي الأمر",
+        "studentName": "اسم الطالب",
+        "school": "المدرسة",
+        "class": "الصف",
+        "package": "الباقة",
+        "deliveryMethod": "طريقة التسليم",
+        "paymentMethod": "طريقة الدفع",
+        "orderDate": "تاريخ الطلب"
+      },
+      "delivery": {
+        "cargo": "📦 شحن إلى المنزل",
+        "school": "🏫 التسليم إلى المدرسة"
+      },
+      "payment": {
+        "creditCard": "💳 بطاقة ائتمان"
+      },
+      "amount": {
+        "subtotal": "المجموع الفرعي",
+        "discount": "الخصم ({code})",
+        "total": "المبلغ الإجمالي"
+      },
+      "info": {
+        "title": "معلومات",
+        "saveNumber": "يُرجى حفظ رقم طلبك — ستحتاج إليه لتتبّع طلبك.",
+        "trackHint": "يمكنك عرض تحديثات الحالة من صفحة <link>تتبّع الطلب</link>.",
+        "whatsapp": "لأي استفسارات، يمكنك التواصل معنا عبر خط واتساب الخاص بنا."
+      },
+      "buttons": {
+        "track": "تتبّع الطلب"
+      },
+      "errors": {
+        "notFound": "لم يتم العثور على الطلب",
+        "notFoundTitle": "لم يتم العثور على الطلب",
+        "loadFailed": "حدث خطأ أثناء تحميل تفاصيل الطلب"
+      }
+    }
+  }
+}

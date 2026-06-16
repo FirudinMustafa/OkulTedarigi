@@ -4,15 +4,18 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { cancelInvoice } from '@/lib/kolaybi'
 import { sendInvoiceCancelled } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -25,17 +28,18 @@ export async function POST(
         invoiceNo: true,
         status: true,
         parentName: true,
-        email: true
+        email: true,
+        locale: true
       }
     })
 
     if (!order) {
-      return NextResponse.json({ error: 'Siparis bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
     if (!order.invoiceNo) {
       return NextResponse.json(
-        { error: 'Bu sipariste fatura bulunamadi' },
+        { error: t('orders.noInvoiceOnOrder') },
         { status: 400 }
       )
     }
@@ -45,7 +49,7 @@ export async function POST(
 
     if (!result.success) {
       return NextResponse.json(
-        { error: result.message || 'Fatura iptal edilemedi' },
+        { error: result.message || t('orders.invoiceCancelFailed') },
         { status: 500 }
       )
     }
@@ -82,6 +86,7 @@ export async function POST(
           orderNumber: order.orderNumber,
           parentName: order.parentName,
           invoiceNo: order.invoiceNo,
+          locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
         })
       } catch (notifError) {
         console.error('Fatura iptal bildirim maili gonderilemedi:', notifError)
@@ -90,12 +95,12 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Fatura basariyla iptal edildi'
+      message: t('orders.invoiceCancelled')
     })
   } catch (error) {
     console.error('Fatura iptal edilemedi:', error)
     return NextResponse.json(
-      { error: 'Fatura iptal edilemedi' },
+      { error: t('orders.invoiceCancelFailed') },
       { status: 500 }
     )
   }

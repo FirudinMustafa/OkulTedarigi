@@ -1,40 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus } from '@phosphor-icons/react'
 
 // Apple-stili accordion: hairline border-b, büyük soru, yumuşak aç/kapat.
 // AI tropes (rounded cards, rotating badge) kaldırıldı.
 export default function FAQ() {
+  const t = useTranslations('landing.faq')
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
-  const faqs = [
-    {
-      question: 'Şifreyi nereden alacağım?',
-      answer:
-        'Sınıf şifrenizi okulunuzun idaresinden veya sınıf öğretmeninizden temin edebilirsiniz. Her sınıf için özel bir şifre tanımlanmıştır.',
-    },
-    {
-      question: 'Ödeme güvenli mi?',
-      answer:
-        'Evet, tüm ödemeler 256-bit SSL şifrelemesi ve 3D Secure teknolojisi ile korunmaktadır. Kart bilgileriniz sistemimizde saklanmaz.',
-    },
-    {
-      question: 'Teslimat ne kadar sürer?',
-      answer:
-        'Kargo ile teslimat 2-3 iş günü içinde gerçekleşir. Okula toplu teslimat seçeneğinde okul tarafından belirlenen tarihte teslim yapılır.',
-    },
-    {
-      question: 'İade yapabilir miyim?',
-      answer:
-        'Kullanılmamış ve ambalajı açılmamış ürünler için 14 gün içinde iade talebinde bulunabilirsiniz.',
-    },
-    {
-      question: 'Fatura alabilir miyim?',
-      answer:
-        'Evet, bireysel veya kurumsal fatura seçenekleri mevcuttur. Sipariş sırasında tercihini belirtmeniz yeterlidir.',
-    },
-  ]
+  const faqs = [0, 1, 2, 3, 4].map((i) => ({
+    question: t(`items.${i}.question`),
+    answer: t(`items.${i}.answer`),
+  }))
 
   return (
     <section id="sss" className="py-24 lg:py-32 bg-apple-bg">
@@ -42,13 +21,13 @@ export default function FAQ() {
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-[13px] font-medium text-[#10b981] mb-5 tracking-wide uppercase">
-            S.S.S
+            {t('eyebrow')}
           </p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-apple-ink leading-[1.05]">
-            <span className="text-gradient-green">Merak</span> edilenler
+            <span className="text-gradient-green">{t('titleHighlight')}</span> {t('titleRest')}
           </h2>
           <p className="mt-6 text-xl text-apple-gray">
-            Sık sorulan sorular ve cevapları.
+            {t('subtitle')}
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { motion, useScroll, useTransform, useSpring, type MotionValue } from 'framer-motion'
 
@@ -14,29 +15,21 @@ import { motion, useScroll, useTransform, useSpring, type MotionValue } from 'fr
 const STEPS = [
   {
     num: '1',
-    title: 'Okul paketi oluşturur',
-    desc: '2026 - 2027 Eğitim-öğretim döneminde kullanılacak olan ve zümrelerimiz tarafından belirlenen ders kitapları ile yardımcı kaynaklar, sistemimizde paket olarak yapılandırılmıştır.',
     iconA: '/images/surec/1.1.png',
     iconB: '/images/surec/1.2.png',
   },
   {
     num: '2',
-    title: 'Şifre velilere ulaşır',
-    desc: 'Kişisel verilerin korunması ve güvenli alışverişiniz için sistem tarafından üretilen okul şifresini, yalnızca öğrencinizin bağlı bulunduğu okul yönetiminden tedarik edebilirsiniz. Alışverişinize devam etmek için lütfen bu şifreyi kullanınız.',
     iconA: '/images/surec/2.1.png',
     iconB: '/images/surec/2.2.png',
   },
   {
     num: '3',
-    title: 'Veli siparişi tamamlar',
-    desc: 'Veli, şifre ile pakete erişir, içeriği inceler ve 3D Secure ile güvenli ödeme yapar. Eğer ödeme başarılı olmazsa (bakiye yetersizliği, hatalı kart bilgisi vb. nedenlerle), herhangi bir sipariş oluşmaz ve ücret alınmaz. Bu durumda ekrandan bilgilendirilirsiniz ve tekrar deneyebilirsiniz.',
     iconA: '/images/surec/3.1.png',
     iconB: '/images/surec/3.2.png',
   },
   {
     num: '4',
-    title: 'Kitaplar teslim edilir',
-    desc: 'Tamamlanan siparişler; okul yönetiminin belirlediği tarihte doğrudan okulda öğrencilerimize teslim edilir veya okul açılış döneminde, sipariş esnasında belirttiğiniz adrese kargo ile ulaştırılır. Sürecin her aşaması, sipariş numaranız ile şeffaf bir şekilde takip edilebilmektedir.',
     iconA: '/images/surec/4.1.png',
     iconB: '/images/surec/4.2.png',
   },
@@ -48,6 +41,7 @@ const STEPS = [
 const TOTAL_SLOTS = STEPS.length
 
 export default function Process() {
+  const t = useTranslations('landing.process')
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -68,12 +62,12 @@ export default function Process() {
           <div className="absolute inset-x-0 top-0 pt-16 px-6 lg:px-8 z-40">
             <div className="max-w-3xl mx-auto text-center">
               <p className="text-[13px] font-medium text-[#10b981] mb-5 tracking-wide uppercase">
-                Süreç
+                {t('eyebrow')}
               </p>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-apple-ink leading-[1.05]">
-                Dört adımda,
+                {t('titleLine1')}
                 <br />
-                <span className="text-gradient-green">baştan sona şeffaf.</span>
+                <span className="text-gradient-green">{t('titleLine2')}</span>
               </h2>
             </div>
           </div>
@@ -88,6 +82,8 @@ export default function Process() {
                   index={i}
                   total={STEPS.length}
                   progress={scrollYProgress}
+                  title={t(`items.${i}.title`)}
+                  desc={t(`items.${i}.desc`)}
                 />
               ))}
             </div>
@@ -103,11 +99,15 @@ function ProcessCard({
   index,
   total,
   progress,
+  title,
+  desc,
 }: {
   step: (typeof STEPS)[number]
   index: number
   total: number
   progress: MotionValue<number>
+  title: string
+  desc: string
 }) {
   // 1. kart (index 0) en başından itibaren stack pozisyonunda sabit duruyor.
   // Diğer kartlar slot [(index-1)/total, index/total] aralığında aşağıdan
@@ -150,10 +150,10 @@ function ProcessCard({
             </span>
             <div className="mt-2 md:mt-0 min-w-0">
               <h3 className="text-2xl md:text-4xl lg:text-5xl font-semibold text-apple-ink tracking-tight leading-[1.08]">
-                {step.title}
+                {title}
               </h3>
               <p className="mt-3 md:mt-4 text-[15px] md:text-lg text-apple-gray leading-relaxed max-w-md mx-auto md:mx-0">
-                {step.desc}
+                {desc}
               </p>
             </div>
           </div>

@@ -2,16 +2,19 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 // Odemeyi tamamla (PAID olarak isaretle)
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -22,10 +25,10 @@ export async function POST(
       select: { id: true, status: true }
     })
     if (!existing) {
-      return NextResponse.json({ error: 'Odeme bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('adminMisc.paymentNotFound') }, { status: 404 })
     }
     if (existing.status === 'PAID') {
-      return NextResponse.json({ error: 'Bu odeme zaten odenmis' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.alreadyPaid') }, { status: 400 })
     }
 
     // Atomic update with status guard
@@ -39,7 +42,7 @@ export async function POST(
 
     if (updateResult.count === 0) {
       return NextResponse.json(
-        { error: 'Odeme bu sirada baska bir admin tarafindan islendi' },
+        { error: t('adminMisc.paymentBeingProcessed') },
         { status: 409 }
       )
     }
@@ -52,7 +55,7 @@ export async function POST(
     })
 
     if (!payment) {
-      return NextResponse.json({ error: 'Odeme bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('adminMisc.paymentNotFound') }, { status: 404 })
     }
 
     await logAction({
@@ -72,7 +75,7 @@ export async function POST(
   } catch (error) {
     console.error('Odeme tamamlanamadi:', error)
     return NextResponse.json(
-      { error: 'Odeme tamamlanamadi' },
+      { error: t('adminMisc.paymentCompleteFailed') },
       { status: 500 }
     )
   }
@@ -83,10 +86,11 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -99,7 +103,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Odeme silinemedi:', error)
     return NextResponse.json(
-      { error: 'Odeme silinemedi' },
+      { error: t('adminMisc.paymentDeleteFailed') },
       { status: 500 }
     )
   }

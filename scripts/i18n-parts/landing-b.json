@@ -1,0 +1,298 @@
+{
+  "tr": {
+    "landing": {
+      "faq": {
+        "eyebrow": "S.S.S",
+        "titleHighlight": "Merak",
+        "titleRest": "edilenler",
+        "subtitle": "Sık sorulan sorular ve cevapları.",
+        "items": {
+          "0": {
+            "question": "Şifreyi nereden alacağım?",
+            "answer": "Sınıf şifrenizi okulunuzun idaresinden veya sınıf öğretmeninizden temin edebilirsiniz. Her sınıf için özel bir şifre tanımlanmıştır."
+          },
+          "1": {
+            "question": "Ödeme güvenli mi?",
+            "answer": "Evet, tüm ödemeler 256-bit SSL şifrelemesi ve 3D Secure teknolojisi ile korunmaktadır. Kart bilgileriniz sistemimizde saklanmaz."
+          },
+          "2": {
+            "question": "Teslimat ne kadar sürer?",
+            "answer": "Kargo ile teslimat 2-3 iş günü içinde gerçekleşir. Okula toplu teslimat seçeneğinde okul tarafından belirlenen tarihte teslim yapılır."
+          },
+          "3": {
+            "question": "İade yapabilir miyim?",
+            "answer": "Kullanılmamış ve ambalajı açılmamış ürünler için 14 gün içinde iade talebinde bulunabilirsiniz."
+          },
+          "4": {
+            "question": "Fatura alabilir miyim?",
+            "answer": "Evet, bireysel veya kurumsal fatura seçenekleri mevcuttur. Sipariş sırasında tercihini belirtmeniz yeterlidir."
+          }
+        }
+      },
+      "cta": {
+        "eyebrow": "Başla",
+        "headingLine1": "Siparişine",
+        "headingLine2": "hazır mısın?",
+        "body": "Okulundan aldığın şifreyi gir, paketini gör, ödemeyi tamamla. Üyelik gerekmiyor.",
+        "primaryButton": "Sipariş Ver",
+        "secondaryButton": "Sipariş Takip"
+      },
+      "footer": {
+        "tagline": "Okulların belirlediği, velilerin güvenle kullandığı kurumsal okul tedarik sistemi.",
+        "linksHeading": "Bağlantılar",
+        "links": {
+          "0": "Nasıl Çalışır",
+          "1": "S.S.S",
+          "2": "Sipariş Ver"
+        },
+        "contactHeading": "İletişim",
+        "whatsapp": "WhatsApp Hattımızdan iletişim kurabilirsiniz",
+        "quickHeading": "Hızlı Erişim",
+        "quick": {
+          "0": "Sipariş Takip",
+          "1": "KVKK Aydınlatma",
+          "2": "Mesafeli Satış"
+        },
+        "schoolPanel": "Okul Paneli",
+        "copyright": "© 2026 okultedarigim.com — Tüm hakları saklıdır.",
+        "securePayment": "3D Secure • SSL şifreli ödeme"
+      },
+      "chat": {
+        "welcome": "Merhaba! 👋 OkulTedarigim asistanıyım. Sipariş verme, şifre, teslimat, ödeme veya iade gibi konularda size yardımcı olabilirim. Nasıl yardımcı olabilirim?",
+        "nudge": "Bir yardıma ihtiyacınız var mı? 👋",
+        "headerTitle": "Yardım Asistanı",
+        "headerSubtitle": "Genellikle birkaç saniyede yanıtlar",
+        "placeholder": "Sorunuzu yazın...",
+        "send": "Gönder",
+        "close": "Kapat",
+        "openChat": "Yardım asistanını aç",
+        "closeChat": "Sohbeti kapat",
+        "whatsappLinkLabel": "WhatsApp Destek Hattı",
+        "errorBusy": "Şu an yanıt veremiyorum, lütfen biraz sonra tekrar deneyin.",
+        "errorConnection": "Bağlantı hatası oluştu. Lütfen tekrar deneyin."
+      }
+    }
+  },
+  "en": {
+    "landing": {
+      "faq": {
+        "eyebrow": "FAQ",
+        "titleHighlight": "Frequently",
+        "titleRest": "asked questions",
+        "subtitle": "Common questions and their answers.",
+        "items": {
+          "0": {
+            "question": "Where do I get the password?",
+            "answer": "You can obtain your class password from your school administration or your class teacher. A unique password is defined for each class."
+          },
+          "1": {
+            "question": "Is payment secure?",
+            "answer": "Yes, all payments are protected with 256-bit SSL encryption and 3D Secure technology. Your card details are never stored in our system."
+          },
+          "2": {
+            "question": "How long does delivery take?",
+            "answer": "Delivery by courier takes place within 2-3 business days. With the bulk delivery to school option, items are delivered on the date set by the school."
+          },
+          "3": {
+            "question": "Can I make a return?",
+            "answer": "You can request a return within 14 days for unused products with unopened packaging."
+          },
+          "4": {
+            "question": "Can I get an invoice?",
+            "answer": "Yes, individual or corporate invoice options are available. Simply indicate your preference during your order."
+          }
+        }
+      },
+      "cta": {
+        "eyebrow": "Get started",
+        "headingLine1": "Ready for",
+        "headingLine2": "your order?",
+        "body": "Enter the password from your school, view your package, and complete the payment. No membership required.",
+        "primaryButton": "Place Order",
+        "secondaryButton": "Track Order"
+      },
+      "footer": {
+        "tagline": "The corporate school supply system set by schools and trusted by parents.",
+        "linksHeading": "Links",
+        "links": {
+          "0": "How It Works",
+          "1": "FAQ",
+          "2": "Place Order"
+        },
+        "contactHeading": "Contact",
+        "whatsapp": "You can reach us via our WhatsApp line",
+        "quickHeading": "Quick Access",
+        "quick": {
+          "0": "Track Order",
+          "1": "Privacy Notice",
+          "2": "Distance Sales"
+        },
+        "schoolPanel": "School Panel",
+        "copyright": "© 2026 okultedarigim.com — All rights reserved.",
+        "securePayment": "3D Secure • SSL-encrypted payment"
+      },
+      "chat": {
+        "welcome": "Hello! 👋 I'm the OkulTedarigim assistant. I can help you with topics like placing an order, passwords, delivery, payment, or returns. How can I help you?",
+        "nudge": "Do you need any help? 👋",
+        "headerTitle": "Support Assistant",
+        "headerSubtitle": "Usually replies within a few seconds",
+        "placeholder": "Type your question...",
+        "send": "Send",
+        "close": "Close",
+        "openChat": "Open support assistant",
+        "closeChat": "Close chat",
+        "whatsappLinkLabel": "WhatsApp Support Line",
+        "errorBusy": "I can't respond right now, please try again shortly.",
+        "errorConnection": "A connection error occurred. Please try again."
+      }
+    }
+  },
+  "de": {
+    "landing": {
+      "faq": {
+        "eyebrow": "FAQ",
+        "titleHighlight": "Häufig",
+        "titleRest": "gestellte Fragen",
+        "subtitle": "Häufige Fragen und ihre Antworten.",
+        "items": {
+          "0": {
+            "question": "Woher bekomme ich das Passwort?",
+            "answer": "Ihr Klassenpasswort erhalten Sie von der Schulleitung oder Ihrer Klassenlehrkraft. Für jede Klasse ist ein eigenes Passwort festgelegt."
+          },
+          "1": {
+            "question": "Ist die Zahlung sicher?",
+            "answer": "Ja, alle Zahlungen sind durch 256-Bit-SSL-Verschlüsselung und 3D-Secure-Technologie geschützt. Ihre Kartendaten werden in unserem System nicht gespeichert."
+          },
+          "2": {
+            "question": "Wie lange dauert die Lieferung?",
+            "answer": "Die Lieferung per Versand erfolgt innerhalb von 2-3 Werktagen. Bei der Option der Sammellieferung an die Schule erfolgt die Lieferung zum von der Schule festgelegten Termin."
+          },
+          "3": {
+            "question": "Kann ich etwas zurückgeben?",
+            "answer": "Für unbenutzte Produkte mit ungeöffneter Verpackung können Sie innerhalb von 14 Tagen eine Rückgabe beantragen."
+          },
+          "4": {
+            "question": "Kann ich eine Rechnung erhalten?",
+            "answer": "Ja, es stehen Privat- oder Firmenrechnungsoptionen zur Verfügung. Geben Sie einfach Ihre Präferenz während der Bestellung an."
+          }
+        }
+      },
+      "cta": {
+        "eyebrow": "Loslegen",
+        "headingLine1": "Bereit für",
+        "headingLine2": "deine Bestellung?",
+        "body": "Gib das Passwort von deiner Schule ein, sieh dir dein Paket an und schließe die Zahlung ab. Keine Mitgliedschaft erforderlich.",
+        "primaryButton": "Bestellen",
+        "secondaryButton": "Bestellung verfolgen"
+      },
+      "footer": {
+        "tagline": "Das von Schulen festgelegte und von Eltern vertrauensvoll genutzte Schulbedarfssystem für Institutionen.",
+        "linksHeading": "Links",
+        "links": {
+          "0": "So funktioniert's",
+          "1": "FAQ",
+          "2": "Bestellen"
+        },
+        "contactHeading": "Kontakt",
+        "whatsapp": "Sie können uns über unsere WhatsApp-Linie erreichen",
+        "quickHeading": "Schnellzugriff",
+        "quick": {
+          "0": "Bestellung verfolgen",
+          "1": "Datenschutzhinweis",
+          "2": "Fernabsatz"
+        },
+        "schoolPanel": "Schulpanel",
+        "copyright": "© 2026 okultedarigim.com — Alle Rechte vorbehalten.",
+        "securePayment": "3D Secure • SSL-verschlüsselte Zahlung"
+      },
+      "chat": {
+        "welcome": "Hallo! 👋 Ich bin der OkulTedarigim-Assistent. Ich kann Ihnen bei Themen wie Bestellung, Passwort, Lieferung, Zahlung oder Rückgabe helfen. Wie kann ich Ihnen helfen?",
+        "nudge": "Brauchen Sie Hilfe? 👋",
+        "headerTitle": "Hilfe-Assistent",
+        "headerSubtitle": "Antwortet meist innerhalb weniger Sekunden",
+        "placeholder": "Geben Sie Ihre Frage ein...",
+        "send": "Senden",
+        "close": "Schließen",
+        "openChat": "Hilfe-Assistent öffnen",
+        "closeChat": "Chat schließen",
+        "whatsappLinkLabel": "WhatsApp-Support-Linie",
+        "errorBusy": "Ich kann gerade nicht antworten, bitte versuchen Sie es in Kürze erneut.",
+        "errorConnection": "Es ist ein Verbindungsfehler aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    }
+  },
+  "ar": {
+    "landing": {
+      "faq": {
+        "eyebrow": "الأسئلة الشائعة",
+        "titleHighlight": "الأسئلة",
+        "titleRest": "المتداولة",
+        "subtitle": "الأسئلة الشائعة وإجاباتها.",
+        "items": {
+          "0": {
+            "question": "من أين أحصل على كلمة المرور؟",
+            "answer": "يمكنك الحصول على كلمة مرور الصف من إدارة مدرستك أو من معلم الصف. تم تحديد كلمة مرور خاصة لكل صف."
+          },
+          "1": {
+            "question": "هل الدفع آمن؟",
+            "answer": "نعم، جميع المدفوعات محمية بتشفير SSL بطول 256 بت وتقنية 3D Secure. لا يتم تخزين بيانات بطاقتك في نظامنا."
+          },
+          "2": {
+            "question": "كم تستغرق مدة التوصيل؟",
+            "answer": "يتم التوصيل عبر الشحن خلال 2-3 أيام عمل. في خيار التوصيل الجماعي إلى المدرسة، يتم التسليم في التاريخ الذي تحدده المدرسة."
+          },
+          "3": {
+            "question": "هل يمكنني إرجاع المنتج؟",
+            "answer": "يمكنك تقديم طلب إرجاع خلال 14 يومًا للمنتجات غير المستخدمة وغير المفتوحة العبوة."
+          },
+          "4": {
+            "question": "هل يمكنني الحصول على فاتورة؟",
+            "answer": "نعم، تتوفر خيارات الفاتورة الفردية أو المؤسسية. يكفي تحديد تفضيلك أثناء الطلب."
+          }
+        }
+      },
+      "cta": {
+        "eyebrow": "ابدأ",
+        "headingLine1": "هل أنت جاهز",
+        "headingLine2": "لطلبك؟",
+        "body": "أدخل كلمة المرور التي حصلت عليها من مدرستك، واطّلع على حزمتك، وأكمل الدفع. لا حاجة للعضوية.",
+        "primaryButton": "إنشاء طلب",
+        "secondaryButton": "تتبع الطلب"
+      },
+      "footer": {
+        "tagline": "نظام التوريد المدرسي المؤسسي الذي تحدده المدارس ويستخدمه أولياء الأمور بثقة.",
+        "linksHeading": "الروابط",
+        "links": {
+          "0": "كيف يعمل",
+          "1": "الأسئلة الشائعة",
+          "2": "إنشاء طلب"
+        },
+        "contactHeading": "التواصل",
+        "whatsapp": "يمكنك التواصل معنا عبر خط الواتساب",
+        "quickHeading": "وصول سريع",
+        "quick": {
+          "0": "تتبع الطلب",
+          "1": "إشعار حماية البيانات",
+          "2": "البيع عن بُعد"
+        },
+        "schoolPanel": "لوحة المدرسة",
+        "copyright": "© 2026 okultedarigim.com — جميع الحقوق محفوظة.",
+        "securePayment": "3D Secure • دفع مشفّر بـ SSL"
+      },
+      "chat": {
+        "welcome": "مرحبًا! 👋 أنا مساعد OkulTedarigim. يمكنني مساعدتك في مواضيع مثل إنشاء الطلب، وكلمة المرور، والتوصيل، والدفع، أو الإرجاع. كيف يمكنني مساعدتك؟",
+        "nudge": "هل تحتاج إلى مساعدة؟ 👋",
+        "headerTitle": "مساعد الدعم",
+        "headerSubtitle": "يرد عادةً في غضون ثوانٍ قليلة",
+        "placeholder": "اكتب سؤالك...",
+        "send": "إرسال",
+        "close": "إغلاق",
+        "openChat": "فتح مساعد الدعم",
+        "closeChat": "إغلاق المحادثة",
+        "whatsappLinkLabel": "خط دعم الواتساب",
+        "errorBusy": "لا يمكنني الرد الآن، يرجى المحاولة مرة أخرى بعد قليل.",
+        "errorConnection": "حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى."
+      }
+    }
+  }
+}

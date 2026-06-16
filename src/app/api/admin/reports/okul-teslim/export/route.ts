@@ -5,14 +5,17 @@ import { buildContentDisposition } from '@/lib/security'
 import { buildTeslimExcel } from '@/lib/teslim-excel'
 import { UNPAID_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 // Teslim Excel'i — tarih + saat araligiyla indirme ("Okul Teslim Raporu" yerine).
 // Sutunlar: Okul | Ad | Soyad | Sinif | Sube | Siparis Adedi | Teslim Tarihi (bos) | ✓
 export async function GET(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     })
 
-    const buffer = await buildTeslimExcel(orders)
+    const buffer = await buildTeslimExcel(orders, (await getApiLocale()) as 'tr' | 'en' | 'de' | 'ar')
 
     // Filename: datetime-local'daki ':' Windows'ta gecersiz; '-' ile degistir
     const safeForFilename = (s: string) => s.replace(/[:T]/g, '-')
@@ -75,6 +78,6 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Teslim listesi export hatasi:', error)
-    return NextResponse.json({ error: 'Export basarisiz' }, { status: 500 })
+    return NextResponse.json({ error: t('adminMisc.exportFailed') }, { status: 500 })
   }
 }

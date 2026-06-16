@@ -1,0 +1,1678 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
+import { useRouter, Link } from "@/i18n/navigation"
+import { useTranslations, useLocale } from "next-intl"
+import ilIlceData from "@/data/il-ilce.json"
+import { formatPrice, isValidTCKimlik } from "@/lib/utils"
+import { CHECKOUT_DRAFT_KEY } from "@/lib/constants"
+import { getLocalized } from "@/lib/i18n-content"
+
+interface PackageItem {
+  id: string
+  name: string
+  name_en?: string | null
+  name_de?: string | null
+  name_ar?: string | null
+  quantity: number
+  price?: number
+}
+
+interface ClassData {
+  id: string
+  name: string
+  name_en?: string | null
+  name_de?: string | null
+  name_ar?: string | null
+  school: {
+    id: string
+    name: string
+    name_en?: string | null
+    name_de?: string | null
+    name_ar?: string | null
+    address?: string
+    deliveryType: "CARGO" | "SCHOOL_DELIVERY"
+  }
+  package: {
+    id: string
+    name: string
+    name_en?: string | null
+    name_de?: string | null
+    name_ar?: string | null
+    description: string | null
+    description_en?: string | null
+    description_de?: string | null
+    description_ar?: string | null
+    note: string | null
+    note_en?: string | null
+    note_de?: string | null
+    note_ar?: string | null
+    price: number
+    isCustomizable?: boolean
+    items: PackageItem[]
+  }
+}
+
+// Icons
+const BookIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+  </svg>
+)
+
+const ArrowLeftIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+  </svg>
+)
+
+const CheckIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+  </svg>
+)
+
+const TruckIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+  </svg>
+)
+
+const SchoolIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+  </svg>
+)
+
+const Spinner = () => (
+  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+
+export default function PaketPage() {
+  const t = useTranslations('packageForm')
+  const locale = useLocale()
+  const router = useRouter()
+  const params = useParams()
+  const classId = params.id as string
+
+  const [classData, setClassData] = useState<ClassData | null>(null)
+  // Ozellestirilebilir pakette velinin secili tuttugu kalem id'leri (varsayilan: hepsi)
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  // Form state - Kişisel Bilgiler
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
+
+  // Form state - Adres Bilgileri (Kargo için)
+  const [country, setCountry] = useState("Türkiye")
+  const [streetAddress, setStreetAddress] = useState("")
+  const [streetAddress2, setStreetAddress2] = useState("")
+  const [selectedIl, setSelectedIl] = useState("")
+  const [selectedIlce, setSelectedIlce] = useState("")
+  const [postalCode, setPostalCode] = useState("")
+
+  // Alternatif Teslimat Adresi
+  const [shipToDifferentAddress, setShipToDifferentAddress] = useState(false)
+  const [altCountry, setAltCountry] = useState("Türkiye")
+  const [altStreetAddress, setAltStreetAddress] = useState("")
+  const [altStreetAddress2, setAltStreetAddress2] = useState("")
+  const [altSelectedIl, setAltSelectedIl] = useState("")
+  const [altSelectedIlce, setAltSelectedIlce] = useState("")
+  const [altPostalCode, setAltPostalCode] = useState("")
+
+  // Form state - Öğrenci Bilgileri (cogul)
+  const MAX_STUDENTS = 5
+  type StudentRow = { firstName: string; lastName: string; section: string }
+  const [students, setStudents] = useState<StudentRow[]>([{ firstName: '', lastName: '', section: '' }])
+
+  const updateStudent = (idx: number, field: keyof StudentRow, value: string) => {
+    setStudents(prev => prev.map((s, i) => i === idx ? { ...s, [field]: field === 'section' ? value.toUpperCase().slice(0, 1) : value } : s))
+  }
+  const addStudent = () => {
+    setStudents(prev => prev.length >= MAX_STUDENTS ? prev : [...prev, { firstName: '', lastName: '', section: '' }])
+  }
+  const removeStudent = (idx: number) => {
+    setStudents(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))
+  }
+
+  // Form state - Ek Alanlar
+  const [orderNote, setOrderNote] = useState("")
+
+  // Form state - Indirim Kodu
+  const [discountCode, setDiscountCode] = useState("")
+  const [discountApplied, setDiscountApplied] = useState<{
+    code: string
+    description: string | null
+    type: string
+    value: number
+    discountAmount: number
+  } | null>(null)
+  const [discountError, setDiscountError] = useState("")
+  const [discountLoading, setDiscountLoading] = useState(false)
+
+  // Form state - Yasal Onaylar
+  const [acceptMesafeliSatis, setAcceptMesafeliSatis] = useState(false)
+  const [acceptKVKK, setAcceptKVKK] = useState(false)
+
+  // Fatura bilgileri
+  const [invoiceType, setInvoiceType] = useState<'bireysel' | 'kurumsal'>('bireysel')
+  const [isCorporateInvoice, setIsCorporateInvoice] = useState(false)
+  const [companyTitle, setCompanyTitle] = useState("")
+  const [taxNumber, setTaxNumber] = useState("")
+  const [taxOffice, setTaxOffice] = useState("")
+  const [tcNumber, setTcNumber] = useState("")
+
+  // Fatura adresi (farkli adres secenegi)
+  const [invoiceAddressSame, setInvoiceAddressSame] = useState(true)
+  const [invoiceStreetAddress, setInvoiceStreetAddress] = useState("")
+  const [invoiceStreetAddress2, setInvoiceStreetAddress2] = useState("")
+  const [invoiceSelectedIl, setInvoiceSelectedIl] = useState("")
+  const [invoiceSelectedIlce, setInvoiceSelectedIlce] = useState("")
+  const [invoicePostalCode, setInvoicePostalCode] = useState("")
+
+  // Real-time field validation: onBlur'da kontrol edilen alan-bazli hata mesajlari
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  // Helper: tek bir alanin hatasini set/clear et
+  const setFieldError = (field: string, message: string) => {
+    setFieldErrors(prev => {
+      if (!message) {
+        if (!prev[field]) return prev
+        const rest = { ...prev }
+        delete rest[field]
+        return rest
+      }
+      if (prev[field] === message) return prev
+      return { ...prev, [field]: message }
+    })
+  }
+
+  // onBlur handler'lari (anlik dogrulama)
+  const validateEmail = (val: string) => {
+    if (!val) { setFieldError('email', ''); return }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    setFieldError('email', emailRegex.test(val) ? '' : t('validation.invalidEmail'))
+  }
+  const validatePhone = (val: string) => {
+    if (!val) { setFieldError('phone', ''); return }
+    const normalized = val.replace(/[\s\-()]/g, '')
+    setFieldError('phone', /^0?5\d{9}$/.test(normalized) ? '' : t('validation.invalidPhone'))
+  }
+  const validateTC = (val: string) => {
+    if (!val) { setFieldError('tcNumber', ''); return }
+    if (!/^\d{11}$/.test(val)) { setFieldError('tcNumber', t('validation.tcLength')); return }
+    setFieldError('tcNumber', isValidTCKimlik(val) ? '' : t('validation.invalidTc'))
+  }
+  const validateTaxNumber = (val: string) => {
+    if (!val) { setFieldError('taxNumber', ''); return }
+    setFieldError('taxNumber', /^\d{10,11}$/.test(val) ? '' : t('validation.taxLength'))
+  }
+
+  // Ülke listesi
+  const countries = [
+    "Türkiye", "Almanya", "Fransa", "İngiltere", "Hollanda", "Belçika",
+    "Avusturya", "İsviçre", "İsveç", "Norveç", "Danimarka", "ABD", "Kanada",
+    "Avustralya", "Kuzey Kıbrıs", "Azerbaycan", "Kazakistan", "Özbekistan"
+  ]
+
+  // İl/İlçe seçimi
+  const ilceler = ilIlceData.iller.find(il => il.name === selectedIl)?.ilceler || []
+  const altIlceler = ilIlceData.iller.find(il => il.name === altSelectedIl)?.ilceler || []
+  const invoiceIlceler = ilIlceData.iller.find(il => il.name === invoiceSelectedIl)?.ilceler || []
+
+  useEffect(() => {
+    loadClassData()
+  }, [classId])
+
+  // F5 koruması: form state'i localStorage'a kaydet (debounced)
+  // Sayfa yenilense de veri kaybolmaz. Kart bilgileri, sifre vb. asla kaydedilmez.
+  const FORM_STORAGE_KEY = `paket-form-${classId}`
+
+  // Restore: ilk mount'ta saklanan veri varsa state'lere yukle
+  useEffect(() => {
+    if (!classId) return
+    try {
+      const raw = localStorage.getItem(FORM_STORAGE_KEY)
+      if (!raw) return
+      const data = JSON.parse(raw)
+      // 24 saatten eski veriyi at
+      if (data.savedAt && Date.now() - data.savedAt > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(FORM_STORAGE_KEY)
+        return
+      }
+      if (data.firstName !== undefined) setFirstName(data.firstName)
+      if (data.lastName !== undefined) setLastName(data.lastName)
+      if (data.phone !== undefined) setPhone(data.phone)
+      if (data.email !== undefined) setEmail(data.email)
+      if (data.country !== undefined) setCountry(data.country)
+      if (data.streetAddress !== undefined) setStreetAddress(data.streetAddress)
+      if (data.streetAddress2 !== undefined) setStreetAddress2(data.streetAddress2)
+      if (data.selectedIl !== undefined) setSelectedIl(data.selectedIl)
+      if (data.selectedIlce !== undefined) setSelectedIlce(data.selectedIlce)
+      if (data.postalCode !== undefined) setPostalCode(data.postalCode)
+      if (data.shipToDifferentAddress !== undefined) setShipToDifferentAddress(data.shipToDifferentAddress)
+      if (data.altCountry !== undefined) setAltCountry(data.altCountry)
+      if (data.altStreetAddress !== undefined) setAltStreetAddress(data.altStreetAddress)
+      if (data.altStreetAddress2 !== undefined) setAltStreetAddress2(data.altStreetAddress2)
+      if (data.altSelectedIl !== undefined) setAltSelectedIl(data.altSelectedIl)
+      if (data.altSelectedIlce !== undefined) setAltSelectedIlce(data.altSelectedIlce)
+      if (data.altPostalCode !== undefined) setAltPostalCode(data.altPostalCode)
+      // Cogul ogrenci yukleme (geri uyumluluk: eski tek-ogrenci kayitlari da desteklenir)
+      if (Array.isArray(data.students) && data.students.length > 0) {
+        setStudents(data.students.slice(0, MAX_STUDENTS).map((s: { firstName?: string; lastName?: string; section?: string }) => ({
+          firstName: s.firstName || '',
+          lastName: s.lastName || '',
+          section: s.section || '',
+        })))
+      } else if (data.studentFirstName !== undefined || data.studentLastName !== undefined) {
+        setStudents([{
+          firstName: data.studentFirstName || '',
+          lastName: data.studentLastName || '',
+          section: data.studentSection || '',
+        }])
+      }
+      if (data.orderNote !== undefined) setOrderNote(data.orderNote)
+      if (data.invoiceType !== undefined) setInvoiceType(data.invoiceType)
+      if (data.isCorporateInvoice !== undefined) setIsCorporateInvoice(data.isCorporateInvoice)
+      if (data.companyTitle !== undefined) setCompanyTitle(data.companyTitle)
+      if (data.taxNumber !== undefined) setTaxNumber(data.taxNumber)
+      if (data.taxOffice !== undefined) setTaxOffice(data.taxOffice)
+      if (data.tcNumber !== undefined) setTcNumber(data.tcNumber)
+      if (data.invoiceAddressSame !== undefined) setInvoiceAddressSame(data.invoiceAddressSame)
+      if (data.invoiceStreetAddress !== undefined) setInvoiceStreetAddress(data.invoiceStreetAddress)
+      if (data.invoiceStreetAddress2 !== undefined) setInvoiceStreetAddress2(data.invoiceStreetAddress2)
+      if (data.invoiceSelectedIl !== undefined) setInvoiceSelectedIl(data.invoiceSelectedIl)
+      if (data.invoiceSelectedIlce !== undefined) setInvoiceSelectedIlce(data.invoiceSelectedIlce)
+      if (data.invoicePostalCode !== undefined) setInvoicePostalCode(data.invoicePostalCode)
+    } catch {
+      // Bozuk JSON varsa temizle
+      try { localStorage.removeItem(FORM_STORAGE_KEY) } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId])
+
+  // Save: form alanlari her degistiginde 500ms debounced kaydet
+  useEffect(() => {
+    if (!classId || loading) return
+    const handle = setTimeout(() => {
+      try {
+        const snapshot = {
+          savedAt: Date.now(),
+          firstName, lastName, phone, email,
+          country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
+          shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
+          altSelectedIl, altSelectedIlce, altPostalCode,
+          students, orderNote,
+          invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
+          invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
+          invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
+        }
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(snapshot))
+      } catch {
+        // localStorage doluysa sessizce ignore
+      }
+    }, 500)
+    return () => clearTimeout(handle)
+  }, [
+    classId, loading,
+    firstName, lastName, phone, email,
+    country, streetAddress, streetAddress2, selectedIl, selectedIlce, postalCode,
+    shipToDifferentAddress, altCountry, altStreetAddress, altStreetAddress2,
+    altSelectedIl, altSelectedIlce, altPostalCode,
+    students, orderNote,
+    invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
+    invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
+    invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
+    FORM_STORAGE_KEY
+  ])
+
+  useEffect(() => {
+    // İl değiştiğinde ilçeyi sıfırla
+    setSelectedIlce("")
+  }, [selectedIl])
+
+  useEffect(() => {
+    // Alternatif adres - İl değiştiğinde ilçeyi sıfırla
+    setAltSelectedIlce("")
+  }, [altSelectedIl])
+
+  useEffect(() => {
+    // Fatura adresi - İl değiştiğinde ilçeyi sıfırla
+    setInvoiceSelectedIlce("")
+  }, [invoiceSelectedIl])
+
+  const loadClassData = () => {
+    try {
+      // Önce sessionStorage'dan oku (sifre dogrulama sonrasi kaydedilmis)
+      const storedData = sessionStorage.getItem('classData')
+
+      if (storedData) {
+        const parsed = JSON.parse(storedData)
+
+        // classId eslesiyor mu kontrol et
+        if (parsed.classId === classId) {
+          setClassData({
+            id: parsed.classId,
+            name: parsed.className,
+            school: {
+              id: parsed.schoolId,
+              name: parsed.schoolName,
+              deliveryType: parsed.deliveryType
+            },
+            package: parsed.package
+          })
+          setSelectedItemIds((parsed.package?.items || []).map((it: PackageItem) => it.id))
+          setLoading(false)
+          return
+        }
+      }
+
+      // SessionStorage'da veri yoksa veya classId eslesmiyorsa siparis sayfasina yonlendir
+      router.push('/siparis?reason=session-lost')
+    } catch {
+      // Hata durumunda siparis sayfasina yonlendir
+      router.push('/siparis?reason=session-lost')
+    }
+  }
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return
+
+    setDiscountLoading(true)
+    setDiscountError("")
+
+    try {
+      const baseTotal = Number(classData?.package.price || 0) * students.length
+      const res = await fetch("/api/veli/discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: discountCode.trim(),
+          totalAmount: baseTotal
+        })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setDiscountError(data.error)
+        setDiscountApplied(null)
+      } else {
+        setDiscountApplied(data.discount)
+        setDiscountError("")
+      }
+    } catch {
+      setDiscountError(t('validation.genericError'))
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
+
+  const handleRemoveDiscount = () => {
+    setDiscountApplied(null)
+    setDiscountCode("")
+    setDiscountError("")
+  }
+
+  // Ozellestirilebilir pakette ogrenci basina birim fiyat = secili kalemlerin
+  // (birim fiyat x adet) toplami. Aksi halde paketin sabit fiyati kullanilir.
+  const getUnitPrice = () => {
+    const pkg = classData?.package
+    if (pkg?.isCustomizable) {
+      return (pkg.items || [])
+        .filter((it) => selectedItemIds.includes(it.id))
+        .reduce((sum, it) => sum + Number(it.price || 0) * Number(it.quantity || 1), 0)
+    }
+    return Number(pkg?.price || 0)
+  }
+
+  const getFinalPrice = () => {
+    const baseTotal = getUnitPrice() * students.length
+    if (discountApplied) {
+      return baseTotal - discountApplied.discountAmount
+    }
+    return baseTotal
+  }
+
+  const toggleItem = (itemId: string) => {
+    setSelectedItemIds((prev) => {
+      if (prev.includes(itemId)) {
+        // En az 1 kalem secili kalmali (0 TL bos siparis engellenir)
+        if (prev.length <= 1) return prev
+        return prev.filter((id) => id !== itemId)
+      }
+      return [...prev, itemId]
+    })
+    // Kalem degisince uygulanmis indirim eski tutara gore yeniden hesaplanmali; kaldir
+    if (discountApplied) {
+      handleRemoveDiscount()
+    }
+  }
+
+  // Dogrulama hatasinda eksik/hatali alana smooth scroll + focus + gecici kirmizi ring
+  // (ozellikle mobil icin; kullanici hangi alanin eksik oldugunu net gorsun).
+  const scrollToField = (id: string) => {
+    const el = typeof document !== 'undefined' ? document.getElementById(id) : null
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const ringClasses = ['ring-2', 'ring-red-500', 'ring-offset-2', 'rounded-lg']
+    el.classList.add(...ringClasses)
+    setTimeout(() => {
+      try { (el as HTMLElement).focus({ preventScroll: true }) } catch {}
+    }, 350)
+    setTimeout(() => {
+      try { el.classList.remove(...ringClasses) } catch {}
+    }, 2200)
+  }
+
+  const validateForm = (): boolean => {
+    // Kişisel bilgiler
+    if (!firstName || !lastName || !phone || !email) {
+      setError(t('validation.requiredPersonal'))
+      scrollToField(!firstName ? 'f-firstName' : !lastName ? 'f-lastName' : !phone ? 'f-phone' : 'f-email')
+      return false
+    }
+
+    // Telefon format kontrolü (bosluk, tire, parantez tolere et)
+    const phoneRegex = /^05\d{9}$/
+    const normalizedPhone = phone.replace(/[\s\-()]/g, '')
+    if (!phoneRegex.test(normalizedPhone)) {
+      setError(t('validation.invalidPhoneSubmit'))
+      scrollToField('f-phone')
+      return false
+    }
+
+    // Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError(t('validation.invalidEmailSubmit'))
+      scrollToField('f-email')
+      return false
+    }
+
+    // Öğrenci bilgileri (cogul)
+    if (students.length === 0) {
+      setError(t('validation.atLeastOneStudent'))
+      scrollToField('f-students')
+      return false
+    }
+    if (students.some(s => !s.firstName.trim() || !s.lastName.trim())) {
+      setError(t('validation.studentNames'))
+      scrollToField('f-students')
+      return false
+    }
+    if (students.some(s => !s.section.trim())) {
+      setError(t('validation.studentSections'))
+      scrollToField('f-students')
+      return false
+    }
+
+    // Bireysel fatura: TC kimlik no zorunlu
+    if (invoiceType === 'bireysel') {
+      if (!tcNumber) {
+        setError(t('validation.tcRequired'))
+        scrollToField('f-tcNumber')
+        return false
+      }
+      if (!isValidTCKimlik(tcNumber)) {
+        setError(t('validation.invalidTc'))
+        scrollToField('f-tcNumber')
+        return false
+      }
+    }
+
+    // Adres zorunlu durumlar:
+    //  - Kargo teslimat (sevk adresi gerekli)
+    //  - Bireysel fatura (fatura/iletisim adresi gerekli)
+    //  - Kurumsal fatura (firma adresi gerekli)
+    if (!country || !streetAddress || !streetAddress2) {
+      setError(t('validation.addressIncomplete'))
+      scrollToField(!country ? 'f-country' : !streetAddress ? 'f-streetAddress' : 'f-streetAddress2')
+      return false
+    }
+    // Türkiye seçiliyse il/ilçe zorunlu
+    if (country === "Türkiye" && (!selectedIl || !selectedIlce)) {
+      setError(t('validation.selectProvinceDistrict'))
+      scrollToField(!selectedIl ? 'f-il' : 'f-ilce')
+      return false
+    }
+
+    // Kargo teslim için alternatif adres seçiliyse kontrol et
+    if (classData?.school.deliveryType === "CARGO" && shipToDifferentAddress) {
+      if (!altCountry || !altStreetAddress || !altStreetAddress2) {
+        setError(t('validation.altAddressIncomplete'))
+        scrollToField(!altCountry ? 'f-altCountry' : !altStreetAddress ? 'f-altStreetAddress' : 'f-altStreetAddress2')
+        return false
+      }
+      if (altCountry === "Türkiye" && (!altSelectedIl || !altSelectedIlce)) {
+        setError(t('validation.altSelectProvinceDistrict'))
+        scrollToField(!altSelectedIl ? 'f-altIl' : 'f-altIlce')
+        return false
+      }
+    }
+
+    // Kurumsal fatura için vergi bilgileri
+    if (invoiceType === 'kurumsal') {
+      if (!taxNumber || !taxOffice || !companyTitle) {
+        setError(t('validation.corporateRequired'))
+        scrollToField(!companyTitle ? 'f-companyTitle' : !taxNumber ? 'f-taxNumber' : 'f-taxOffice')
+        return false
+      }
+    }
+
+    // Bireysel fatura icin fatura adresi farkli secilmisse kontrol
+    if (invoiceType === 'bireysel' && !invoiceAddressSame) {
+      if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
+        setError(t('validation.invoiceAddressIncomplete'))
+        scrollToField(!invoiceStreetAddress ? 'f-invoiceStreetAddress' : !invoiceStreetAddress2 ? 'f-invoiceStreetAddress2' : !invoiceSelectedIl ? 'f-invoiceIl' : 'f-invoiceIlce')
+        return false
+      }
+    }
+    // Kurumsal fatura adresi kontrolu (kargo ise)
+    if (invoiceType === 'kurumsal' && !invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
+      if (!invoiceStreetAddress || !invoiceStreetAddress2 || !invoiceSelectedIl || !invoiceSelectedIlce) {
+        setError(t('validation.invoiceAddressIncomplete'))
+        scrollToField(!invoiceStreetAddress ? 'f-invoiceStreetAddress' : !invoiceStreetAddress2 ? 'f-invoiceStreetAddress2' : !invoiceSelectedIl ? 'f-invoiceIl' : 'f-invoiceIlce')
+        return false
+      }
+    }
+
+    // Yasal onaylar
+    if (!acceptMesafeliSatis || !acceptKVKK) {
+      setError(t('validation.acceptContracts'))
+      scrollToField('f-legal')
+      return false
+    }
+
+    return true
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    if (!validateForm()) return
+    goToPayment()
+  }
+
+  // Siparis ARTIK burada olusturulmaz. Form dogrulanir, tum veri + tutar bir "checkout
+  // draft" olarak sessionStorage'a yazilir ve /odeme sayfasina gecilir. Siparis SADECE
+  // /odeme'de odeme basariliysa olusur (POST /api/veli/checkout).
+  const goToPayment = () => {
+    setSubmitting(true)
+
+    // Adres her durumda olusturulur:
+    //  - Kargo teslim: sevk + iletisim adresi
+    //  - Bireysel fatura: fatura/iletisim adresi
+    //  - Kurumsal fatura: firma adresi
+    const addressParts = [streetAddress]
+    if (streetAddress2) addressParts.push(streetAddress2)
+    if (country === "Türkiye") {
+      addressParts.push(selectedIlce, selectedIl)
+    }
+    if (postalCode) addressParts.push(postalCode)
+    addressParts.push(country)
+    const fullAddress = addressParts.join(', ')
+
+    // Alternatif teslimat adresi oluştur
+    let altAddress = null
+    if (shipToDifferentAddress && classData?.school.deliveryType === "CARGO") {
+      const altParts = [altStreetAddress]
+      if (altStreetAddress2) altParts.push(altStreetAddress2)
+      if (altCountry === "Türkiye") {
+        altParts.push(altSelectedIlce, altSelectedIl)
+      }
+      if (altPostalCode) altParts.push(altPostalCode)
+      altParts.push(altCountry)
+      altAddress = altParts.join(', ')
+    }
+
+    // Fatura adresi oluştur (farklı adres seçildiyse)
+    let invoiceAddr = null
+    if (!invoiceAddressSame && classData?.school.deliveryType === "CARGO") {
+      const invParts = [invoiceStreetAddress]
+      if (invoiceStreetAddress2) invParts.push(invoiceStreetAddress2)
+      invParts.push(invoiceSelectedIlce, invoiceSelectedIl)
+      if (invoicePostalCode) invParts.push(invoicePostalCode)
+      invParts.push('Türkiye')
+      invoiceAddr = invParts.join(', ')
+    }
+
+    const primaryStudent = students[0]
+    const payload = {
+      classId,
+      parentName: `${firstName} ${lastName}`,
+      students: students.map(s => ({
+        firstName: s.firstName.trim(),
+        lastName: s.lastName.trim(),
+        section: s.section.trim(),
+      })),
+      phone: phone.replace(/\s/g, ''),
+      email,
+      address: fullAddress,
+      deliveryAddress: shipToDifferentAddress ? altAddress : null,
+      invoiceAddress: invoiceAddr,
+      invoiceAddressSame,
+      // Yapisal il/ilce — KolayBi fatura adresi icin.
+      city: (invoiceAddressSame ? selectedIl : invoiceSelectedIl) || null,
+      district: (invoiceAddressSame ? selectedIlce : invoiceSelectedIlce) || null,
+      isCorporateInvoice: invoiceType === 'kurumsal',
+      companyTitle: invoiceType === 'kurumsal' ? companyTitle : null,
+      taxNumber: invoiceType === 'kurumsal' ? taxNumber : (tcNumber || null),
+      taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
+      orderNote,
+      discountCode: discountApplied ? discountApplied.code : null,
+      selectedItemIds: classData?.package.isCustomizable ? selectedItemIds : undefined,
+    }
+
+    const draft = {
+      payload,
+      summary: {
+        totalAmount: getFinalPrice(),
+        studentName: `${primaryStudent.firstName.trim()} ${primaryStudent.lastName.trim()}`.trim(),
+        studentCount: students.length,
+        packageName: classData?.package?.name || '',
+        discountCode: discountApplied ? discountApplied.code : null,
+        discountAmount: discountApplied ? discountApplied.discountAmount : null,
+      }
+    }
+
+    try { sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify(draft)) } catch {}
+    router.push('/odeme')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex items-center gap-3 text-gray-600">
+          <Spinner />
+          <span>{t('loading')}</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !classData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 max-w-md text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('errorTitle')}</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => router.push("/")}
+            className="inline-flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          >
+            <ArrowLeftIcon />
+            {t('backToHome')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!classData) return null
+
+  const isCargoDelivery = classData.school.deliveryType === "CARGO"
+
+  // Adres input'lari (ulke/il/ilce/sokak/posta kodu) - kargo, bireysel okula teslim ve kurumsal okula teslim icin yeniden kullanilir
+  const renderAddressFields = () => (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.country')}</label>
+        <select
+          id="f-country"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          required
+        >
+          {countries.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+      {country === "Türkiye" && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.province')}</label>
+            <select
+              id="f-il"
+              value={selectedIl}
+              onChange={(e) => setSelectedIl(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              required
+            >
+              <option value="">{t('address.selectProvince')}</option>
+              {ilIlceData.iller.map((il) => (
+                <option key={il.id} value={il.name}>{il.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.district')}</label>
+            <select
+              id="f-ilce"
+              value={selectedIlce}
+              onChange={(e) => setSelectedIlce(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              required
+              disabled={!selectedIl}
+            >
+              <option value="">
+                {selectedIl ? t('address.selectDistrict') : t('address.selectProvinceFirst')}
+              </option>
+              {ilceler.map((ilce) => (
+                <option key={ilce} value={ilce}>{ilce}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.streetAddress')}</label>
+        <input
+          type="text"
+          id="f-streetAddress"
+          value={streetAddress}
+          onChange={(e) => setStreetAddress(e.target.value)}
+          placeholder={t('address.streetAddressPlaceholder')}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.streetAddress2')}</label>
+        <input
+          type="text"
+          id="f-streetAddress2"
+          value={streetAddress2}
+          onChange={(e) => setStreetAddress2(e.target.value)}
+          placeholder={t('address.streetAddress2Placeholder')}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.postalCode')}</label>
+        <input
+          type="text"
+          value={postalCode}
+          onChange={(e) => setPostalCode(e.target.value)}
+          placeholder="34000"
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-w-[200px]"
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <svg className="w-9 h-9 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+                <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-amber-900" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                  </svg>
+                </div>
+              </div>
+              <span className="text-xl font-extrabold tracking-tight">
+                <span className="text-gray-900">okultedarigim</span><span className="text-red-600">.com</span>
+              </span>
+            </Link>
+            <button
+              onClick={() => {
+                // Tarayici history'sinde onceki sayfa varsa onu kullan; yoksa /siparis'e fallback
+                if (typeof window !== 'undefined' && window.history.length > 1) {
+                  router.back()
+                } else {
+                  router.push('/siparis?reason=session-lost')
+                }
+              }}
+              className="flex items-center gap-2 text-gray-600 hover:text-blue-900 transition-colors"
+            >
+              <ArrowLeftIcon />
+              <span className="hidden sm:inline">{t('back')}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8">
+        <form onSubmit={handleSubmit}>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Sol - Form Alanları */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Okul/Sınıf Bilgisi */}
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center text-white">
+                    <SchoolIcon />
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-700">{getLocalized(classData.school, 'name', locale)}</p>
+                    <p className="font-semibold text-blue-900">{t('classLabel', { className: getLocalized(classData, 'name', locale) })}</p>
+                  </div>
+                  <div className="ml-auto">
+                    {isCargoDelivery ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        <TruckIcon />
+                        {t('delivery.cargoBadge')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                        <SchoolIcon />
+                        {t('delivery.schoolBadge')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 👤 Kargo ve İletişim Bilgileri */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('contact.title')}</h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('contact.firstName')}</label>
+                    <input
+                      type="text"
+                      id="f-firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('contact.lastName')}</label>
+                    <input
+                      type="text"
+                      id="f-lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('contact.phone')}</label>
+                    <input
+                      type="tel"
+                      id="f-phone"
+                      value={phone}
+                      onChange={(e) => { setPhone(e.target.value); if (fieldErrors.phone) validatePhone(e.target.value) }}
+                      onBlur={(e) => validatePhone(e.target.value)}
+                      placeholder={t('contact.phonePlaceholder')}
+                      autoComplete="tel"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 ${fieldErrors.phone ? 'border-red-400 focus:border-red-500 focus:ring-red-400' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`}
+                      required
+                    />
+                    {fieldErrors.phone && <p className="mt-1 text-xs text-red-600">{fieldErrors.phone}</p>}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('contact.email')}</label>
+                    <input
+                      type="email"
+                      id="f-email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) validateEmail(e.target.value) }}
+                      onBlur={(e) => validateEmail(e.target.value)}
+                      autoComplete="email"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 ${fieldErrors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-400' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`}
+                      required
+                    />
+                    {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
+                  </div>
+                </div>
+
+                {/* Adres alanlari ayni kart icinde */}
+                {(isCargoDelivery || invoiceType === 'bireysel') && (
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    {renderAddressFields()}
+                  </div>
+                )}
+              </div>
+
+              {/* Okula Teslim Bilgisi */}
+              {!isCargoDelivery && (
+                <div className="bg-green-50 rounded-xl p-6 border border-green-100">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-700 flex-shrink-0">
+                      <SchoolIcon />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-green-900 mb-1">{t('schoolDelivery.title')}</h3>
+                      <p className="text-green-700 text-sm">
+                        {t('schoolDelivery.description')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 🚚 Alternatif Teslimat Adresi */}
+              {isCargoDelivery && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={shipToDifferentAddress}
+                      onChange={(e) => setShipToDifferentAddress(e.target.checked)}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900 font-medium">{t('altAddress.toggle')}</span>
+                  </label>
+
+                  {shipToDifferentAddress && (
+                    <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('altAddress.title')}</h4>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.country')}</label>
+                        <select
+                          id="f-altCountry"
+                          value={altCountry}
+                          onChange={(e) => setAltCountry(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required
+                        >
+                          {countries.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {altCountry === "Türkiye" && (
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.province')}</label>
+                            <select
+                              id="f-altIl"
+                              value={altSelectedIl}
+                              onChange={(e) => setAltSelectedIl(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                              required
+                            >
+                              <option value="">{t('address.selectProvince')}</option>
+                              {ilIlceData.iller.map((il) => (
+                                <option key={il.id} value={il.name}>{il.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.district')}</label>
+                            <select
+                              id="f-altIlce"
+                              value={altSelectedIlce}
+                              onChange={(e) => setAltSelectedIlce(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              required
+                              disabled={!altSelectedIl}
+                            >
+                              <option value="">
+                                {altSelectedIl ? t('address.selectDistrict') : t('address.selectProvinceFirst')}
+                              </option>
+                              {altIlceler.map((ilce) => (
+                                <option key={ilce} value={ilce}>{ilce}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.streetAddress')}</label>
+                        <input
+                          type="text"
+                          id="f-altStreetAddress"
+                          value={altStreetAddress}
+                          onChange={(e) => setAltStreetAddress(e.target.value)}
+                          placeholder={t('address.streetAddressPlaceholder')}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.streetAddress2')}</label>
+                        <input
+                          type="text"
+                          id="f-altStreetAddress2"
+                          value={altStreetAddress2}
+                          onChange={(e) => setAltStreetAddress2(e.target.value)}
+                          placeholder={t('address.streetAddress2Placeholder')}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required={shipToDifferentAddress}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.postalCode')}</label>
+                        <input
+                          type="text"
+                          value={altPostalCode}
+                          onChange={(e) => setAltPostalCode(e.target.value)}
+                          placeholder="34000"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-w-[200px]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 🎓 Öğrenci Bilgileri */}
+              <div id="f-students" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {t('students.title')}
+                    {students.length > 1 && (
+                      <span className="ml-2 text-sm font-normal text-gray-500">{t('students.count', { count: students.length })}</span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-gray-500">{t('students.helper')}</p>
+                </div>
+
+                <div className="space-y-4">
+                  {students.map((student, idx) => (
+                    <div key={idx} className="rounded-lg border border-gray-200 p-4 bg-gray-50/40">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-gray-700">
+                          {t('students.studentN', { number: idx + 1 })}
+                        </p>
+                        {students.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeStudent(idx)}
+                            className="text-xs text-red-600 hover:text-red-700 hover:underline"
+                          >
+                            {t('students.remove')}
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid sm:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('students.firstName')}</label>
+                          <input
+                            type="text"
+                            value={student.firstName}
+                            onChange={(e) => updateStudent(idx, 'firstName', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('students.lastName')}</label>
+                          <input
+                            type="text"
+                            value={student.lastName}
+                            onChange={(e) => updateStudent(idx, 'lastName', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('students.class')}</label>
+                          <input
+                            type="text"
+                            value={getLocalized(classData, 'name', locale)}
+                            disabled
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {t('students.section')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={student.section}
+                            onChange={(e) => updateStudent(idx, 'section', e.target.value)}
+                            placeholder="A"
+                            maxLength={1}
+                            required
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {students.length < MAX_STUDENTS && (
+                  <button
+                    type="button"
+                    onClick={addStudent}
+                    className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-blue-400 text-blue-600 hover:bg-blue-50 text-sm font-medium transition-colors"
+                  >
+                    {t('students.add')}
+                  </button>
+                )}
+                {students.length >= MAX_STUDENTS && (
+                  <p className="mt-3 text-xs text-gray-500">{t('students.maxReached', { max: MAX_STUDENTS })}</p>
+                )}
+              </div>
+
+              {/* 🧾 Fatura Bilgileri */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('invoice.title')}</h3>
+
+                {/* Bireysel/Kurumsal Seçimi */}
+                <div className="flex gap-3 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => { setInvoiceType('bireysel'); setIsCorporateInvoice(false) }}
+                    className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium text-sm transition-all ${
+                      invoiceType === 'bireysel'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    {t('invoice.individual')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setInvoiceType('kurumsal'); setIsCorporateInvoice(true) }}
+                    className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium text-sm transition-all ${
+                      invoiceType === 'kurumsal'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    {t('invoice.corporate')}
+                  </button>
+                </div>
+
+                {/* Bireysel Fatura Alanları */}
+                {invoiceType === 'bireysel' && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.fullName')}</label>
+                        <input
+                          type="text"
+                          value={`${firstName} ${lastName}`.trim()}
+                          disabled
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.tcNumber')}</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          id="f-tcNumber"
+                          value={tcNumber}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, '').slice(0, 11)
+                            setTcNumber(v)
+                            if (fieldErrors.tcNumber) validateTC(v)
+                          }}
+                          onBlur={(e) => validateTC(e.target.value)}
+                          placeholder={t('invoice.tcPlaceholder')}
+                          maxLength={11}
+                          className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 ${fieldErrors.tcNumber ? 'border-red-400 focus:border-red-500 focus:ring-red-400' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`}
+                          required={invoiceType === 'bireysel'}
+                        />
+                        {fieldErrors.tcNumber && <p className="mt-1 text-xs text-red-600">{fieldErrors.tcNumber}</p>}
+                      </div>
+                    </div>
+                    {isCargoDelivery && (
+                      <p className="text-xs text-gray-500">{t('invoice.individualAddressNote')}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Kurumsal Fatura Alanları */}
+                {invoiceType === 'kurumsal' && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700">{t('invoice.companyInfo')}</h4>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.taxNumber')}</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          id="f-taxNumber"
+                          value={taxNumber}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, '').slice(0, 11)
+                            setTaxNumber(v)
+                            if (fieldErrors.taxNumber) validateTaxNumber(v)
+                          }}
+                          onBlur={(e) => validateTaxNumber(e.target.value)}
+                          placeholder={t('invoice.taxPlaceholder')}
+                          maxLength={11}
+                          className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 ${fieldErrors.taxNumber ? 'border-red-400 focus:border-red-500 focus:ring-red-400' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`}
+                          required={invoiceType === 'kurumsal'}
+                        />
+                        {fieldErrors.taxNumber && <p className="mt-1 text-xs text-red-600">{fieldErrors.taxNumber}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.companyTitle')}</label>
+                        <input
+                          type="text"
+                          id="f-companyTitle"
+                          value={companyTitle}
+                          onChange={(e) => setCompanyTitle(e.target.value)}
+                          placeholder={t('invoice.companyTitlePlaceholder')}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required={invoiceType === 'kurumsal'}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.taxOffice')}</label>
+                        <input
+                          type="text"
+                          id="f-taxOffice"
+                          value={taxOffice}
+                          onChange={(e) => setTaxOffice(e.target.value)}
+                          placeholder={t('invoice.taxOfficePlaceholder')}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          required={invoiceType === 'kurumsal'}
+                        />
+                      </div>
+                    </div>
+                    {isCargoDelivery ? (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs font-semibold text-gray-600 mb-1">{t('invoice.companyAddress')}</p>
+                        <p className="text-xs text-gray-500">{t('invoice.companyAddressNote')}</p>
+                      </div>
+                    ) : (
+                      <div className="pt-4 border-t border-gray-200">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('invoice.companyAddressHeading')}</h4>
+                        {renderAddressFields()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fatura Adresi - Sadece Kargo Teslim ise */}
+                {isCargoDelivery && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={invoiceAddressSame}
+                        onChange={(e) => setInvoiceAddressSame(e.target.checked)}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-gray-700">{t('invoice.sameAddress')}</span>
+                    </label>
+
+                    {!invoiceAddressSame && (
+                      <div className="mt-4 space-y-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 className="text-sm font-semibold text-gray-700">{t('invoice.invoiceAddress')}</h4>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.province')}</label>
+                            <select
+                              id="f-invoiceIl"
+                              value={invoiceSelectedIl}
+                              onChange={(e) => setInvoiceSelectedIl(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                              required={!invoiceAddressSame}
+                            >
+                              <option value="">{t('address.selectProvince')}</option>
+                              {ilIlceData.iller.map((il) => (
+                                <option key={il.id} value={il.name}>{il.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.districtShort')}</label>
+                            <select
+                              id="f-invoiceIlce"
+                              value={invoiceSelectedIlce}
+                              onChange={(e) => setInvoiceSelectedIlce(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              required={!invoiceAddressSame}
+                              disabled={!invoiceSelectedIl}
+                            >
+                              <option value="">
+                                {invoiceSelectedIl ? t('address.selectDistrict') : t('address.selectProvinceFirst')}
+                              </option>
+                              {invoiceIlceler.map((ilce) => (
+                                <option key={ilce} value={ilce}>{ilce}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.streetAddress')}</label>
+                          <input
+                            type="text"
+                            id="f-invoiceStreetAddress"
+                            value={invoiceStreetAddress}
+                            onChange={(e) => setInvoiceStreetAddress(e.target.value)}
+                            placeholder={t('address.streetAddressPlaceholder')}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                            required={!invoiceAddressSame}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('invoice.streetAddress2')}</label>
+                          <input
+                            type="text"
+                            id="f-invoiceStreetAddress2"
+                            value={invoiceStreetAddress2}
+                            onChange={(e) => setInvoiceStreetAddress2(e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                            required={!invoiceAddressSame}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t('address.postalCode')}</label>
+                          <input
+                            type="text"
+                            value={invoicePostalCode}
+                            onChange={(e) => setInvoicePostalCode(e.target.value)}
+                            placeholder="34000"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 max-w-[200px]"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 📝 Ek Bilgiler */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('note.title')}</h3>
+                <textarea
+                  value={orderNote}
+                  onChange={(e) => setOrderNote(e.target.value)}
+                  rows={3}
+                  placeholder={t('note.placeholder')}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 💳 Ödeme Yöntemi */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('payment.title')}</h3>
+                <div className="flex items-center gap-3 p-3 border rounded-lg" style={{ borderColor: '#3b82f6' }}>
+                  <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{t('payment.cardLabel')}</p>
+                    <p className="text-sm text-gray-500">{t('payment.cardDescription')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ✅ Yasal Onaylar */}
+              <div id="f-legal" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('legal.title')}</h3>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptMesafeliSatis}
+                      onChange={(e) => setAcceptMesafeliSatis(e.target.checked)}
+                      className="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 text-sm">
+                      {t.rich('legal.distanceSales', {
+                        link: (chunks) => (
+                          <Link href="/mesafeli-satis" className="text-blue-600 hover:underline" target="_blank">
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptKVKK}
+                      onChange={(e) => setAcceptKVKK(e.target.checked)}
+                      className="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 text-sm">
+                      {t.rich('legal.kvkk', {
+                        link: (chunks) => (
+                          <Link href="/kvkk" className="text-blue-600 hover:underline" target="_blank">
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Hata Mesajı */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Sağ - Sipariş Özeti (sadece desktop'ta sticky; mobilde dogal akista) */}
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-24">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="bg-blue-900 px-6 py-4">
+                    <h3 className="text-white font-semibold">{t('summary.title')}</h3>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    {/* Okul/Sınıf */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('summary.school')}</span>
+                        <span className="font-medium text-gray-900">{getLocalized(classData.school, 'name', locale)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('summary.class')}</span>
+                        <span className="font-medium text-gray-900">{getLocalized(classData, 'name', locale)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('summary.package')}</span>
+                        <span className="font-medium text-gray-900">{getLocalized(classData.package, 'name', locale)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('summary.delivery')}</span>
+                        <span className="font-medium text-gray-900">
+                          {isCargoDelivery ? t('summary.cargo') : t('summary.schoolDelivery')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <hr className="border-gray-100" />
+
+                    {/* Paket İçeriği */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">{t('summary.packageContents')}</p>
+                      {classData.package.isCustomizable && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          {t('summary.customizableHint')}
+                        </p>
+                      )}
+                      {classData.package.isCustomizable ? (
+                        <ul className="space-y-1.5">
+                          {classData.package.items.map((item) => {
+                            const checked = selectedItemIds.includes(item.id)
+                            const isLast = checked && selectedItemIds.length <= 1
+                            return (
+                              <li key={item.id}>
+                                <label className={`flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-50 ${checked ? "text-gray-700" : "text-gray-400"} ${isLast ? "cursor-not-allowed" : ""}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    disabled={isLast}
+                                    onChange={() => toggleItem(item.id)}
+                                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-60"
+                                  />
+                                  <span className={checked ? "" : "line-through"}>{getLocalized(item, 'name', locale)}</span>
+                                  {item.quantity > 1 && (
+                                    <span className="text-gray-400">x{item.quantity}</span>
+                                  )}
+                                  {item.price != null && (
+                                    <span className="ml-auto text-gray-500">
+                                      {formatPrice(Number(item.price) * Number(item.quantity || 1))}
+                                    </span>
+                                  )}
+                                </label>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        <ul className="space-y-2">
+                          {classData.package.items.map((item) => (
+                            <li key={item.id} className="flex items-center gap-2 text-sm text-gray-600">
+                              <CheckIcon />
+                              <span>{getLocalized(item, 'name', locale)}</span>
+                              {item.quantity > 1 && (
+                                <span className="text-gray-400">x{item.quantity}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {getLocalized(classData.package, 'note', locale) && (
+                      <div className="bg-blue-50 p-3 rounded-lg text-xs text-blue-700">
+                        {getLocalized(classData.package, 'note', locale)}
+                      </div>
+                    )}
+
+                    <hr className="border-gray-100" />
+
+                    {/* Indirim Kodu */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">{t('discount.title')}</p>
+                      {discountApplied ? (
+                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">{discountApplied.code}</p>
+                            <p className="text-xs text-green-600">
+                              {discountApplied.type === 'PERCENTAGE'
+                                ? t('discount.percentage', { value: discountApplied.value })
+                                : t('discount.amount', { value: formatPrice(discountApplied.value) })
+                              }
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveDiscount}
+                            className="text-green-600 hover:text-red-500 transition-colors"
+                          >
+                            <CloseIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => {
+                              setDiscountCode(e.target.value.toUpperCase())
+                              setDiscountError("")
+                            }}
+                            placeholder={t('discount.placeholder')}
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyDiscount}
+                            disabled={discountLoading || !discountCode.trim()}
+                            className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {discountLoading ? "..." : t('discount.apply')}
+                          </button>
+                        </div>
+                      )}
+                      {discountError && (
+                        <p className="text-xs text-red-600 mt-1">{discountError}</p>
+                      )}
+                    </div>
+
+                    <hr className="border-gray-100" />
+
+                    {/* Toplam */}
+                    <div className="space-y-2">
+                      {students.length > 1 ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">{t('summary.packagePerStudent', { count: students.length })}</span>
+                            <span className="text-gray-700">
+                              {formatPrice(getUnitPrice())} × {students.length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">{t('summary.subtotal')}</span>
+                            <span className="text-gray-700">{formatPrice(getUnitPrice() * students.length)} TL</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">{t('summary.subtotal')}</span>
+                          <span className="text-gray-700">{formatPrice(getUnitPrice())} TL</span>
+                        </div>
+                      )}
+                      {discountApplied && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-600">{t('summary.discount')}</span>
+                          <span className="text-green-600">-{formatPrice(discountApplied.discountAmount)} TL</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <span className="font-semibold text-gray-900">{t('summary.total')}</span>
+                        <span className="text-2xl font-bold text-blue-900">
+                          {formatPrice(getFinalPrice())} TL
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Ödeme Butonu */}
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full bg-blue-900 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <Spinner />
+                          <span>{t('summary.processing')}</span>
+                        </>
+                      ) : (
+                        <span>{t('summary.goToPayment')}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+  )
+}

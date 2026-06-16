@@ -2,16 +2,20 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { NO_HTML_REGEX, NO_HTML_MSG } from '@/lib/validators'
+import { NO_HTML_REGEX } from '@/lib/validators'
+import { buildTranslationData } from '@/lib/i18n-content'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -29,21 +33,33 @@ export async function GET(
     })
 
     if (!pkg) {
-      return NextResponse.json({ error: 'Paket bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.packageNotFound') }, { status: 404 })
     }
 
     // Frontend icin map et
     const mappedPackage = {
       id: pkg.id,
       name: pkg.name,
+      name_en: pkg.name_en,
+      name_de: pkg.name_de,
+      name_ar: pkg.name_ar,
       description: pkg.description,
+      description_en: pkg.description_en,
+      description_de: pkg.description_de,
+      description_ar: pkg.description_ar,
       note: pkg.note,
+      note_en: pkg.note_en,
+      note_de: pkg.note_de,
+      note_ar: pkg.note_ar,
       basePrice: Number(pkg.price),
       isActive: pkg.isActive,
       isCustomizable: pkg.isCustomizable,
       items: pkg.items.map(item => ({
         id: item.id,
         name: item.name,
+        name_en: item.name_en,
+        name_de: item.name_de,
+        name_ar: item.name_ar,
         quantity: item.quantity,
         unitPrice: Number(item.price)
       })),
@@ -54,7 +70,7 @@ export async function GET(
   } catch (error) {
     console.error('Paket getirilemedi:', error)
     return NextResponse.json(
-      { error: 'Paket yuklenemedi' },
+      { error: t('catalog.packageLoadFailed') },
       { status: 500 }
     )
   }
@@ -64,16 +80,17 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.invalidRequest') }, { status: 400 })
     }
     const { items, basePrice, isCustomizable, ...otherData } = body
 
@@ -89,23 +106,23 @@ export async function PUT(
 
     // Validation
     if (typeof packageData.name === 'string' && (!packageData.name.trim() || packageData.name.length > 200)) {
-      return NextResponse.json({ error: 'Paket adi 1-200 karakter olmali' }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.packageNameLength') }, { status: 400 })
     }
     if (typeof packageData.name === 'string' && !NO_HTML_REGEX.test(packageData.name)) {
-      return NextResponse.json({ error: `Paket adi: ${NO_HTML_MSG}` }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.packageNameNoHtml') }, { status: 400 })
     }
     if (typeof packageData.description === 'string' && !NO_HTML_REGEX.test(packageData.description)) {
-      return NextResponse.json({ error: `Aciklama: ${NO_HTML_MSG}` }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.descriptionNoHtml') }, { status: 400 })
     }
     if (typeof packageData.note === 'string' && !NO_HTML_REGEX.test(packageData.note)) {
-      return NextResponse.json({ error: `Not: ${NO_HTML_MSG}` }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.noteNoHtml') }, { status: 400 })
     }
 
     // basePrice varsa price olarak kaydet
     if (basePrice !== undefined) {
       const numericPrice = Number(basePrice)
       if (!isFinite(numericPrice) || numericPrice < 0 || numericPrice > 1_000_000) {
-        return NextResponse.json({ error: 'Fiyat 0 ile 1.000.000 arasinda olmali' }, { status: 400 })
+        return NextResponse.json({ error: t('catalog.priceRange') }, { status: 400 })
       }
       packageData.price = numericPrice
     }
@@ -115,28 +132,39 @@ export async function PUT(
       packageData.isCustomizable = Boolean(isCustomizable)
     }
 
+    // Ceviri alanlari (EN/DE/AR) - sadece body'de varsa ekle
+    if (body.name_en !== undefined || body.name_de !== undefined || body.name_ar !== undefined) {
+      Object.assign(packageData, buildTranslationData('name', { en: body.name_en, de: body.name_de, ar: body.name_ar }))
+    }
+    if (body.description_en !== undefined || body.description_de !== undefined || body.description_ar !== undefined) {
+      Object.assign(packageData, buildTranslationData('description', { en: body.description_en, de: body.description_de, ar: body.description_ar }))
+    }
+    if (body.note_en !== undefined || body.note_de !== undefined || body.note_ar !== undefined) {
+      Object.assign(packageData, buildTranslationData('note', { en: body.note_en, de: body.note_de, ar: body.note_ar }))
+    }
+
     // Items validation
     if (items) {
       if (!Array.isArray(items)) {
-        return NextResponse.json({ error: 'Items array olmali' }, { status: 400 })
+        return NextResponse.json({ error: t('catalog.itemsMustBeArray') }, { status: 400 })
       }
       if (items.length > 100) {
-        return NextResponse.json({ error: 'Bir pakette en fazla 100 urun olabilir' }, { status: 400 })
+        return NextResponse.json({ error: t('catalog.packageMax100Items') }, { status: 400 })
       }
       for (const item of items) {
         if (!item.name || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 200) {
-          return NextResponse.json({ error: 'Urun adi 1-200 karakter olmali' }, { status: 400 })
+          return NextResponse.json({ error: t('catalog.itemNameLength') }, { status: 400 })
         }
         if (!NO_HTML_REGEX.test(item.name)) {
-          return NextResponse.json({ error: `Urun adi (${item.name}): ${NO_HTML_MSG}` }, { status: 400 })
+          return NextResponse.json({ error: t('catalog.itemNameNoHtml', { name: item.name }) }, { status: 400 })
         }
         const itemPrice = Number(item.unitPrice ?? item.price ?? 0)
         if (!isFinite(itemPrice) || itemPrice < 0 || itemPrice > 1_000_000) {
-          return NextResponse.json({ error: `Urun fiyati gecersiz (${item.name})` }, { status: 400 })
+          return NextResponse.json({ error: t('catalog.itemPriceInvalid', { name: item.name }) }, { status: 400 })
         }
         const itemQty = Number(item.quantity ?? 1)
         if (!Number.isInteger(itemQty) || itemQty < 1 || itemQty > 1000) {
-          return NextResponse.json({ error: `Urun adedi 1-1000 olmali (${item.name})` }, { status: 400 })
+          return NextResponse.json({ error: t('catalog.itemQtyRange', { name: item.name }) }, { status: 400 })
         }
       }
 
@@ -145,9 +173,10 @@ export async function PUT(
       })
 
       await prisma.packageItem.createMany({
-        data: items.map((item: { name: string; quantity: number; unitPrice?: number; price?: number }) => ({
+        data: items.map((item: { name: string; quantity: number; unitPrice?: number; price?: number; name_en?: string; name_de?: string; name_ar?: string }) => ({
           packageId: id,
           name: item.name.trim(),
+          ...buildTranslationData('name', { en: item.name_en, de: item.name_de, ar: item.name_ar }),
           quantity: item.quantity || 1,
           price: item.unitPrice !== undefined ? item.unitPrice : (item.price || 0)
         }))
@@ -183,7 +212,7 @@ export async function PUT(
   } catch (error) {
     console.error('Paket guncellenemedi:', error)
     return NextResponse.json(
-      { error: 'Paket guncellenemedi' },
+      { error: t('catalog.packageUpdateFailed') },
       { status: 500 }
     )
   }
@@ -193,10 +222,11 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -207,7 +237,7 @@ export async function DELETE(
     })
 
     if (!pkg) {
-      return NextResponse.json({ error: 'Paket bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.packageNotFound') }, { status: 404 })
     }
 
     // Aktif siparis kontrolu
@@ -220,7 +250,7 @@ export async function DELETE(
 
     if (activeOrders > 0) {
       return NextResponse.json(
-        { error: `Bu pakete ait ${activeOrders} aktif siparis bulunuyor. Silmeden once siparislerin tamamlanmasi veya iptal edilmesi gerekiyor.` },
+        { error: t('catalog.packageHasActiveOrders', { count: activeOrders }) },
         { status: 400 }
       )
     }
@@ -265,7 +295,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Paket silinemedi:', error)
     return NextResponse.json(
-      { error: 'Paket silinemedi' },
+      { error: t('catalog.packageDeleteFailed') },
       { status: 500 }
     )
   }

@@ -3,16 +3,20 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { adminSchoolUpdateSchema, formatZodError } from '@/lib/validators'
+import { buildTranslationData } from '@/lib/i18n-content'
 import { sendDirectorPasswordReset, sendSchoolPasswordRegenerated } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -30,7 +34,7 @@ export async function GET(
     })
 
     if (!school) {
-      return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.schoolNotFound') }, { status: 404 })
     }
 
     // Hassas alanlari response'dan cikar
@@ -39,7 +43,7 @@ export async function GET(
   } catch (error) {
     console.error('Okul getirilemedi:', error)
     return NextResponse.json(
-      { error: 'Okul yuklenemedi' },
+      { error: t('catalog.schoolLoadFailed') },
       { status: 500 }
     )
   }
@@ -49,10 +53,11 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -60,7 +65,7 @@ export async function PUT(
     const parsed = adminSchoolUpdateSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -76,6 +81,15 @@ export async function PUT(
       }
     }
 
+    // Cok dilli okul adi cevirileri (varsa) — bos string -> null
+    if ('name_en' in rest || 'name_de' in rest || 'name_ar' in rest) {
+      Object.assign(updateData, buildTranslationData('name', {
+        en: rest.name_en as string | null | undefined,
+        de: rest.name_de as string | null | undefined,
+        ar: rest.name_ar as string | null | undefined,
+      }))
+    }
+
     // Veli sifresi degisiyorsa: minimum uzunluk siniri yok. Bos birakilirsa "degismedi"
     // anlamina gelir (mevcut sifre korunur). Dolu ise benzersizlik kontrolu yapilir.
     if (typeof updateData.password === 'string') {
@@ -89,7 +103,7 @@ export async function PUT(
         })
         if (conflict) {
           return NextResponse.json(
-            { error: 'Bu sifre baska bir okulda kullaniliyor' },
+            { error: t('catalog.passwordInUseOther') },
             { status: 409 }
           )
         }
@@ -109,7 +123,7 @@ export async function PUT(
 
     // En az bir alan guncellenmelidir
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'Guncellenecek alan bulunamadi' }, { status: 400 })
+      return NextResponse.json({ error: t('catalog.noFieldsToUpdate') }, { status: 400 })
     }
 
     // Mail gonderme kararini almak icin update'ten ONCE eski degerleri al
@@ -156,13 +170,13 @@ export async function PUT(
   } catch (error) {
     if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
-        { error: 'Bu e-posta adresi ile baska bir okul zaten mevcut.' },
+        { error: t('catalog.schoolEmailExists') },
         { status: 409 }
       )
     }
     console.error('Okul guncellenemedi:', error)
     return NextResponse.json(
-      { error: 'Okul guncellenemedi' },
+      { error: t('catalog.schoolUpdateFailed') },
       { status: 500 }
     )
   }
@@ -172,10 +186,11 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -187,7 +202,7 @@ export async function DELETE(
     })
 
     if (!school) {
-      return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.schoolNotFound') }, { status: 404 })
     }
 
     const classIds = school.classes.map(c => c.id)
@@ -201,7 +216,7 @@ export async function DELETE(
       })
       if (hasOrders) {
         return NextResponse.json(
-          { error: 'Bu okulun siparis kayitlari mevcut. Silmek yerine okulu pasiflestirebilirsiniz.' },
+          { error: t('catalog.schoolHasOrders') },
           { status: 409 }
         )
       }
@@ -220,7 +235,7 @@ export async function DELETE(
     })
     if (hasPayments) {
       return NextResponse.json(
-        { error: 'Bu okulun hakedis kayitlari mevcut. Silmek yerine okulu pasiflestirebilirsiniz.' },
+        { error: t('catalog.schoolHasPayments') },
         { status: 409 }
       )
     }
@@ -243,7 +258,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Okul silinemedi:', error)
     return NextResponse.json(
-      { error: 'Okul silinemedi' },
+      { error: t('catalog.schoolDeleteFailed') },
       { status: 500 }
     )
   }

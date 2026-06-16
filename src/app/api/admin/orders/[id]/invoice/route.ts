@@ -4,15 +4,18 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
 import { sendInvoiceCreated } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -32,12 +35,12 @@ export async function POST(
     })
 
     if (!order) {
-      return NextResponse.json({ error: 'Siparis bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
     if (!['PAID', 'CONFIRMED'].includes(order.status)) {
       return NextResponse.json(
-        { error: 'Bu siparis icin fatura kesilemez (sadece onaylanmis siparisler)' },
+        { error: t('orders.notInvoiceable') },
         { status: 400 }
       )
     }
@@ -46,7 +49,7 @@ export async function POST(
     if (order.invoiceNo) {
       return NextResponse.json(
         {
-          error: 'Bu siparise daha onceden fatura kesilmis',
+          error: t('orders.alreadyInvoiced'),
           invoiceNo: order.invoiceNo
         },
         { status: 409 }
@@ -61,7 +64,7 @@ export async function POST(
     })
     if (claimResult.count === 0) {
       return NextResponse.json(
-        { error: 'Fatura kesim islemi su anda baska bir admin tarafindan yapiliyor' },
+        { error: t('orders.invoiceInProgress') },
         { status: 409 }
       )
     }
@@ -103,7 +106,7 @@ export async function POST(
         data: { status: order.status, invoicedAt: null }
       })
       return NextResponse.json(
-        { error: invoiceResult.errorMessage || 'Fatura olusturulamadi' },
+        { error: invoiceResult.errorMessage || t('orders.invoiceCreateFailed') },
         { status: 500 }
       )
     }
@@ -139,6 +142,7 @@ export async function POST(
           parentName: order.parentName,
           invoiceNo: invoiceResult.invoiceNo,
           totalAmount: Number(order.totalAmount),
+          locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
         })
       } catch (notifError) {
         console.error('Fatura bildirim maili gonderilemedi:', notifError)
@@ -153,7 +157,7 @@ export async function POST(
   } catch (error) {
     console.error('Fatura olusturulamadi:', error)
     return NextResponse.json(
-      { error: 'Fatura olusturulamadi' },
+      { error: t('orders.invoiceCreateFailed') },
       { status: 500 }
     )
   }

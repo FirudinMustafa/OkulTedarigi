@@ -1,13 +1,14 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import {
   LayoutDashboard, ShoppingCart, DollarSign, BarChart3,
   LogOut, Menu, X, Users
 } from "lucide-react"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -17,18 +18,19 @@ interface SidebarProps {
   }
 }
 
-const menuItems = [
-  { href: "/mudur", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/mudur/siniflar", label: "Siniflar", icon: Users },
-  { href: "/mudur/siparisler", label: "Siparisler", icon: ShoppingCart },
-  { href: "/mudur/hakedisler", label: "Hakedisler", icon: DollarSign },
-  { href: "/mudur/raporlar", label: "Raporlar", icon: BarChart3 },
-]
-
 export default function MudurSidebar({ school }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const t = useTranslations('mudur.sidebar')
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const menuItems = [
+    { href: "/mudur", label: t('dashboard'), icon: LayoutDashboard },
+    { href: "/mudur/siniflar", label: t('classes'), icon: Users },
+    { href: "/mudur/siparisler", label: t('orders'), icon: ShoppingCart },
+    { href: "/mudur/hakedisler", label: t('payments'), icon: DollarSign },
+    { href: "/mudur/raporlar", label: t('reports'), icon: BarChart3 },
+  ]
 
   const handleLogout = async () => {
     await fetch("/api/mudur/auth/logout", { method: "POST", credentials: 'include' })
@@ -90,11 +92,12 @@ export default function MudurSidebar({ school }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {school.principalName || "Mudur"}
+              {school.principalName || t('principalFallback')}
             </p>
             <p className="text-xs text-gray-500 truncate">{school.name}</p>
           </div>
         </div>
+        <LanguageSwitcher className="mb-3 w-full" align="start" />
         <Button
           variant="outline"
           size="sm"
@@ -102,7 +105,7 @@ export default function MudurSidebar({ school }: SidebarProps) {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Cikis Yap
+          {t('logout')}
         </Button>
       </div>
     </>

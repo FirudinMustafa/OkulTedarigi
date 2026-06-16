@@ -1,6 +1,57 @@
 import { jsPDF } from 'jspdf'
 import JsBarcode from 'jsbarcode'
 
+export type DocLocale = 'tr' | 'en' | 'de' | 'ar'
+
+// --- Etiket cevirileri (per-function paylasimli) ---
+// NOT: jsPDF varsayilan (Roboto) fontu Arapca glifleri guvenilir sekilde render
+// edemez; bu yuzden Arapca (ar) UI etiketleri icin Ingilizce'ye geri donulur
+// (T.ar = T.en). Dinamik veriler (isim, okul, adres, takip no) oldugu gibi kalir.
+const L_en = {
+  headerSub: 'Shipping Label',
+  recipient: 'RECIPIENT',
+  orderInfo: 'ORDER INFO',
+  orderNo: 'Order No:',
+  school: 'School:',
+  class: 'Class:',
+  package: 'Package:',
+  amount: 'Amount:',
+  shipped: 'Shipped:',
+  barcodeError: '[Barcode could not be generated]',
+  pageTitle: 'Shipping Labels',
+}
+const LABEL_T = {
+  tr: {
+    headerSub: 'Kargo Gönderim Etiketi',
+    recipient: 'ALICI',
+    orderInfo: 'SİPARİŞ BİLGİLERİ',
+    orderNo: 'Sipariş No:',
+    school: 'Okul:',
+    class: 'Sınıf:',
+    package: 'Paket:',
+    amount: 'Tutar:',
+    shipped: 'Gönderim:',
+    barcodeError: '[Barkod oluşturulamadı]',
+    pageTitle: 'Kargo Etiketleri',
+  },
+  en: L_en,
+  de: {
+    headerSub: 'Versandetikett',
+    recipient: 'EMPFÄNGER',
+    orderInfo: 'BESTELLINFO',
+    orderNo: 'Bestell-Nr.:',
+    school: 'Schule:',
+    class: 'Klasse:',
+    package: 'Paket:',
+    amount: 'Betrag:',
+    shipped: 'Versand:',
+    barcodeError: '[Barcode konnte nicht erstellt werden]',
+    pageTitle: 'Versandetiketten',
+  },
+  // ar -> en fallback: jsPDF Arapca glif sinirlamasi
+  ar: L_en,
+}
+
 export interface LabelOrder {
   orderNumber: string
   parentName: string
@@ -71,7 +122,8 @@ function generateBarcode(trackingNo: string): string {
 // --- Etiket cizimi (100\u00d780mm YATAY/manzara sayfaya sigacak sekilde optimize) ---
 // Sayfa: 100mm en \u00d7 80mm boy. Iki sutunlu kompakt yerlesim:
 //   ust: baslik + barkod (tam genislik), alt: sol=ALICI, sag=SIPARIS BILGILERI.
-function drawLabel(doc: jsPDF, order: LabelOrder) {
+function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
+  const tr = LABEL_T[locale] ?? LABEL_T.tr
   const pageW = doc.internal.pageSize.getWidth()   // 100
   const pageH = doc.internal.pageSize.getHeight()   // 80
   const m = 4
@@ -92,7 +144,7 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
   doc.text('OKULTEDARIGIM.COM', pageW / 2, y + 4, { align: 'center' })
   doc.setFontSize(6.5)
   doc.setFont('Roboto', 'normal')
-  doc.text('Kargo G\u00f6nderim Etiketi', pageW / 2, y + 7.3, { align: 'center' })
+  doc.text(tr.headerSub, pageW / 2, y + 7.3, { align: 'center' })
   y += 9
 
   // --- Barkod (tam genislik, kompakt) ---
@@ -105,7 +157,7 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
   } catch {
     doc.setFontSize(9)
     doc.setTextColor(150)
-    doc.text('[Barkod olu\u015fturulamad\u0131]', pageW / 2, barTop + barH / 2, { align: 'center' })
+    doc.text(tr.barcodeError, pageW / 2, barTop + barH / 2, { align: 'center' })
   }
   let secStart = barTop + barH + 1.5
 
@@ -127,7 +179,7 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
   doc.setFontSize(7)
   doc.setFont('Roboto', 'bold')
   doc.setTextColor(71, 85, 105)
-  doc.text('ALICI', leftX + 2, ly + 3.5)
+  doc.text(tr.recipient, leftX + 2, ly + 3.5)
   ly += 7.5
 
   doc.setTextColor(0)
@@ -157,7 +209,7 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
   doc.setFontSize(7)
   doc.setFont('Roboto', 'bold')
   doc.setTextColor(71, 85, 105)
-  doc.text('S\u0130PAR\u0130\u015e B\u0130LG\u0130LER\u0130', rightX + 2, ry + 3.5)
+  doc.text(tr.orderInfo, rightX + 2, ry + 3.5)
   ry += 7.5
 
   doc.setTextColor(0)
@@ -166,11 +218,11 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
   const valW = colW - 15 - 2
 
   const infoLines: Array<[string, string]> = [
-    ['Sipari\u015f No:', order.orderNumber],
-    ['Okul:', order.class.school.name],
-    ['S\u0131n\u0131f:', order.class.name],
-    ['Paket:', order.package?.name || '-'],
-    ['Tutar:', `${Number(order.totalAmount).toFixed(2)} TL`]
+    [tr.orderNo, order.orderNumber],
+    [tr.school, order.class.school.name],
+    [tr.class, order.class.name],
+    [tr.package, order.package?.name || '-'],
+    [tr.amount, `${Number(order.totalAmount).toFixed(2)} TL`]
   ]
   for (const [label, value] of infoLines) {
     doc.setFont('Roboto', 'bold')
@@ -188,12 +240,12 @@ function drawLabel(doc: jsPDF, order: LabelOrder) {
 
   doc.setFontSize(6.5)
   doc.setTextColor(100)
-  doc.text(`G\u00f6nderim: ${shipDate}`, m + 2, pageH - m - 2)
+  doc.text(`${tr.shipped} ${shipDate}`, m + 2, pageH - m - 2)
   doc.text('www.okultedarigim.com', pageW - m - 2, pageH - m - 2, { align: 'right' })
 }
 
 // --- Dahili: PDF doc olustur ---
-async function createLabelDoc(orders: LabelOrder[]): Promise<jsPDF> {
+async function createLabelDoc(orders: LabelOrder[], locale: DocLocale = 'tr'): Promise<jsPDF> {
   const fonts = await loadFonts()
 
   const doc = new jsPDF({
@@ -206,47 +258,153 @@ async function createLabelDoc(orders: LabelOrder[]): Promise<jsPDF> {
 
   orders.forEach((order, i) => {
     if (i > 0) doc.addPage([100, 80], 'landscape')
-    drawLabel(doc, order)
+    drawLabel(doc, order, locale)
   })
 
   return doc
 }
 
 // --- Preview: blob URL doner ---
-export async function previewShippingLabel(order: LabelOrder): Promise<string> {
-  const doc = await createLabelDoc([order])
+export async function previewShippingLabel(order: LabelOrder, locale: DocLocale = 'tr'): Promise<string> {
+  const doc = await createLabelDoc([order], locale)
   return doc.output('bloburl').toString()
 }
 
-export async function previewBulkLabels(orders: LabelOrder[]): Promise<string> {
+export async function previewBulkLabels(orders: LabelOrder[], locale: DocLocale = 'tr'): Promise<string> {
   if (orders.length === 0) throw new Error('Siparis listesi bos')
-  const doc = await createLabelDoc(orders)
+  const doc = await createLabelDoc(orders, locale)
   return doc.output('bloburl').toString()
 }
 
-// --- Toplu yazdir: PDF'i yeni sekmede acip yazdirma diyalogunu otomatik tetikler ---
-export async function printBulkLabels(orders: LabelOrder[]): Promise<void> {
+// --- HTML birebir-olcu baski (termal etiket yazicisi icin onerilir) ---
+// PDF yerine @page size 100mm 80mm + margin 0 tanimli HTML uretip gizli iframe ile
+// bastirir. Boylece tarayici/yazici "sayfaya sigdir" olcek kaymasi en aza iner.
+function esc(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+function buildLabelHtml(orders: LabelOrder[], locale: DocLocale = 'tr'): string {
+  // xlsx degil HTML — Arapca burada da sorunsuz; ancak etiket cevirileri tutarli
+  // olsun diye ayni LABEL_T tablosu kullanilir (ar -> en fallback dahil).
+  const tr = LABEL_T[locale] ?? LABEL_T.tr
+  const labels = orders.map(o => {
+    let barcode = ''
+    try { barcode = `<img src="${generateBarcode(o.trackingNo)}" alt="${esc(o.trackingNo)}" />` }
+    catch { barcode = `<div class="noBarcode">${esc(tr.barcodeError)}</div>` }
+    const shipDate = o.shippedAt
+      ? new Date(o.shippedAt).toLocaleDateString('tr-TR')
+      : new Date().toLocaleDateString('tr-TR')
+    const rows: Array<[string, string]> = [
+      [tr.orderNo, o.orderNumber],
+      [tr.school, o.class.school.name],
+      [tr.class, o.class.name],
+      [tr.package, o.package?.name || '-'],
+      [tr.amount, `${Number(o.totalAmount).toFixed(2)} TL`],
+    ]
+    const infoRows = rows.map(([l, v]) =>
+      `<div class="row"><span class="lbl">${esc(l)}</span><span class="val">${esc(v)}</span></div>`
+    ).join('')
+    return `
+      <div class="label"><div class="frame">
+        <div class="header">
+          <div class="h-title">OKULTEDARIGIM.COM</div>
+          <div class="h-sub">${esc(tr.headerSub)}</div>
+        </div>
+        <div class="barcode">${barcode}</div>
+        <hr class="sep" />
+        <div class="cols">
+          <div class="col">
+            <div class="sec">${esc(tr.recipient)}</div>
+            <div class="name">${esc(o.parentName)}</div>
+            <div class="phone">${esc(o.phone)}</div>
+            <div class="addr">${esc(o.deliveryAddress || '-')}</div>
+          </div>
+          <div class="col">
+            <div class="sec">${esc(tr.orderInfo)}</div>
+            ${infoRows}
+          </div>
+        </div>
+        <div class="footer"><span>${esc(tr.shipped)} ${esc(shipDate)}</span><span>www.okultedarigim.com</span></div>
+      </div></div>`
+  }).join('')
+
+  return `<!DOCTYPE html><html lang="${esc(locale)}"><head><meta charset="utf-8" />
+<title>${esc(tr.pageTitle)}</title>
+<style>
+  @page { size: 100mm 80mm; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  .label { width: 100mm; height: 80mm; overflow: hidden; page-break-after: always; break-after: page;
+           font-family: Arial, Helvetica, sans-serif; color: #000; }
+  .label:last-child { page-break-after: auto; break-after: auto; }
+  .frame { margin: 4mm; height: 72mm; border: 0.4mm solid #1e293b; position: relative; }
+  .header { background: #1e293b; color: #fff; height: 9mm; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; }
+  .h-title { font-size: 11pt; font-weight: 700; line-height: 1; }
+  .h-sub { font-size: 6.5pt; line-height: 1; margin-top: 0.4mm; }
+  .barcode { text-align: center; margin-top: 1.5mm; height: 16mm; }
+  .barcode img { height: 16mm; width: 64mm; object-fit: contain; }
+  .noBarcode { font-size: 9pt; color: #999; padding-top: 6mm; }
+  .sep { border: none; border-top: 0.3mm solid #d2d2d2; margin: 1.5mm 2mm 0; }
+  .cols { display: flex; padding-top: 2mm; }
+  .col { width: 50%; padding: 0 2mm; }
+  .sec { background: #f1f5f9; color: #475569; font-size: 7pt; font-weight: 700; padding: 1mm 2mm; }
+  .name { font-size: 9pt; font-weight: 700; margin-top: 1.5mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phone { font-size: 8pt; margin-top: 1mm; }
+  .addr { font-size: 7pt; margin-top: 1mm; line-height: 1.25; display: -webkit-box;
+          -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .row { font-size: 7.5pt; margin-top: 1.3mm; display: flex; }
+  .lbl { font-weight: 700; flex: 0 0 15mm; }
+  .val { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .footer { position: absolute; left: 2mm; right: 2mm; bottom: 1.5mm; display: flex;
+            justify-content: space-between; font-size: 6.5pt; color: #646464; }
+</style></head><body>${labels}</body></html>`
+}
+
+// --- Toplu yazdir: HTML'i gizli iframe'de birebir olcu ile bastirir ---
+export async function printBulkLabels(orders: LabelOrder[], locale: DocLocale = 'tr'): Promise<void> {
   if (orders.length === 0) throw new Error('Siparis listesi bos')
-  const doc = await createLabelDoc(orders)
-  // dataurlnewwindow PDF'i yeni sekmede acar; iframe ile auto-print:
-  const blobUrl = doc.output('bloburl').toString()
-  const printWindow = window.open(blobUrl, '_blank')
-  if (printWindow) {
-    // PDF yuklendikten sonra yazdir
-    printWindow.addEventListener('load', () => {
-      try { printWindow.focus(); printWindow.print() } catch { /* tarayici engellerse kullanici manuel basar */ }
-    })
-  }
+  const html = buildLabelHtml(orders, locale)
+
+  const iframe = document.createElement('iframe')
+  Object.assign(iframe.style, {
+    position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0',
+  })
+  document.body.appendChild(iframe)
+
+  const cw = iframe.contentWindow
+  if (!cw) { iframe.remove(); throw new Error('Yazdirma penceresi acilamadi') }
+  cw.document.open()
+  cw.document.write(html)
+  cw.document.close()
+
+  // Barkod gorselleri yuklensin (data URL, hizli) — sonra yazdir
+  await new Promise<void>((resolve) => {
+    const imgs = Array.from(cw.document.images)
+    let pending = imgs.filter(im => !im.complete).length
+    if (pending === 0) { resolve(); return }
+    const done = () => { if (--pending <= 0) resolve() }
+    imgs.forEach(im => { if (!im.complete) { im.addEventListener('load', done); im.addEventListener('error', done) } })
+    setTimeout(resolve, 1500) // emniyet
+  })
+
+  const cleanup = () => { try { iframe.remove() } catch { /* yoksay */ } }
+  cw.addEventListener('afterprint', cleanup)
+  setTimeout(cleanup, 60000) // fallback
+  cw.focus()
+  cw.print()
 }
 
 // --- Download: PDF indir ---
-export async function downloadShippingLabel(order: LabelOrder): Promise<void> {
-  const doc = await createLabelDoc([order])
+export async function downloadShippingLabel(order: LabelOrder, locale: DocLocale = 'tr'): Promise<void> {
+  const doc = await createLabelDoc([order], locale)
   doc.save(`etiket-${order.orderNumber}.pdf`)
 }
 
-export async function downloadBulkLabels(orders: LabelOrder[]): Promise<void> {
+export async function downloadBulkLabels(orders: LabelOrder[], locale: DocLocale = 'tr'): Promise<void> {
   if (orders.length === 0) return
-  const doc = await createLabelDoc(orders)
+  const doc = await createLabelDoc(orders, locale)
   doc.save(`etiketler-toplu-${orders.length}-adet.pdf`)
 }

@@ -4,15 +4,18 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
 import { sendSchoolPasswordRegenerated } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
@@ -23,7 +26,7 @@ export async function POST(
     })
 
     if (!school) {
-      return NextResponse.json({ error: 'Okul bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('catalog.schoolNotFound') }, { status: 404 })
     }
 
     // Benzersiz sifre olustur (12 karakter random — collision olasiligi 10^-18)
@@ -45,7 +48,7 @@ export async function POST(
 
     if (!newPassword || !isUnique) {
       return NextResponse.json(
-        { error: 'Benzersiz sifre olusturulamadi, tekrar deneyin' },
+        { error: t('catalog.uniquePasswordGenFailed') },
         { status: 500 }
       )
     }
@@ -84,7 +87,7 @@ export async function POST(
   } catch (error) {
     console.error('Sifre yenilenemedi:', error)
     return NextResponse.json(
-      { error: 'Sifre yenilenemedi' },
+      { error: t('catalog.passwordRegenFailed') },
       { status: 500 }
     )
   }

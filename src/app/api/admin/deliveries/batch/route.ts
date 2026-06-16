@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 interface BatchResult {
   orderId: string
@@ -16,28 +18,29 @@ interface BatchResult {
 //   UNDELIVERED     : Teslim Edilemeyen — SHIPPED -> UNDELIVERED
 //   REDISPATCH      : Tekrar Dagitima   — UNDELIVERED -> SHIPPED
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidRequest') }, { status: 400 })
     }
     const { orderIds, action } = body
 
     if (!Array.isArray(orderIds) || orderIds.length === 0 || orderIds.length > 500) {
-      return NextResponse.json({ error: 'Siparis ID listesi gerekli (max 500)' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.idListRequired500') }, { status: 400 })
     }
     if (!orderIds.every(id => typeof id === 'string' && id.length > 0 && id.length <= 40)) {
-      return NextResponse.json({ error: 'Gecersiz siparis ID' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidOrderId') }, { status: 400 })
     }
 
     const validActions = ['CONFIRM', 'SCHOOL_DISPATCH', 'COMPLETED', 'UNDELIVERED', 'REDISPATCH']
     if (!validActions.includes(action)) {
-      return NextResponse.json({ error: 'Gecersiz aksiyon' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidAction') }, { status: 400 })
     }
 
     const orders = await prisma.order.findMany({
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: `Bu siparis "${action}" islemine uygun degil (mevcut: ${order.status})`
+            error: t('orders.notEligibleForAction', { action, status: order.status })
           })
           continue
         }
@@ -95,7 +98,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: 'Siparis durumu degismis, sayfayi yenileyin'
+            error: t('orders.statusChanged')
           })
           continue
         }
@@ -115,7 +118,7 @@ export async function POST(request: Request) {
           orderId: order.id,
           orderNumber: order.orderNumber,
           success: false,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+          error: error instanceof Error ? error.message : t('orders.unknownError')
         })
       }
     }
@@ -137,23 +140,17 @@ export async function POST(request: Request) {
       }
     })
 
-    const actionLabels: Record<string, string> = {
-      CONFIRM: 'onaylandi',
-      SCHOOL_DISPATCH: 'okula teslime cikarildi',
-      COMPLETED: 'tamamlandi',
-      UNDELIVERED: 'teslim edilemeyen olarak isaretlendi',
-      REDISPATCH: 'tekrar dagitima cikarildi',
-    }
+    const actionLabel = t(`orders.actionLabels.${action}` as 'orders.actionLabels.CONFIRM')
 
     return NextResponse.json({
       success: true,
-      message: `${successCount} siparis ${actionLabels[action]}${failCount > 0 ? `, ${failCount} hata` : ''}`,
+      message: t('orders.batchDeliveryResult', { success: successCount, action: actionLabel, failed: failCount }),
       results,
       summary: { total: orders.length, success: successCount, failed: failCount }
     })
 
   } catch (error) {
     console.error('Toplu teslimat guncelleme hatasi:', error)
-    return NextResponse.json({ error: 'Toplu teslimat guncellenemedi' }, { status: 500 })
+    return NextResponse.json({ error: t('orders.batchDeliveryFailed') }, { status: 500 })
   }
 }

@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/security'
 import { formatZodError } from '@/lib/validators'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 // Sohbet gecmisi: rol + icerik. Welcome mesaji client'ta statik, buraya gelmez.
 const chatbotBodySchema = z.object({
@@ -16,7 +18,16 @@ const chatbotBodySchema = z.object({
     )
     .min(1, 'Mesaj zorunlu')
     .max(30, 'Cok fazla mesaj'),
+  locale: z.enum(['tr', 'en', 'de', 'ar']).optional(),
 }).strict()
+
+// Yanit dili zorlamasi — kullanicinin sectigi dile gore.
+const LANG_INSTRUCTION: Record<string, string> = {
+  tr: '\n\n# YANIT DILI\nKullaniciya HER ZAMAN Turkce yanit ver.',
+  en: '\n\n# RESPONSE LANGUAGE\nIMPORTANT: Respond ONLY in English, regardless of the language the user writes in. Keep URLs/links exactly as written.',
+  de: '\n\n# ANTWORTSPRACHE\nWICHTIG: Antworte AUSSCHLIESSLICH auf Deutsch, unabhängig von der Sprache des Nutzers. Links/URLs exakt beibehalten.',
+  ar: '\n\n# لغة الرد\nمهم: أجب باللغة العربية فقط بغضّ النظر عن لغة المستخدم. اترك الروابط/عناوين URL كما هي تمامًا.',
+}
 
 // Sistemi tanitan, yonlendirme yapan ve kapsam disi sorulari reddeden talimat.
 const SYSTEM_PROMPT = `Sen "OkulTedarigim" (okultedarigim.com) platformunun web sitesindeki yardim asistanisin. Velilere (ogrenci velilerine) Turkce yardim edersin. Sadece bu sistem hakkinda dogru, net ve kisa bilgi verirsin; bilmedigin seyi UYDURMAZSIN.
@@ -78,11 +89,12 @@ Okullarin belirledigi egitim/kitap/kirtasiye paketlerini, velilerin guvenle onli
 6. Hicbir sekilde sifre, kart bilgisi veya kisisel veri isteme; kullanicidan bu bilgileri buraya yazmamasini soyle.`
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Sohbet asistani su an kullanilamiyor.' },
+        { error: t('veli.chatUnavailable') },
         { status: 503 }
       )
     }
@@ -91,11 +103,12 @@ export async function POST(request: Request) {
     const parsed = chatbotBodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
-    const { messages } = parsed.data
+    const { messages, locale } = parsed.data
+    const systemInstruction = SYSTEM_PROMPT + (LANG_INSTRUCTION[locale ?? 'tr'] ?? LANG_INSTRUCTION.tr)
 
     // IP basina rate limit (20 mesaj / 10 dakika)
     const ip = getClientIp(request)
@@ -105,7 +118,7 @@ export async function POST(request: Request) {
         ? Math.ceil((rateLimitResult.blockedUntil.getTime() - Date.now()) / 60000)
         : 10
       return NextResponse.json(
-        { error: `Cok fazla mesaj gonderildi. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('veli.chatTooManyMessages', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -113,7 +126,7 @@ export async function POST(request: Request) {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash-lite',
-      systemInstruction: SYSTEM_PROMPT,
+      systemInstruction,
     })
 
     // Gemini gecmisi: ilk mesaj 'user' olmali. Son mesaj kullanicinin sorusu.
@@ -136,7 +149,7 @@ export async function POST(request: Request) {
 
     if (!reply) {
       return NextResponse.json(
-        { error: 'Su an yanit veremiyorum, lutfen tekrar deneyin.' },
+        { error: t('veli.chatEmptyReply') },
         { status: 502 }
       )
     }
@@ -145,7 +158,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Chatbot hatasi:', error)
     return NextResponse.json(
-      { error: 'Su an yanit veremiyorum, lutfen biraz sonra tekrar deneyin.' },
+      { error: t('veli.chatBusy') },
       { status: 500 }
     )
   }

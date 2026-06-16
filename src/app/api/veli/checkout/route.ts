@@ -9,6 +9,9 @@ import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-
 import { getClientIp, generateOrderAccessToken } from '@/lib/security'
 import { veliCheckoutBodySchema, formatZodError } from '@/lib/validators'
 import { sendOrderConfirmation } from '@/lib/email'
+import { getLocalized } from '@/lib/i18n-content'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 /**
  * Birlesik checkout: siparis + odeme TEK istekte.
@@ -22,12 +25,16 @@ import { sendOrderConfirmation } from '@/lib/email'
  *   KolayBi'ye gonder (best-effort) -> TEK "siparisiniz alindi" maili.
  */
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const body = await request.json().catch(() => null)
+    // Veli'nin UI dili (bildirim e-postasi + order.locale icin). Sema disinda, ham body'den.
+    const reqLocale: 'tr' | 'en' | 'de' | 'ar' =
+      ['tr', 'en', 'de', 'ar'].includes(body?.locale) ? body.locale : 'tr'
     const parsed = veliCheckoutBodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
         ? Math.ceil((rateLimitResult.blockedUntil.getTime() - Date.now()) / 60000)
         : 10
       return NextResponse.json(
-        { error: `Cok fazla deneme. ${waitMinutes} dakika sonra tekrar deneyin.` },
+        { error: t('veli.tooManyAttempts', { minutes: waitMinutes }) },
         { status: 429 }
       )
     }
@@ -78,7 +85,7 @@ export async function POST(request: Request) {
       if (!taxNumber || !isValidTCKimlik(String(taxNumber))) {
         await recordFailedAttempt(rlIdentifier)
         return NextResponse.json(
-          { error: 'Gecerli bir TC Kimlik Numarasi giriniz' },
+          { error: t('veli.invalidTcKimlik') },
           { status: 400 }
         )
       }
@@ -86,7 +93,7 @@ export async function POST(request: Request) {
       if (!companyTitle || !taxNumber || !taxOffice) {
         await recordFailedAttempt(rlIdentifier)
         return NextResponse.json(
-          { error: 'Kurumsal fatura icin Vergi No, Firma Unvani ve Vergi Dairesi zorunludur' },
+          { error: t('veli.corporateInvoiceRequired') },
           { status: 400 }
         )
       }
@@ -102,11 +109,11 @@ export async function POST(request: Request) {
 
     if (!classData || !classData.package) {
       await recordFailedAttempt(rlIdentifier)
-      return NextResponse.json({ error: 'Sinif veya paket bulunamadi' }, { status: 404 })
+      return NextResponse.json({ error: t('veli.classOrPackageNotFound') }, { status: 404 })
     }
     if (!classData.isActive || !classData.school.isActive) {
       await recordFailedAttempt(rlIdentifier)
-      return NextResponse.json({ error: 'Bu sinif veya okul aktif degil' }, { status: 403 })
+      return NextResponse.json({ error: t('veli.classOrSchoolInactive') }, { status: 403 })
     }
 
     // Fiyat hesabi (SUNUCUDA dogrulanir; client'tan gelen tutara guvenilmez)
@@ -120,7 +127,7 @@ export async function POST(request: Request) {
       const chosen = allItems.filter(it => requestedIds.includes(it.id))
       if (chosen.length === 0) {
         await recordFailedAttempt(rlIdentifier)
-        return NextResponse.json({ error: 'En az bir urun secmelisiniz' }, { status: 400 })
+        return NextResponse.json({ error: t('veli.selectAtLeastOneItem') }, { status: 400 })
       }
       unitPrice = chosen.reduce((sum, it) => sum + Number(it.price) * it.quantity, 0)
       orderItemsSnapshot = chosen.map(it => ({ name: it.name, quantity: it.quantity, price: Number(it.price) }))
@@ -179,7 +186,7 @@ export async function POST(request: Request) {
     if (!paymentResult.success) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json(
-        { error: paymentResult.errorMessage || 'Odeme islemi basarisiz' },
+        { error: paymentResult.errorMessage || t('veli.paymentFailed') },
         { status: 400 }
       )
     }
@@ -232,6 +239,7 @@ export async function POST(request: Request) {
               paymentMethod: 'CREDIT_CARD',
               paymentId,
               paidAt: new Date(),
+              locale: reqLocale,
               isCorporateInvoice: isCorporateInvoice || false,
               companyTitle: isCorporateInvoice ? (companyTitle || null) : null,
               taxNumber: taxNumber || null,
@@ -271,7 +279,7 @@ export async function POST(request: Request) {
       // Odeme alindi ama siparis yazilamadi — KRITIK, manuel mudahale icin logla
       console.error('[checkout] Odeme alindi fakat siparis olusturulamadi:', { paymentId, orderNumberForPayment })
       return NextResponse.json(
-        { error: 'Odeme alindi ancak siparis kaydedilemedi. Lutfen destek ile iletisime gecin.' },
+        { error: t('veli.orderSaveFailed') },
         { status: 500 }
       )
     }
@@ -349,9 +357,10 @@ export async function POST(request: Request) {
         orderNumber: order.orderNumber,
         parentName,
         studentName: primaryStudentName,
-        packageName: classData.package.name,
+        packageName: getLocalized(classData.package, 'name', reqLocale),
         totalAmount: effectiveAmount,
         isSchoolDelivery: classData.school.deliveryType === 'SCHOOL_DELIVERY',
+        locale: reqLocale,
       }).catch(err => console.error('[email] sendOrderConfirmation hatasi:', err))
     }
 
@@ -366,7 +375,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Checkout hatasi:', error)
     return NextResponse.json(
-      { error: 'Siparis tamamlanamadi' },
+      { error: t('veli.checkoutFailed') },
       { status: 500 }
     )
   }

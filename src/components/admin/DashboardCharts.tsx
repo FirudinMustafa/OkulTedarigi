@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
@@ -15,7 +16,7 @@ import {
   XCircle, FileText, BarChart3, CreditCard
 } from "lucide-react"
 import { formatCurrency, formatDateShort, formatDateTimeFull } from '@/lib/utils'
-import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/constants'
+import { ORDER_STATUS_COLORS } from '@/lib/constants'
 
 interface DashboardData {
   summary: {
@@ -57,16 +58,12 @@ interface DashboardData {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
 
-const statusLabels = ORDER_STATUS_LABELS
 const statusColors = ORDER_STATUS_COLORS
 
-const monthNames: Record<string, string> = {
-  '01': 'Oca', '02': 'Sub', '03': 'Mar', '04': 'Nis',
-  '05': 'May', '06': 'Haz', '07': 'Tem', '08': 'Agu',
-  '09': 'Eyl', '10': 'Eki', '11': 'Kas', '12': 'Ara'
-}
-
 export default function DashboardCharts() {
+  const t = useTranslations('admin.dashboard')
+  const ts = useTranslations('status')
+  const monthAbbr = (idx: number) => t(`months.${idx}`)
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -108,9 +105,9 @@ export default function DashboardCharts() {
     return (
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Veriler yuklenemedi</p>
+        <p className="text-gray-500">{t('loadError')}</p>
         <Button variant="outline" className="mt-4" onClick={() => { setLoading(true); fetchDashboardData() }}>
-          Tekrar Dene
+          {t('retry')}
         </Button>
       </div>
     )
@@ -118,7 +115,7 @@ export default function DashboardCharts() {
 
   const formatMonth = (monthStr: string) => {
     const [year, month] = monthStr.split('-')
-    return `${monthNames[month]} ${year.slice(2)}`
+    return `${monthAbbr(parseInt(month, 10) - 1)} ${year.slice(2)}`
   }
 
   const isPositiveGrowth = parseFloat(data.summary.revenueGrowth) >= 0
@@ -138,7 +135,7 @@ export default function DashboardCharts() {
             disabled={refreshing}
           >
             <RefreshCw className={`w-4 h-4 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Yenile
+            {t('refresh')}
           </Button>
         </div>
         <div className="flex items-center gap-2">
@@ -146,7 +143,7 @@ export default function DashboardCharts() {
             <Link href="/admin/siparisler">
               <Button size="sm" variant="outline" className="text-yellow-700 border-yellow-300 bg-yellow-50 hover:bg-yellow-100">
                 <Clock className="w-4 h-4 mr-1.5" />
-                {data.summary.pendingOrders} Bekleyen
+                {t('pendingBtn', { n: data.summary.pendingOrders })}
               </Button>
             </Link>
           )}
@@ -154,7 +151,7 @@ export default function DashboardCharts() {
             <Link href="/admin/iptal-talepleri">
               <Button size="sm" variant="outline" className="text-red-700 border-red-300 bg-red-50 hover:bg-red-100">
                 <XCircle className="w-4 h-4 mr-1.5" />
-                {data.summary.cancelRequests} Iptal Talebi
+                {t('cancelRequestBtn', { n: data.summary.cancelRequests })}
               </Button>
             </Link>
           )}
@@ -162,7 +159,7 @@ export default function DashboardCharts() {
             <Link href="/admin/siparisler">
               <Button size="sm" variant="outline" className="text-orange-700 border-orange-300 bg-orange-50 hover:bg-orange-100">
                 <Truck className="w-4 h-4 mr-1.5" />
-                {data.deliveryStats.shipped} Dağıtımda
+                {t('inDeliveryBtn', { n: data.deliveryStats.shipped })}
               </Button>
             </Link>
           )}
@@ -176,13 +173,13 @@ export default function DashboardCharts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Toplam Ciro</p>
+                <p className="text-sm font-medium text-gray-500">{t('totalRevenue')}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
                   {formatCurrency(data.summary.totalRevenue)}
                 </p>
                 <div className={`flex items-center gap-1 mt-2 text-sm ${isPositiveGrowth ? 'text-green-600' : 'text-red-600'}`}>
                   {isPositiveGrowth ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                  <span>{data.summary.revenueGrowth}% bu ay</span>
+                  <span>{t('growthThisMonth', { pct: data.summary.revenueGrowth })}</span>
                 </div>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -197,11 +194,11 @@ export default function DashboardCharts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Aylik Ciro</p>
+                <p className="text-sm font-medium text-gray-500">{t('monthlyRevenue')}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
                   {formatCurrency(data.summary.monthlyRevenue)}
                 </p>
-                <p className="text-sm text-gray-500 mt-2">Bu ay</p>
+                <p className="text-sm text-gray-500 mt-2">{t('thisMonth')}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <CreditCard className="w-6 h-6 text-blue-600" />
@@ -215,11 +212,11 @@ export default function DashboardCharts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Haftalik Ciro</p>
+                <p className="text-sm font-medium text-gray-500">{t('weeklyRevenue')}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
                   {formatCurrency(data.summary.weeklyRevenue)}
                 </p>
-                <p className="text-sm text-gray-500 mt-2">Son 7 gun</p>
+                <p className="text-sm text-gray-500 mt-2">{t('last7Days')}</p>
               </div>
               <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-indigo-600" />
@@ -233,10 +230,10 @@ export default function DashboardCharts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Toplam Siparis</p>
+                <p className="text-sm font-medium text-gray-500">{t('totalOrders')}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{data.summary.totalOrders}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  <span className="text-blue-600 font-medium">{data.summary.todayOrders}</span> bugun
+                  <span className="text-blue-600 font-medium">{data.summary.todayOrders}</span> {t('today')}
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -256,11 +253,11 @@ export default function DashboardCharts() {
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Bekleyen</p>
+                <p className="text-sm text-gray-500">{t('pending')}</p>
                 <p className="text-xl font-bold">{data.summary.pendingOrders}</p>
               </div>
               {data.summary.pendingOrders > 0 && (
-                <Link href="/admin/siparisler" className="text-xs text-blue-600 hover:underline">Git →</Link>
+                <Link href="/admin/siparisler" className="text-xs text-blue-600 hover:underline">{t('go')}</Link>
               )}
             </div>
           </CardContent>
@@ -273,7 +270,7 @@ export default function DashboardCharts() {
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Tamamlanan</p>
+                <p className="text-sm text-gray-500">{t('completed')}</p>
                 <p className="text-xl font-bold">{data.summary.completedOrders}</p>
               </div>
               <span className="text-xs text-gray-500">%{completionRate}</span>
@@ -288,10 +285,10 @@ export default function DashboardCharts() {
                 <School className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Okul / Sinif</p>
+                <p className="text-sm text-gray-500">{t('schoolClass')}</p>
                 <p className="text-xl font-bold">{data.summary.totalSchools} <span className="text-sm font-normal text-gray-400">/ {data.summary.totalClasses}</span></p>
               </div>
-              <Link href="/admin/okullar" className="text-xs text-blue-600 hover:underline">Git →</Link>
+              <Link href="/admin/okullar" className="text-xs text-blue-600 hover:underline">{t('go')}</Link>
             </div>
           </CardContent>
         </Card>
@@ -303,10 +300,10 @@ export default function DashboardCharts() {
                 <Package className="w-5 h-5 text-pink-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Paket</p>
+                <p className="text-sm text-gray-500">{t('package')}</p>
                 <p className="text-xl font-bold">{data.summary.totalPackages}</p>
               </div>
-              <Link href="/admin/paketler" className="text-xs text-blue-600 hover:underline">Git →</Link>
+              <Link href="/admin/paketler" className="text-xs text-blue-600 hover:underline">{t('go')}</Link>
             </div>
           </CardContent>
         </Card>
@@ -317,7 +314,7 @@ export default function DashboardCharts() {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Ciro Grafigi</CardTitle>
+              <CardTitle className="text-lg font-semibold">{t('revenueChart')}</CardTitle>
               <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
                 <button
                   onClick={() => setActiveTab('daily')}
@@ -325,7 +322,7 @@ export default function DashboardCharts() {
                     activeTab === 'daily' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Gunluk
+                  {t('daily')}
                 </button>
                 <button
                   onClick={() => setActiveTab('monthly')}
@@ -333,7 +330,7 @@ export default function DashboardCharts() {
                     activeTab === 'monthly' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Aylik
+                  {t('monthly')}
                 </button>
               </div>
             </div>
@@ -364,7 +361,7 @@ export default function DashboardCharts() {
                     fontSize={12}
                   />
                   <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), 'Ciro']}
+                    formatter={(value: number) => [formatCurrency(value), t('revenueLabel')]}
                     labelFormatter={activeTab === 'daily' ? (v) => formatDateShort(v) : formatMonth}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                   />
@@ -384,7 +381,7 @@ export default function DashboardCharts() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Siparis Sayisi</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('orderCount')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -402,7 +399,7 @@ export default function DashboardCharts() {
                   />
                   <YAxis stroke="#9CA3AF" fontSize={12} />
                   <Tooltip
-                    formatter={(value: number) => [value, 'Siparis']}
+                    formatter={(value: number) => [value, t('orderLabel')]}
                     labelFormatter={activeTab === 'daily' ? (v) => formatDateShort(v) : formatMonth}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                   />
@@ -418,7 +415,7 @@ export default function DashboardCharts() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Siparis Durumlari</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('orderStatuses')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -439,7 +436,7 @@ export default function DashboardCharts() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number, name: string) => [value, statusLabels[name] || name]}
+                    formatter={(value: number, name: string) => [value, ts(name)]}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                   />
                 </PieChart>
@@ -452,7 +449,7 @@ export default function DashboardCharts() {
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   />
-                  <span className="text-gray-600">{statusLabels[item.status]} ({item.count})</span>
+                  <span className="text-gray-600">{ts(item.status)} ({item.count})</span>
                 </div>
               ))}
             </div>
@@ -462,8 +459,8 @@ export default function DashboardCharts() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Okul Bazli Performans</CardTitle>
-              <Link href="/admin/raporlar" className="text-xs text-blue-600 hover:underline">Detayli Rapor →</Link>
+              <CardTitle className="text-lg font-semibold">{t('schoolPerformance')}</CardTitle>
+              <Link href="/admin/raporlar" className="text-xs text-blue-600 hover:underline">{t('detailedReport')}</Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -487,7 +484,7 @@ export default function DashboardCharts() {
                   <Tooltip
                     formatter={(value: number, name: string) => [
                       name === 'revenue' ? formatCurrency(value) : value,
-                      name === 'revenue' ? 'Ciro' : 'Siparis'
+                      name === 'revenue' ? t('revenueLabel') : t('orderLabel')
                     ]}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                   />
@@ -503,9 +500,9 @@ export default function DashboardCharts() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Son Siparisler</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('recentOrders')}</CardTitle>
             <Link href="/admin/siparisler" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              Tumu →
+              {t('viewAll')}
             </Link>
           </div>
         </CardHeader>
@@ -514,12 +511,12 @@ export default function DashboardCharts() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Siparis No</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ogrenci</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Okul / Sinif</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Tutar</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Durum</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Tarih</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colOrderNo')}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colStudent')}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colSchoolClass')}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colAmount')}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colStatus')}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('colDate')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -543,7 +540,7 @@ export default function DashboardCharts() {
                     <td className="py-3 px-4 font-medium">{formatCurrency(order.totalAmount)}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
-                        {statusLabels[order.status]}
+                        {ts(order.status)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-500">
@@ -566,9 +563,9 @@ export default function DashboardCharts() {
                 <Truck className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-purple-700 font-medium">Dağıtımda</p>
+                <p className="text-sm text-purple-700 font-medium">{t('inDelivery')}</p>
                 <p className="text-3xl font-bold text-purple-900">{data.deliveryStats.shipped}</p>
-                <p className="text-xs text-purple-600">siparis dagitimda</p>
+                <p className="text-xs text-purple-600">{t('ordersInDelivery')}</p>
               </div>
             </div>
           </CardContent>
@@ -581,9 +578,9 @@ export default function DashboardCharts() {
                 <School className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-rose-700 font-medium">Teslim Edilemeyen</p>
+                <p className="text-sm text-rose-700 font-medium">{t('undelivered')}</p>
                 <p className="text-3xl font-bold text-rose-900">{data.deliveryStats.undelivered}</p>
-                <p className="text-xs text-rose-600">tekrar dagitima cikacak</p>
+                <p className="text-xs text-rose-600">{t('willBeRedelivered')}</p>
               </div>
             </div>
           </CardContent>
@@ -596,9 +593,9 @@ export default function DashboardCharts() {
                 <CheckCircle className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-emerald-700 font-medium">Tamamlandi</p>
+                <p className="text-sm text-emerald-700 font-medium">{t('completedDelivery')}</p>
                 <p className="text-3xl font-bold text-emerald-900">{data.deliveryStats.completed}</p>
-                <p className="text-xs text-emerald-600">siparis tamamlandi</p>
+                <p className="text-xs text-emerald-600">{t('ordersCompleted')}</p>
               </div>
             </div>
           </CardContent>

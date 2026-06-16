@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import {
   WhatsappLogo,
   EnvelopeSimple,
@@ -12,6 +13,7 @@ import {
 // Apple-style footer: açık gri panel (apple-panel), sade hairline borders,
 // tutarlı Phosphor ikon seti. Slate-900 koyu arka plan kaldırıldı.
 export default function Footer() {
+  const t = useTranslations('landing.footer')
   return (
     <footer className="bg-white border-t border-apple-border/60">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20">
@@ -35,7 +37,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-[15px] text-apple-gray max-w-md leading-relaxed mb-8">
-              Okulların belirlediği, velilerin güvenle kullandığı kurumsal okul tedarik sistemi.
+              {t('tagline')}
             </p>
             <div className="flex gap-3">
               <a
@@ -58,7 +60,7 @@ export default function Footer() {
           {/* Nav links */}
           <div>
             <h4 className="text-[13px] font-semibold text-apple-ink mb-6 tracking-wide uppercase">
-              Bağlantılar
+              {t('linksHeading')}
             </h4>
             <ul className="space-y-3 text-[14px]">
               <li>
@@ -66,7 +68,7 @@ export default function Footer() {
                   href="/#nasil-calisir"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  Nasıl Çalışır
+                  {t('links.0')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -78,7 +80,7 @@ export default function Footer() {
                   href="/#sss"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  S.S.S
+                  {t('links.1')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -90,7 +92,7 @@ export default function Footer() {
                   href="/siparis"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  Sipariş Ver
+                  {t('links.2')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -103,13 +105,13 @@ export default function Footer() {
           {/* Contact */}
           <div>
             <h4 className="text-[13px] font-semibold text-apple-ink mb-6 tracking-wide uppercase">
-              İletişim
+              {t('contactHeading')}
             </h4>
             <ul className="space-y-4 text-[14px]">
               <li>
                 <span className="inline-flex items-center gap-2.5 text-apple-gray">
                   <WhatsappLogo weight="regular" className="w-4 h-4" />
-                  WhatsApp Hattımızdan iletişim kurabilirsiniz
+                  {t('whatsapp')}
                 </span>
               </li>
               <li>
@@ -127,7 +129,7 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="text-[13px] font-semibold text-apple-ink mb-6 tracking-wide uppercase">
-              Hızlı Erişim
+              {t('quickHeading')}
             </h4>
             <ul className="space-y-3 text-[14px]">
               <li>
@@ -135,7 +137,7 @@ export default function Footer() {
                   href="/siparis-takip"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  Sipariş Takip
+                  {t('quick.0')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -147,7 +149,7 @@ export default function Footer() {
                   href="/kvkk"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  KVKK Aydınlatma
+                  {t('quick.1')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -159,7 +161,7 @@ export default function Footer() {
                   href="/mesafeli-satis"
                   className="group inline-flex items-center gap-1 text-apple-gray hover:text-apple-ink transition-colors"
                 >
-                  Mesafeli Satış
+                  {t('quick.2')}
                   <ArrowRight
                     weight="bold"
                     className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
@@ -172,7 +174,7 @@ export default function Footer() {
                   className="inline-flex items-center gap-1.5 text-apple-blue hover:underline underline-offset-4 font-medium"
                 >
                   <Storefront weight="regular" className="w-4 h-4" />
-                  Okul Paneli
+                  {t('schoolPanel')}
                 </Link>
               </li>
             </ul>
@@ -182,11 +184,11 @@ export default function Footer() {
         {/* Bottom */}
         <div className="pt-8 border-t border-apple-border/60 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[12px] text-apple-gray">
-            © 2026 okultedarigim.com — Tüm hakları saklıdır.
+            {t('copyright')}
           </p>
           <div className="inline-flex items-center gap-1.5 text-[12px] text-apple-gray">
             <ShieldCheck weight="regular" className="w-4 h-4" />
-            3D Secure • SSL şifreli ödeme
+            {t('securePayment')}
           </div>
         </div>
       </div>

@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -52,7 +55,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Loglar listelenemedi:', error)
     return NextResponse.json(
-      { error: 'Loglar yuklenemedi' },
+      { error: t('adminMisc.logsLoadFailed') },
       { status: 500 }
     )
   }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import FadeIn from '@/components/motion/FadeIn'
 
 // Önceki işbirliklerinde yer alan yayınevleri — yatay marquee olarak akıyor.
@@ -14,12 +15,13 @@ const BRANDS = [
 ] as const
 
 export default function BrandScroll() {
+  const t = useTranslations('landing.brands')
   return (
     <section className="py-20 bg-white border-y border-apple-border/60 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <FadeIn>
           <h2 className="text-center text-2xl sm:text-3xl font-semibold tracking-tight text-apple-ink mb-12">
-            İş birliklerimiz
+            {t('title')}
           </h2>
         </FadeIn>
 

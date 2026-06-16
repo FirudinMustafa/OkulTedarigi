@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import {
   LayoutDashboard, School, Users, Package, ShoppingCart,
   DollarSign, XCircle, BarChart3, Tag,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -19,18 +20,19 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/okullar", label: "Okullar", icon: School },
-  { href: "/admin/siniflar", label: "Siniflar", icon: Users },
-  { href: "/admin/paketler", label: "Paketler", icon: Package },
-  { href: "/admin/siparisler", label: "Siparisler", icon: ShoppingCart },
-  { href: "/admin/hakedisler", label: "Hakedisler", icon: DollarSign },
-  { href: "/admin/indirimler", label: "Indirimler", icon: Tag },
-  { href: "/admin/iptal-talepleri", label: "Iptal Talepleri", icon: XCircle },
-  { href: "/admin/raporlar", label: "Raporlar", icon: BarChart3 },
+  { href: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/admin/okullar", labelKey: "schools", icon: School },
+  { href: "/admin/siniflar", labelKey: "classes", icon: Users },
+  { href: "/admin/paketler", labelKey: "packages", icon: Package },
+  { href: "/admin/siparisler", labelKey: "orders", icon: ShoppingCart },
+  { href: "/admin/hakedisler", labelKey: "commissions", icon: DollarSign },
+  { href: "/admin/indirimler", labelKey: "discounts", icon: Tag },
+  { href: "/admin/iptal-talepleri", labelKey: "cancelRequests", icon: XCircle },
+  { href: "/admin/raporlar", labelKey: "reports", icon: BarChart3 },
 ]
 
 export default function AdminSidebar({ user }: SidebarProps) {
+  const t = useTranslations("admin.sidebar")
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -96,7 +98,7 @@ export default function AdminSidebar({ user }: SidebarProps) {
               onClick={() => setMobileOpen(false)}
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              {t(item.labelKey)}
               {item.href === "/admin/siparisler" && newOrderCount > 0 && (
                 <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
                   {newOrderCount}
@@ -120,6 +122,7 @@ export default function AdminSidebar({ user }: SidebarProps) {
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
         </div>
+        <LanguageSwitcher className="mb-3 w-full" align="start" />
         <Button
           variant="outline"
           size="sm"
@@ -127,7 +130,7 @@ export default function AdminSidebar({ user }: SidebarProps) {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Cikis Yap
+          {t("logout")}
         </Button>
       </div>
     </>

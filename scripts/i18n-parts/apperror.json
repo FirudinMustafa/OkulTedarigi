@@ -1,0 +1,58 @@
+{
+  "tr": { "appError": {
+    "error": {
+      "title": "Bir Hata Oluştu",
+      "message": "Beklenmeyen bir hata meydana geldi. Lütfen tekrar deneyin.",
+      "retry": "Tekrar Dene",
+      "home": "Ana Sayfaya Dön"
+    },
+    "notFound": {
+      "title": "Sayfa Bulunamadı",
+      "message": "Aradığınız sayfa mevcut değil veya kaldırılmış olabilir.",
+      "home": "Ana Sayfaya Dön",
+      "order": "Sipariş Ver"
+    }
+  } },
+  "en": { "appError": {
+    "error": {
+      "title": "An Error Occurred",
+      "message": "An unexpected error occurred. Please try again.",
+      "retry": "Try Again",
+      "home": "Back to Home"
+    },
+    "notFound": {
+      "title": "Page Not Found",
+      "message": "The page you are looking for does not exist or may have been removed.",
+      "home": "Back to Home",
+      "order": "Place Order"
+    }
+  } },
+  "de": { "appError": {
+    "error": {
+      "title": "Ein Fehler ist aufgetreten",
+      "message": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen",
+      "home": "Zurück zur Startseite"
+    },
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "message": "Die gesuchte Seite existiert nicht oder wurde möglicherweise entfernt.",
+      "home": "Zurück zur Startseite",
+      "order": "Bestellen"
+    }
+  } },
+  "ar": { "appError": {
+    "error": {
+      "title": "حدث خطأ",
+      "message": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+      "retry": "حاول مرة أخرى",
+      "home": "العودة إلى الصفحة الرئيسية"
+    },
+    "notFound": {
+      "title": "الصفحة غير موجودة",
+      "message": "الصفحة التي تبحث عنها غير موجودة أو ربما تمت إزالتها.",
+      "home": "العودة إلى الصفحة الرئيسية",
+      "order": "اطلب الآن"
+    }
+  } }
+}

@@ -5,36 +5,39 @@ import { logAction } from '@/lib/logger'
 import { processRefund } from '@/lib/iyzico'
 import { sendCancellationConfirmation, sendCancellationRejected } from '@/lib/email'
 import { CANCELLABLE_STATUSES } from '@/lib/constants'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
     const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.invalidRequest') }, { status: 400 })
     }
 
     const { status, adminNote } = body
     if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
-      return NextResponse.json({ error: 'Gecersiz durum' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.invalidStatus') }, { status: 400 })
     }
     if (adminNote != null && (typeof adminNote !== 'string' || adminNote.length > 2000)) {
-      return NextResponse.json({ error: 'Admin notu max 2000 karakter olabilir' }, { status: 400 })
+      return NextResponse.json({ error: t('adminMisc.adminNoteTooLong') }, { status: 400 })
     }
     // Reddetmede neden zorunlu — veli niye reddedildigini bilsin (en az 5 karakter).
     if (status === 'REJECTED') {
       const trimmedNote = typeof adminNote === 'string' ? adminNote.trim() : ''
       if (trimmedNote.length < 5) {
         return NextResponse.json(
-          { error: 'Iptal talebini reddederken neden belirtilmesi zorunludur (en az 5 karakter)' },
+          { error: t('adminMisc.rejectReasonRequired') },
           { status: 400 }
         )
       }
@@ -50,18 +53,18 @@ export async function POST(
       })
 
       if (!cancelRequest) {
-        return { error: 'Iptal talebi bulunamadi', status: 404 as const }
+        return { error: t('adminMisc.cancelRequestNotFound'), status: 404 as const }
       }
 
       // Atomic status check: sadece PENDING -> APPROVED/REJECTED
       if (cancelRequest.status !== 'PENDING') {
-        return { error: `Bu talep zaten ${cancelRequest.status} durumunda`, status: 400 as const }
+        return { error: t('adminMisc.requestAlreadyProcessed', { status: cancelRequest.status }), status: 400 as const }
       }
 
       // APPROVED durumunda siparis iptal edilebilir mi?
       if (status === 'APPROVED' && !CANCELLABLE_STATUSES.includes(cancelRequest.order.status)) {
         return {
-          error: `Bu siparis artik iptal edilemez (mevcut durum: ${cancelRequest.order.status})`,
+          error: t('adminMisc.orderNotCancellable', { status: cancelRequest.order.status }),
           status: 400 as const
         }
       }
@@ -79,7 +82,7 @@ export async function POST(
 
       if (updateResult.count === 0) {
         // Bir baska transaction ayni anda process etti
-        return { error: 'Bu talep su anda baska bir admin tarafindan isleniyor', status: 409 as const }
+        return { error: t('adminMisc.requestBeingProcessed'), status: 409 as const }
       }
 
       const updatedRequest = await tx.cancelRequest.findUnique({ where: { id } })
@@ -161,14 +164,16 @@ export async function POST(
           email: orderEmail,
           orderNumber: result.order.orderNumber,
           parentName: result.order.parentName,
-          refundAmount: result.order.paidAt ? Number(result.order.totalAmount) : undefined
+          refundAmount: result.order.paidAt ? Number(result.order.totalAmount) : undefined,
+          locale: (result.order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined)
         }).catch(err => console.error('[email] sendCancellationConfirmation hatasi:', err))
       } else if (status === 'REJECTED') {
         sendCancellationRejected({
           email: orderEmail,
           orderNumber: result.order.orderNumber,
           parentName: result.order.parentName,
-          reason: adminNote?.trim() || 'Reddedilme nedeni belirtilmedi.'
+          reason: adminNote?.trim() || 'Reddedilme nedeni belirtilmedi.',
+          locale: (result.order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined)
         }).catch(err => console.error('[email] sendCancellationRejected hatasi:', err))
       }
     }
@@ -177,7 +182,7 @@ export async function POST(
   } catch (error) {
     console.error('Iptal talebi islenemedi:', error)
     return NextResponse.json(
-      { error: 'Islem yapilamadi' },
+      { error: t('adminMisc.processFailed') },
       { status: 500 }
     )
   }

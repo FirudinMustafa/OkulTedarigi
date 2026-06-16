@@ -1,19 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { X, PaperPlaneRight, Robot } from '@phosphor-icons/react'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
-const WELCOME: Msg = {
-  role: 'assistant',
-  content:
-    'Merhaba! 👋 OkulTedarigim asistanıyım. Sipariş verme, şifre, teslimat, ödeme veya iade gibi konularda size yardımcı olabilirim. Nasıl yardımcı olabilirim?',
-}
-
 // Yanıt içindeki /siparis, /siparis-takip gibi iç linkleri ve WhatsApp (wa.me) linkini
 // tıklanabilir yapar.
-function renderContent(text: string) {
+function renderContent(text: string, whatsappLabel: string) {
   const parts = text.split(/(\/(?:siparis-takip|siparis|kvkk|mesafeli-satis)\b|#sss|https?:\/\/wa\.me\/\d+)/g)
   return parts.map((part, i) => {
     if (/^https?:\/\/wa\.me\/\d+$/.test(part)) {
@@ -25,7 +20,7 @@ function renderContent(text: string) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 font-semibold text-[#10b981] underline underline-offset-2 hover:opacity-80"
         >
-          WhatsApp Destek Hattı
+          {whatsappLabel}
         </a>
       )
     }
@@ -46,6 +41,12 @@ function renderContent(text: string) {
 }
 
 export default function ChatWidget() {
+  const t = useTranslations('landing.chat')
+  const locale = useLocale()
+  const WELCOME = useMemo<Msg>(
+    () => ({ role: 'assistant', content: t('welcome') }),
+    [t]
+  )
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([WELCOME])
   const [input, setInput] = useState('')
@@ -83,7 +84,7 @@ export default function ChatWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Welcome mesajini gondermeye gerek yok (statik karsilama).
-        body: JSON.stringify({ messages: next.filter((m) => m !== WELCOME) }),
+        body: JSON.stringify({ messages: next.filter((m) => m !== WELCOME), locale }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -91,9 +92,7 @@ export default function ChatWidget() {
           ...m,
           {
             role: 'assistant',
-            content:
-              data?.error ||
-              'Şu an yanıt veremiyorum, lütfen biraz sonra tekrar deneyin.',
+            content: data?.error || t('errorBusy'),
           },
         ])
       } else {
@@ -105,7 +104,7 @@ export default function ChatWidget() {
         ...m,
         {
           role: 'assistant',
-          content: 'Bağlantı hatası oluştu. Lütfen tekrar deneyin.',
+          content: t('errorConnection'),
         },
       ])
     } finally {
@@ -121,7 +120,7 @@ export default function ChatWidget() {
           <div className="relative bg-white border border-apple-border/60 rounded-2xl rounded-br-sm shadow-[0_12px_40px_-12px_rgba(0,0,0,0.25)] px-4 py-3 pr-7">
             <button
               type="button"
-              aria-label="Kapat"
+              aria-label={t('close')}
               onClick={() => { setNudge(false); setNudgeDismissed(true) }}
               className="absolute top-1.5 right-1.5 text-apple-gray hover:text-apple-ink"
             >
@@ -134,7 +133,7 @@ export default function ChatWidget() {
             >
               <Robot weight="fill" className="w-5 h-5 text-[#2563eb] shrink-0 mt-0.5" />
               <span className="text-[13px] text-apple-ink leading-snug">
-                Bir yardıma ihtiyacınız var mı? 👋
+                {t('nudge')}
               </span>
             </button>
           </div>
@@ -144,7 +143,7 @@ export default function ChatWidget() {
       {/* Yüzen buton (chatbot ikonu) */}
       <button
         type="button"
-        aria-label={open ? 'Sohbeti kapat' : 'Yardım asistanını aç'}
+        aria-label={open ? t('closeChat') : t('openChat')}
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-5 right-5 z-[60] flex items-center justify-center w-14 h-14 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-[0_8px_30px_-6px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
       >
@@ -175,10 +174,10 @@ export default function ChatWidget() {
             </div>
             <div>
               <p className="text-[14px] font-semibold text-apple-ink leading-tight">
-                Yardım Asistanı
+                {t('headerTitle')}
               </p>
               <p className="text-[12px] text-apple-gray leading-tight">
-                Genellikle birkaç saniyede yanıtlar
+                {t('headerSubtitle')}
               </p>
             </div>
           </div>
@@ -197,7 +196,7 @@ export default function ChatWidget() {
                       : 'bg-apple-panel text-apple-ink rounded-bl-md'
                   }`}
                 >
-                  {m.role === 'assistant' ? renderContent(m.content) : m.content}
+                  {m.role === 'assistant' ? renderContent(m.content, t('whatsappLinkLabel')) : m.content}
                 </div>
               </div>
             ))}
@@ -227,14 +226,14 @@ export default function ChatWidget() {
                   }
                 }}
                 rows={1}
-                placeholder="Sorunuzu yazın..."
+                placeholder={t('placeholder')}
                 className="flex-1 resize-none max-h-24 px-3.5 py-2.5 rounded-2xl bg-apple-panel text-[13.5px] text-apple-ink placeholder:text-apple-gray focus:outline-none focus:ring-2 focus:ring-[#2563eb]/40"
               />
               <button
                 type="button"
                 onClick={send}
                 disabled={loading || !input.trim()}
-                aria-label="Gönder"
+                aria-label={t('send')}
                 className="flex items-center justify-center w-10 h-10 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <PaperPlaneRight weight="fill" className="w-4 h-4" />

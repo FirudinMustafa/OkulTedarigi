@@ -1,20 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { List, X, ArrowRight } from '@phosphor-icons/react'
+import { Link } from '@/i18n/navigation'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export default function Header() {
+  const t = useTranslations('landing.nav')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // href '#...' => ayni sayfa ankuru (<a>), '/...' => locale-aware Link
   const navLinks = [
-    { label: 'Nasıl Çalışır', href: '#nasil-calisir' },
-    { label: 'S.S.S', href: '#sss' },
-    { label: 'Sipariş Takibi', href: '/siparis-takip' },
+    { label: t('howItWorks'), href: '#nasil-calisir' },
+    { label: t('faq'), href: '#sss' },
+    { label: t('orderTracking'), href: '/siparis-takip' },
   ]
 
   // İki ayrı floating pill header: solda logo + nav linkleri,
-  // sağda daha küçük Okul Paneli + Sipariş Ver pill'i. Her ikisi de
+  // sağda daha küçük dil seçici + Sipariş Ver pill'i. Her ikisi de
   // havada asılı gibi — rounded-full, backdrop-blur, hairline border, gölge.
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
@@ -27,7 +31,7 @@ export default function Header() {
             <Link
               href="/"
               className="flex items-center gap-2 shrink-0"
-              aria-label="okultedarigim.com ana sayfa"
+              aria-label={t('logoAria')}
             >
               <div className="relative w-7 h-7 flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -47,27 +51,38 @@ export default function Header() {
 
             {/* Desktop Nav — logonun hemen yanında */}
             <nav className="hidden lg:flex items-center gap-7">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-normal text-apple-ink/80 hover:text-apple-ink transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) =>
+                link.href.startsWith('#') ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="text-[13px] font-normal text-apple-ink/80 hover:text-apple-ink transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-[13px] font-normal text-apple-ink/80 hover:text-apple-ink transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
             </nav>
           </div>
 
-          {/* Sağ pill — Sipariş Ver */}
+          {/* Sağ pill — dil seçici + Sipariş Ver */}
           <div
-            className="pointer-events-auto hidden sm:flex items-center gap-2 h-12 pl-4 pr-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
+            className="pointer-events-auto hidden sm:flex items-center gap-2 h-12 pl-2 pr-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
           >
+            <LanguageSwitcher />
             <Link
               href="/siparis"
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[13px] font-medium transition-colors"
             >
-              Sipariş Ver
+              {t('order')}
               <ArrowRight weight="bold" className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -75,7 +90,7 @@ export default function Header() {
           {/* Mobile toggle — kendi küçük pill'inde */}
           <button
             type="button"
-            aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+            aria-label={mobileMenuOpen ? t('menuClose') : t('menuOpen')}
             onClick={() => setMobileMenuOpen((v) => !v)}
             className="pointer-events-auto sm:hidden flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl text-apple-ink hover:text-apple-blue transition-colors shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
           >
@@ -95,23 +110,35 @@ export default function Header() {
         >
           <div className="bg-white/90 backdrop-blur-xl border border-apple-border/60 rounded-3xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)] p-4">
             <nav className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-3 text-[15px] font-medium text-apple-ink hover:text-apple-blue transition-colors rounded-xl"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="pt-3">
+              {navLinks.map((link) =>
+                link.href.startsWith('#') ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-3 py-3 text-[15px] font-medium text-apple-ink hover:text-apple-blue transition-colors rounded-xl"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-3 py-3 text-[15px] font-medium text-apple-ink hover:text-apple-blue transition-colors rounded-xl"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
+              <div className="pt-3 flex items-center gap-2">
+                <LanguageSwitcher align="start" />
                 <Link
                   href="/siparis"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[14px] font-medium transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 h-11 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[14px] font-medium transition-colors"
                 >
-                  Sipariş Ver
+                  {t('order')}
                   <ArrowRight weight="bold" className="w-4 h-4" />
                 </Link>
               </div>

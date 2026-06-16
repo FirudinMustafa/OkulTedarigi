@@ -1,0 +1,962 @@
+{
+  "tr": {
+    "legal": {
+      "header": {
+        "nav": {
+          "howItWorks": "Nasıl Çalışır",
+          "faq": "S.S.S",
+          "orderTracking": "Sipariş Takibi"
+        },
+        "backHome": "Ana Sayfaya Dön"
+      },
+      "kvkk": {
+        "eyebrow": "Yasal",
+        "title": "KVKK aydınlatma metni",
+        "intro": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin işlenme amaçları, hukuki sebepleri, aktarımı, saklama süreleri ve KVKK'dan doğan haklarınız hakkında bilgi vermek amacıyla bu metin hazırlanmıştır.",
+        "s1": {
+          "title": "1. Veri Sorumlusu",
+          "p0": "Veri sorumlusu sıfatıyla; kişisel verileriniz, aşağıda kimliği yer alan tüzel/şahıs tarafından işlenmektedir.",
+          "box": {
+            "legalName": "Ticaret Unvanı",
+            "brand": "Marka",
+            "tax": "Vergi Dairesi / No",
+            "mersis": "MERSİS No",
+            "address": "Adres",
+            "email": "E-posta",
+            "phone": "Telefon",
+            "verbis": "VERBİS Kayıt No"
+          }
+        },
+        "s2": {
+          "title": "2. İşlenen Kişisel Veriler",
+          "p0": "Sipariş süreci kapsamında aşağıdaki kişisel veri kategorileri işlenmektedir:",
+          "items": {
+            "0": "Kimlik verileri: ad, soyad, T.C. kimlik numarası (yalnızca e-Arşiv/e-Fatura kesimi için zorunludur)",
+            "1": "İletişim verileri: telefon numarası, e-posta adresi, teslimat ve fatura adresi",
+            "2": "Öğrenci verileri (çocuk verisi): öğrencinin adı, soyadı, okul ve sınıf bilgisi",
+            "3": "Sipariş verileri: sipariş numarası, sipariş içeriği, tutar, tarih, sipariş notu",
+            "4": "Mali veriler: vergi numarası, vergi dairesi (kurumsal fatura tercihinde), fatura no",
+            "5": "İşlem güvenliği verileri: IP adresi, oturum bilgileri, başarısız giriş kayıtları",
+            "6": "Ödeme verileri: yalnızca işlem referans numarası ve tutar saklanır; kart numarası, CVV ve son kullanma tarihi sistemimizde saklanmaz, lisanslı ödeme kuruluşuna (PCI-DSS uyumlu) doğrudan iletilir."
+          }
+        },
+        "s3": {
+          "title": "3. Çocuk Kişisel Verileri Hakkında Özel Bildirim",
+          "p0": "Sipariş süreci sırasında 18 yaş altındaki <strong>öğrencilere ait kişisel veriler</strong> (ad, soyad, sınıf, okul) işlenmektedir. Bu veriler yalnızca öğrencinin <strong>velisi/yasal temsilcisi</strong> tarafından, öğrenciye okul tedarik paketinin teslim edilmesi amacıyla, veli sıfatıyla verilen onay çerçevesinde işlenir.",
+          "p1": "Sipariş formunu dolduran kişi, öğrencinin velisi/yasal temsilcisi olduğunu ve KVKK kapsamında öğrenciye ait kişisel verilerin işlenmesi için yetkili olduğunu beyan eder. Çocuğun verileri yalnızca hizmetin ifası için gereken süre boyunca işlenir ve pazarlama amacıyla kullanılmaz."
+        },
+        "s4": {
+          "title": "4. Kişisel Verilerin İşlenme Amaçları",
+          "items": {
+            "0": "Sipariş ve ödeme süreçlerinin yürütülmesi",
+            "1": "Ürün/paket teslimat sürecinin planlanması ve gerçekleştirilmesi",
+            "2": "e-Arşiv ve e-Fatura kesimi ile yasal fatura yükümlülüklerinin yerine getirilmesi",
+            "3": "Müşteri ilişkileri yönetimi, sipariş takibi, iptal ve iade taleplerinin değerlendirilmesi",
+            "4": "İletişim faaliyetlerinin yürütülmesi (sipariş bildirimi, kargo bildirimi)",
+            "5": "Bilgi güvenliği süreçlerinin yürütülmesi (oturum, brute-force koruması, denetim izi)",
+            "6": "6502, 6698, 213 sayılı kanunlar ve VUK gibi mevzuat kapsamındaki yükümlülüklerin yerine getirilmesi",
+            "7": "Tüketici şikâyetlerinin ve uyuşmazlıkların değerlendirilmesi"
+          }
+        },
+        "s5": {
+          "title": "5. İşlemenin Hukuki Sebepleri (KVKK m.5)",
+          "items": {
+            "0": "Bir sözleşmenin kurulması veya ifasıyla doğrudan doğruya ilgili olması (m. 5/2-c) — sipariş ve teslimat süreci",
+            "1": "Veri sorumlusunun hukuki yükümlülüğünü yerine getirebilmesi için zorunlu olması (m. 5/2-ç) — fatura kesimi, mali kayıt",
+            "2": "İlgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla, veri sorumlusunun meşru menfaatleri için zorunlu olması (m. 5/2-f) — bilgi güvenliği, dolandırıcılık önleme",
+            "3": "Açık rıza (m. 5/1) — pazarlama amaçlı bildirimler ve veli olarak çocuğun verilerinin işlenmesi onayı"
+          }
+        },
+        "s6": {
+          "title": "6. Kişisel Verilerin Aktarılması",
+          "p0": "Kişisel verileriniz, yalnızca aşağıdaki amaçlarla ve sınırlı şekilde, KVKK m. 8 ve m. 9 kapsamında aktarılabilir:",
+          "items": {
+            "0": "Ödeme hizmet sağlayıcısı (Iyzico Ödeme Hizmetleri A.Ş.) — ödeme işleminin gerçekleştirilmesi amacıyla",
+            "1": "e-Fatura entegratörü (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — fatura kesimi amacıyla",
+            "2": "Kargo şirketi (Aras Kargo) — kargo teslimatı için yalnızca alıcı, telefon, adres bilgileri",
+            "3": "E-posta servisi (Resend) ve SMS servisi (Twilio) — bildirim iletimi için",
+            "4": "Yasal merci ve kamu kurumları — yasal yükümlülükler ya da mahkeme/savcılık talebi halinde",
+            "5": "Bulut altyapı sağlayıcıları (Vercel Inc., TiDB Cloud / PingCAP Inc.) — veri saklama ve sunum altyapısı; sunucular Avrupa Birliği (Frankfurt) bölgesinde konumlanmıştır."
+          },
+          "p1": "Yurt dışına aktarım, ilgili sağlayıcının KVKK m. 9 kapsamında sunduğu güvence çerçevesinde gerçekleşir. Yurt dışına aktarımın açık rıza ile gerçekleştiği durumlarda ayrıca onay alınır."
+        },
+        "s7": {
+          "title": "7. Saklama Süreleri",
+          "items": {
+            "0": "Sipariş ve fatura verileri: VUK ve TTK gereği 10 (on) yıl",
+            "1": "KVKK aydınlatma kayıtları ve denetim izi (system_logs): 5 (beş) yıl",
+            "2": "İletişim ve pazarlama amaçlı veriler: açık rızanın geri çekilmesine kadar veya en fazla 3 yıl",
+            "3": "Başarısız giriş ve oturum güvenlik kayıtları: en fazla 1 yıl",
+            "4": "İptal/iade kayıtları: kayıt tarihinden itibaren 10 (on) yıl"
+          },
+          "p0": "Saklama süresi sona eren veriler ilk imha periyodunda silinir, yok edilir veya anonim hale getirilir."
+        },
+        "s8": {
+          "title": "8. Kişisel Veri Sahibinin Hakları (KVKK m. 11)",
+          "p0": "Veri sahibi olarak, KVKK'nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:",
+          "items": {
+            "0": "Kişisel verilerinizin işlenip işlenmediğini öğrenme",
+            "1": "İşlenmişse buna ilişkin bilgi talep etme",
+            "2": "İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme",
+            "3": "Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme",
+            "4": "Eksik veya yanlış işlenmiş olması hâlinde düzeltilmesini isteme",
+            "5": "KVKK'da öngörülen şartlar çerçevesinde silinmesini veya yok edilmesini isteme",
+            "6": "Düzeltme, silme ve yok etme işlemlerinin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme",
+            "7": "Otomatik sistemler ile analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme",
+            "8": "Hukuka aykırı işleme nedeniyle zarara uğramanız hâlinde zararın giderilmesini talep etme"
+          }
+        },
+        "s9": {
+          "title": "9. Başvuru Yöntemi",
+          "p0": "KVKK m. 13 uyarınca yukarıdaki haklarınıza ilişkin taleplerinizi, kimlik tespiti yapılabilecek bir şekilde aşağıdaki yollardan biriyle iletebilirsiniz:",
+          "items": {
+            "0": "E-posta: {dpoEmail} (kayıtlı e-posta adresinizden)",
+            "1": "Yazılı başvuru: {address}",
+            "2": "Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ kapsamında"
+          },
+          "p1": "Başvurunuz; KVKK m. 13/2 uyarınca en geç 30 (otuz) gün içinde sonuçlandırılır. Başvurunuza verilen yanıttan tatmin olmamanız hâlinde KVKK Kuruluna şikayet hakkınız bulunmaktadır (kvkk.gov.tr)."
+        },
+        "s10": {
+          "title": "10. Veri Güvenliği",
+          "p0": "Kişisel verilerinizin hukuka aykırı işlenmesini, erişilmesini ve kaybolmasını önlemek için aşağıdaki teknik ve idari tedbirler uygulanmaktadır:",
+          "items": {
+            "0": "TLS 1.2+ şifreli iletişim, HSTS politikası",
+            "1": "Şifrelerin tek yönlü kriptografik özetleme (bcrypt) ile saklanması",
+            "2": "Yetkili erişim kontrolü ve oturum güvenliği (httpOnly, secure, sameSite çerez politikaları)",
+            "3": "Brute-force koruması ve hız sınırı (rate limiting)",
+            "4": "Veritabanı yedekleme (TiDB Cloud otomatik günlük yedek)",
+            "5": "Üçüncü taraf taşeronlarla veri işleyici sözleşmeleri",
+            "6": "Çalışan farkındalık ve gizlilik yükümlülükleri"
+          }
+        },
+        "s11": {
+          "title": "11. Çerez Politikası Özeti",
+          "p0": "Sitemizde yalnızca <strong>oturum çerezleri</strong> (admin/müdür girişi için <code>token</code>, <code>mudur_token</code>) kullanılmaktadır. Üçüncü taraf izleme/pazarlama çerezi yerleştirilmez, analytics aracı kullanılmaz. Oturum çerezleri yalnızca giriş yapan kullanıcılar için ve KVKK m.5/2-c (sözleşmenin ifası) hukuki sebebiyle kurulur."
+        },
+        "s12": {
+          "title": "12. Güncellemeler",
+          "p0": "Bu aydınlatma metni, mevzuat değişiklikleri ve hizmet kapsamımızdaki gelişmeler doğrultusunda güncellenebilir. Güncel sürüm her zaman bu sayfada yayımlanır."
+        },
+        "lastUpdated": "Son güncelleme tarihi: Nisan 2026 — Sürüm 2.0"
+      },
+      "mesafeli": {
+        "eyebrow": "Yasal",
+        "title": "Mesafeli satış sözleşmesi",
+        "intro": "6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca hazırlanmış; satıcı ile alıcı arasındaki hak ve yükümlülükleri düzenleyen sözleşme metni.",
+        "s1": {
+          "title": "1. Taraflar",
+          "p0": "İşbu sözleşme aşağıdaki taraflar arasında akdedilmiştir.",
+          "sellerHeading": "1.1. Satıcı",
+          "box": {
+            "legalName": "Ticaret Unvanı",
+            "brand": "Marka",
+            "tax": "Vergi Dairesi / No",
+            "mersis": "MERSİS No",
+            "address": "Adres",
+            "email": "E-posta",
+            "phone": "Telefon",
+            "web": "Web"
+          },
+          "buyerHeading": "1.2. Alıcı (Tüketici)",
+          "p1": "Sipariş formunda kimlik, iletişim ve teslimat bilgilerini beyan eden gerçek/tüzel kişi. Sözleşme tarafı olan veli/yasal temsilci, öğrencinin kişisel verilerinin paylaşılması konusunda yetkili olduğunu beyan eder."
+        },
+        "s2": {
+          "title": "2. Sözleşmenin Konusu",
+          "p0": "İşbu sözleşmenin konusu; Alıcı'nın Satıcı'ya ait <website></website> internet sitesinden elektronik ortamda siparişini verdiği, nitelikleri ve satış fiyatı sipariş onayında belirtilen okul tedarik paketinin satışı ve teslimi ile ilgili olarak, tarafların hak ve yükümlülüklerinin düzenlenmesidir."
+        },
+        "s3": {
+          "title": "3. Sözleşmeye Konu Mal/Hizmet",
+          "p0": "Mal/hizmetin <strong>türü, miktarı, marka/modeli, içeriği, KDV dahil satış bedeli</strong> ve <strong>ödeme şekli</strong> sipariş formunda ve sipariş onay e-postasında belirtilmiştir. Tüm fiyatlar KDV dahildir. Türk Lirası (₺) cinsindendir.",
+          "p1": "Paketler, ilgili okulun ve sınıfın ihtiyaçları doğrultusunda Satıcı tarafından önceden belirlenmiş içeriktedir. Paket içerisinde yer alan ürünlerin görsel temsilleri tanıtım amaçlıdır; renk ve marka detayında küçük farklılıklar olabilir."
+        },
+        "s4": {
+          "title": "4. Genel Hükümler",
+          "p0": "Alıcı; Satıcı'ya ait internet sitesinde satış sözleşmesine konu ürünün temel nitelikleri, satış fiyatı (KDV dahil), ödeme şekli, teslimata ilişkin ön bilgilendirmeleri okuyup bilgi sahibi olduğunu, elektronik ortamda gerekli teyidi verdiğini kabul, beyan ve taahhüt eder. Alıcı'nın siparişi tamamlaması; bu sözleşme ve KVKK aydınlatma metnini kabul ettiği anlamına gelir."
+        },
+        "s5": {
+          "title": "5. Cayma Hakkı",
+          "p0": "Alıcı; ürünün kendisine veya gösterdiği adresteki kişi/kuruluşa teslim tarihinden itibaren <strong>14 (ondört) gün</strong> içinde herhangi bir gerekçe göstermeksizin ve cezai şart ödemeksizin sözleşmeden cayma hakkına sahiptir.",
+          "p1": "Cayma hakkı, aşağıdaki kanaldan kullanılabilir:",
+          "items": {
+            "0": "E-posta: {email} adresine, sipariş numarası ve cayma talebini açıkça belirten bir bildirim",
+            "1": "Sipariş takip sayfası üzerinden iptal talebi formu"
+          },
+          "p2": "Cayma hakkının kullanılabilmesi için ürünlerin <strong>kullanılmamış, ambalajının açılmamış</strong> ve yeniden satılabilir durumda olması gerekir. Ürünlerin Alıcı tarafından sökülmüş, yıpratılmış, kullanılmış olması veya niteliği itibariyle iade edilemeyen ürünler haline gelmiş olması durumunda cayma hakkı kullanılamaz."
+        },
+        "s6": {
+          "title": "6. Cayma Hakkının İstisnaları (Yön. m. 15)",
+          "p0": "Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesi gereği, aşağıdaki ürünler için cayma hakkı kullanılamaz:",
+          "items": {
+            "0": "Tüketicinin istekleri veya açıkça onun kişisel ihtiyaçları doğrultusunda hazırlanan, kişiye özel hazırlanmış mallar",
+            "1": "Tesliminden sonra ambalaj, bant, mühür, paket gibi koruyucu unsurları açılmış olan, iadesi sağlık ve hijyen açısından uygun olmayan ürünler",
+            "2": "Tesliminden sonra başka ürünlerle karışan ve doğası gereği ayrıştırılması mümkün olmayan ürünler"
+          },
+          "p1": "Okula özel hazırlanmış öğrenci paketleri, paket Alıcıya/öğrenciye ulaştırılıp ambalajı açıldıktan sonra <strong>kişiye özel hazırlanmış mal</strong> niteliği kazanabilir; bu durumda cayma hakkının kullanımı sınırlanabilir. Bu istisna her sipariş için öncesinde Alıcı'ya açıkça bildirilir."
+        },
+        "s7": {
+          "title": "7. Teslimat",
+          "p0": "Sipariş onayının ardından, ödeme onayını takiben en geç <strong>30 (otuz) gün</strong> içinde teslimat gerçekleştirilir. Teslimat seçenekleri:",
+          "items": {
+            "0": "Okula toplu teslim — okul tarafından belirlenen tarihte, sınıf öğretmeni veya idare aracılığıyla; teslim alındı belgesi düzenlenir",
+            "1": "Kargo ile eve teslim — Aras Kargo aracılığıyla, sipariş onayından itibaren 2-4 iş günü içinde, sipariş formundaki adrese"
+          },
+          "p1": "Kargo ücreti varsa sipariş özetinde belirtilir. Belirtilmemişse, kargo ücreti paket fiyatına dahildir. Adres yanlışlığından doğan ek kargo masrafları Alıcıya aittir."
+        },
+        "s8": {
+          "title": "8. Ödeme",
+          "p0": "Ödeme; banka/kredi kartı ile online olarak, lisanslı ödeme kuruluşu (Iyzico) ve 3D Secure altyapısı üzerinden gerçekleştirilir. Kart bilgileri Satıcı sistemlerinde saklanmaz, doğrudan ödeme kuruluşuna iletilir."
+        },
+        "s9": {
+          "title": "9. İade ve Geri Ödeme",
+          "p0": "Cayma hakkı kapsamındaki iadeler, ürünün Satıcıya ulaşmasından itibaren en geç <strong>14 (ondört) iş günü</strong> içinde, ödemenin yapıldığı kart/hesap iadesi şeklinde yapılır. Bankanın ödemeyi hesaba yansıtma süresi Satıcı kontrolü dışındadır.",
+          "p1": "İade kargo bedeli, cayma hakkı kullanımında — sipariş Alıcının açık tercihi ile kargo seçeneğinde verilmiş ve ürün ayıpsız ise — Alıcıya aittir."
+        },
+        "s10": {
+          "title": "10. Uyuşmazlıkların Çözümü",
+          "p0": "Bu sözleşmeden doğan uyuşmazlıklarda, Ticaret Bakanlığı tarafından her yıl ilan edilen <strong>parasal sınırlara göre Tüketici Hakem Heyetleri</strong> ya da <strong>Tüketici Mahkemeleri</strong> yetkilidir. 2025 yılı itibarıyla parasal sınırlar:",
+          "items": {
+            "0": "İlçe Tüketici Hakem Heyeti: belirlenen değer altındaki uyuşmazlıklar",
+            "1": "İl Tüketici Hakem Heyeti: orta değer aralığındaki uyuşmazlıklar",
+            "2": "Tüketici Mahkemeleri: üst sınırı aşan uyuşmazlıklar"
+          },
+          "p1": "Güncel parasal sınırlar Ticaret Bakanlığı tüketici sayfasında (ticaret.gov.tr) yer almaktadır."
+        },
+        "s11": {
+          "title": "11. Şikâyet ve İletişim",
+          "p0": "Şikayet ve sorularınız için:",
+          "items": {
+            "0": "E-posta: {email}",
+            "1": "Telefon: {phone}",
+            "2": "Tüketici Bilgi Sistemi: tuketici.ticaret.gov.tr",
+            "3": "Alo 175 — Tüketici Danışma Hattı"
+          }
+        },
+        "s12": {
+          "title": "12. Yürürlük",
+          "p0": "İşbu Mesafeli Satış Sözleşmesi, Alıcı'nın elektronik ortamda onaylaması ile yürürlüğe girer. Sözleşmenin bir nüshası, Alıcı'nın e-posta adresine sipariş onay bildirimiyle birlikte iletilir. Tarafların bu sözleşmenin uygulanmasından doğan yükümlülükleri, sipariş bedelinin tahsili ve ürün/paketin teslimi ile sona erer. Cayma ve iade hakları saklıdır."
+        },
+        "lastUpdated": "Bu sözleşme, sipariş tarihinde elektronik ortamda taraflarca okunup kabul edilmiştir. Son güncelleme tarihi: Nisan 2026 — Sürüm 2.0"
+      }
+    }
+  },
+  "en": {
+    "legal": {
+      "header": {
+        "nav": {
+          "howItWorks": "How It Works",
+          "faq": "FAQ",
+          "orderTracking": "Order Tracking"
+        },
+        "backHome": "Back to Home"
+      },
+      "kvkk": {
+        "eyebrow": "Legal",
+        "title": "KVKK information notice",
+        "intro": "This notice has been prepared pursuant to Law No. 6698 on the Protection of Personal Data (\"KVKK\") in order to inform you about the purposes and legal grounds for processing your personal data, its transfer, retention periods, and your rights arising from the KVKK.",
+        "s1": {
+          "title": "1. Data Controller",
+          "p0": "In the capacity of data controller, your personal data is processed by the legal entity/natural person whose identity is set out below.",
+          "box": {
+            "legalName": "Trade Name",
+            "brand": "Brand",
+            "tax": "Tax Office / No",
+            "mersis": "MERSİS No",
+            "address": "Address",
+            "email": "E-mail",
+            "phone": "Phone",
+            "verbis": "VERBİS Registration No"
+          }
+        },
+        "s2": {
+          "title": "2. Personal Data Processed",
+          "p0": "The following categories of personal data are processed within the scope of the order process:",
+          "items": {
+            "0": "Identity data: first name, surname, T.C. national identity number (mandatory only for e-Archive/e-Invoice issuance)",
+            "1": "Contact data: phone number, e-mail address, delivery and billing address",
+            "2": "Student data (child data): the student's first name, surname, school and class information",
+            "3": "Order data: order number, order contents, amount, date, order note",
+            "4": "Financial data: tax number, tax office (in case of a corporate invoice preference), invoice number",
+            "5": "Transaction security data: IP address, session information, failed login records",
+            "6": "Payment data: only the transaction reference number and amount are stored; the card number, CVV and expiry date are not stored in our system and are transmitted directly to the licensed payment institution (PCI-DSS compliant)."
+          }
+        },
+        "s3": {
+          "title": "3. Special Notice Regarding Children's Personal Data",
+          "p0": "During the order process, <strong>personal data belonging to students</strong> under the age of 18 (first name, surname, class, school) is processed. This data is processed solely by the student's <strong>parent/legal guardian</strong>, for the purpose of delivering the school supply package to the student, within the framework of the consent given in the capacity of parent.",
+          "p1": "The person filling out the order form declares that they are the student's parent/legal guardian and that they are authorized to process the student's personal data within the scope of the KVKK. The child's data is processed only for the period necessary to perform the service and is not used for marketing purposes."
+        },
+        "s4": {
+          "title": "4. Purposes of Processing Personal Data",
+          "items": {
+            "0": "Carrying out order and payment processes",
+            "1": "Planning and carrying out the product/package delivery process",
+            "2": "Fulfilling legal invoicing obligations through e-Archive and e-Invoice issuance",
+            "3": "Customer relationship management, order tracking, evaluation of cancellation and return requests",
+            "4": "Carrying out communication activities (order notification, shipping notification)",
+            "5": "Carrying out information security processes (session, brute-force protection, audit trail)",
+            "6": "Fulfilling obligations under legislation such as Laws No. 6502, 6698, 213 and the VUK",
+            "7": "Evaluating consumer complaints and disputes"
+          }
+        },
+        "s5": {
+          "title": "5. Legal Grounds for Processing (KVKK Art. 5)",
+          "items": {
+            "0": "Being directly related to the establishment or performance of a contract (Art. 5/2-c) — the order and delivery process",
+            "1": "Being mandatory for the data controller to fulfill its legal obligation (Art. 5/2-ç) — invoice issuance, financial record-keeping",
+            "2": "Being mandatory for the legitimate interests of the data controller, provided that it does not harm the fundamental rights and freedoms of the data subject (Art. 5/2-f) — information security, fraud prevention",
+            "3": "Explicit consent (Art. 5/1) — marketing notifications and the consent, as a parent, to process the child's data"
+          }
+        },
+        "s6": {
+          "title": "6. Transfer of Personal Data",
+          "p0": "Your personal data may be transferred only for the following purposes and in a limited manner, within the scope of KVKK Art. 8 and Art. 9:",
+          "items": {
+            "0": "Payment service provider (Iyzico Ödeme Hizmetleri A.Ş.) — for the purpose of carrying out the payment transaction",
+            "1": "e-Invoice integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — for the purpose of invoice issuance",
+            "2": "Shipping company (Aras Kargo) — for cargo delivery, only the recipient, phone, and address information",
+            "3": "E-mail service (Resend) and SMS service (Twilio) — for transmitting notifications",
+            "4": "Legal authorities and public institutions — in the event of legal obligations or a court/prosecutor's office request",
+            "5": "Cloud infrastructure providers (Vercel Inc., TiDB Cloud / PingCAP Inc.) — data storage and serving infrastructure; the servers are located in the European Union (Frankfurt) region."
+          },
+          "p1": "Transfers abroad take place within the framework of the safeguards provided by the relevant provider under KVKK Art. 9. In cases where the transfer abroad is carried out with explicit consent, separate consent is obtained."
+        },
+        "s7": {
+          "title": "7. Retention Periods",
+          "items": {
+            "0": "Order and invoice data: 10 (ten) years pursuant to the VUK and the TTK",
+            "1": "KVKK information notice records and audit trail (system_logs): 5 (five) years",
+            "2": "Communication and marketing data: until explicit consent is withdrawn or for a maximum of 3 years",
+            "3": "Failed login and session security records: a maximum of 1 year",
+            "4": "Cancellation/return records: 10 (ten) years from the date of record"
+          },
+          "p0": "Data whose retention period has expired is deleted, destroyed, or anonymized in the first destruction period."
+        },
+        "s8": {
+          "title": "8. Rights of the Personal Data Owner (KVKK Art. 11)",
+          "p0": "As the data owner, you have the following rights pursuant to Article 11 of the KVKK:",
+          "items": {
+            "0": "To learn whether your personal data is being processed",
+            "1": "To request information regarding it if it has been processed",
+            "2": "To learn the purpose of processing and whether it is being used in accordance with that purpose",
+            "3": "To know the third parties to whom it has been transferred domestically or abroad",
+            "4": "To request its correction in the event it has been processed incompletely or incorrectly",
+            "5": "To request its deletion or destruction within the framework of the conditions stipulated in the KVKK",
+            "6": "To request that correction, deletion, and destruction operations be notified to the third parties to whom the data has been transferred",
+            "7": "To object to a result that arises against you as a result of analysis by automated systems",
+            "8": "To request compensation for the damage in the event you suffer damage due to unlawful processing"
+          }
+        },
+        "s9": {
+          "title": "9. Application Method",
+          "p0": "Pursuant to KVKK Art. 13, you may submit your requests regarding the above rights through one of the following channels, in a manner that allows identity verification:",
+          "items": {
+            "0": "E-mail: {dpoEmail} (from your registered e-mail address)",
+            "1": "Written application: {address}",
+            "2": "Within the scope of the Communiqué on the Procedures and Principles of Application to the Data Controller"
+          },
+          "p1": "Your application is finalized within at most 30 (thirty) days pursuant to KVKK Art. 13/2. In the event you are not satisfied with the response given to your application, you have the right to file a complaint with the KVKK Board (kvkk.gov.tr)."
+        },
+        "s10": {
+          "title": "10. Data Security",
+          "p0": "The following technical and administrative measures are applied to prevent the unlawful processing of, access to, and loss of your personal data:",
+          "items": {
+            "0": "TLS 1.2+ encrypted communication, HSTS policy",
+            "1": "Storage of passwords with one-way cryptographic hashing (bcrypt)",
+            "2": "Authorized access control and session security (httpOnly, secure, sameSite cookie policies)",
+            "3": "Brute-force protection and rate limiting",
+            "4": "Database backup (TiDB Cloud automatic daily backup)",
+            "5": "Data processor agreements with third-party subcontractors",
+            "6": "Employee awareness and confidentiality obligations"
+          }
+        },
+        "s11": {
+          "title": "11. Cookie Policy Summary",
+          "p0": "On our site, only <strong>session cookies</strong> (<code>token</code>, <code>mudur_token</code> for admin/principal login) are used. No third-party tracking/marketing cookies are placed, and no analytics tool is used. Session cookies are set only for logged-in users and on the legal ground of KVKK Art. 5/2-c (performance of the contract)."
+        },
+        "s12": {
+          "title": "12. Updates",
+          "p0": "This information notice may be updated in line with legislative changes and developments in the scope of our service. The current version is always published on this page."
+        },
+        "lastUpdated": "Last updated: April 2026 — Version 2.0"
+      },
+      "mesafeli": {
+        "eyebrow": "Legal",
+        "title": "Distance sales agreement",
+        "intro": "An agreement text prepared pursuant to Law No. 6502 on the Protection of the Consumer and the Distance Contracts Regulation, regulating the rights and obligations between the seller and the buyer.",
+        "s1": {
+          "title": "1. Parties",
+          "p0": "This agreement has been concluded between the parties set out below.",
+          "sellerHeading": "1.1. Seller",
+          "box": {
+            "legalName": "Trade Name",
+            "brand": "Brand",
+            "tax": "Tax Office / No",
+            "mersis": "MERSİS No",
+            "address": "Address",
+            "email": "E-mail",
+            "phone": "Phone",
+            "web": "Web"
+          },
+          "buyerHeading": "1.2. Buyer (Consumer)",
+          "p1": "The natural/legal person who declares their identity, contact, and delivery information on the order form. The parent/legal guardian who is party to the contract declares that they are authorized regarding the sharing of the student's personal data."
+        },
+        "s2": {
+          "title": "2. Subject of the Agreement",
+          "p0": "The subject of this agreement is the regulation of the rights and obligations of the parties in relation to the sale and delivery of the school supply package, whose characteristics and sale price are specified in the order confirmation, which the Buyer has ordered electronically from the Seller's website <website></website>."
+        },
+        "s3": {
+          "title": "3. Goods/Services Subject to the Agreement",
+          "p0": "The <strong>type, quantity, brand/model, contents, sale price including VAT</strong> and <strong>method of payment</strong> of the goods/services are specified in the order form and in the order confirmation e-mail. All prices include VAT. They are in Turkish Lira (₺).",
+          "p1": "The packages have contents predetermined by the Seller in line with the needs of the relevant school and class. The visual representations of the products included in the package are for promotional purposes; there may be minor differences in color and brand detail."
+        },
+        "s4": {
+          "title": "4. General Provisions",
+          "p0": "The Buyer accepts, declares, and undertakes that they have read and become informed about the basic characteristics of the product subject to the sales agreement, the sale price (including VAT), the method of payment, and the preliminary information regarding delivery on the Seller's website, and that they have given the necessary confirmation electronically. The Buyer's completion of the order means that they accept this agreement and the KVKK information notice."
+        },
+        "s5": {
+          "title": "5. Right of Withdrawal",
+          "p0": "The Buyer has the right to withdraw from the contract within <strong>14 (fourteen) days</strong> from the date of delivery of the product to themselves or to the person/organization at the address indicated, without showing any justification and without paying any penalty.",
+          "p1": "The right of withdrawal may be exercised through the following channel:",
+          "items": {
+            "0": "E-mail: a notification clearly stating the order number and the withdrawal request, to the address {email}",
+            "1": "Cancellation request form via the order tracking page"
+          },
+          "p2": "In order for the right of withdrawal to be exercised, the products must be <strong>unused, with their packaging unopened</strong> and in resalable condition. In the event that the products have been disassembled, worn out, or used by the Buyer, or have become products that cannot be returned by their nature, the right of withdrawal cannot be exercised."
+        },
+        "s6": {
+          "title": "6. Exceptions to the Right of Withdrawal (Reg. Art. 15)",
+          "p0": "Pursuant to Article 15 of the Distance Contracts Regulation, the right of withdrawal cannot be exercised for the following products:",
+          "items": {
+            "0": "Goods prepared in line with the consumer's requests or clearly their personal needs, custom-prepared goods",
+            "1": "Products whose protective elements such as packaging, tape, seal, or package have been opened after delivery, whose return is not appropriate in terms of health and hygiene",
+            "2": "Products that mix with other products after delivery and that, by their nature, cannot be separated"
+          },
+          "p1": "Student packages specially prepared for the school may acquire the character of <strong>custom-prepared goods</strong> after the package is delivered to the Buyer/student and its packaging is opened; in this case, the exercise of the right of withdrawal may be limited. This exception is clearly notified to the Buyer in advance for each order."
+        },
+        "s7": {
+          "title": "7. Delivery",
+          "p0": "Following the order confirmation, delivery is carried out within at most <strong>30 (thirty) days</strong> following payment confirmation. Delivery options:",
+          "items": {
+            "0": "Bulk delivery to the school — on the date determined by the school, through the class teacher or administration; a delivery receipt is issued",
+            "1": "Home delivery by cargo — through Aras Kargo, within 2-4 business days from order confirmation, to the address on the order form"
+          },
+          "p1": "Any cargo fee is specified in the order summary. If not specified, the cargo fee is included in the package price. Additional cargo costs arising from address errors are borne by the Buyer."
+        },
+        "s8": {
+          "title": "8. Payment",
+          "p0": "Payment is carried out online with a bank/credit card, through the licensed payment institution (Iyzico) and the 3D Secure infrastructure. Card information is not stored in the Seller's systems and is transmitted directly to the payment institution."
+        },
+        "s9": {
+          "title": "9. Return and Refund",
+          "p0": "Returns within the scope of the right of withdrawal are made within at most <strong>14 (fourteen) business days</strong> from the product reaching the Seller, in the form of a refund to the card/account from which payment was made. The bank's period for reflecting the payment to the account is outside the Seller's control.",
+          "p1": "The return cargo fee, in the exercise of the right of withdrawal — if the order was placed with the cargo option by the Buyer's express preference and the product is free of defects — is borne by the Buyer."
+        },
+        "s10": {
+          "title": "10. Resolution of Disputes",
+          "p0": "In disputes arising from this agreement, the <strong>Consumer Arbitration Committees according to the monetary limits</strong> announced each year by the Ministry of Trade, or the <strong>Consumer Courts</strong>, are competent. As of 2025, the monetary limits:",
+          "items": {
+            "0": "District Consumer Arbitration Committee: disputes below the determined value",
+            "1": "Provincial Consumer Arbitration Committee: disputes in the medium value range",
+            "2": "Consumer Courts: disputes exceeding the upper limit"
+          },
+          "p1": "The current monetary limits are available on the Ministry of Trade consumer page (ticaret.gov.tr)."
+        },
+        "s11": {
+          "title": "11. Complaints and Contact",
+          "p0": "For your complaints and questions:",
+          "items": {
+            "0": "E-mail: {email}",
+            "1": "Phone: {phone}",
+            "2": "Consumer Information System: tuketici.ticaret.gov.tr",
+            "3": "Alo 175 — Consumer Advisory Line"
+          }
+        },
+        "s12": {
+          "title": "12. Entry into Force",
+          "p0": "This Distance Sales Agreement enters into force upon the Buyer's electronic approval. A copy of the agreement is transmitted to the Buyer's e-mail address together with the order confirmation notification. The obligations of the parties arising from the performance of this agreement end with the collection of the order amount and the delivery of the product/package. The rights of withdrawal and return are reserved."
+        },
+        "lastUpdated": "This agreement was read and accepted by the parties electronically on the order date. Last updated: April 2026 — Version 2.0"
+      }
+    }
+  },
+  "de": {
+    "legal": {
+      "header": {
+        "nav": {
+          "howItWorks": "So funktioniert's",
+          "faq": "FAQ",
+          "orderTracking": "Bestellverfolgung"
+        },
+        "backHome": "Zurück zur Startseite"
+      },
+      "kvkk": {
+        "eyebrow": "Rechtliches",
+        "title": "KVKK-Informationstext",
+        "intro": "Dieser Text wurde gemäß dem Gesetz Nr. 6698 zum Schutz personenbezogener Daten (\"KVKK\") erstellt, um Sie über die Zwecke und Rechtsgrundlagen der Verarbeitung Ihrer personenbezogenen Daten, deren Übermittlung, die Aufbewahrungsfristen und Ihre sich aus dem KVKK ergebenden Rechte zu informieren.",
+        "s1": {
+          "title": "1. Verantwortlicher",
+          "p0": "In der Eigenschaft als Verantwortlicher werden Ihre personenbezogenen Daten durch die nachstehend bezeichnete juristische Person/natürliche Person verarbeitet.",
+          "box": {
+            "legalName": "Handelsname",
+            "brand": "Marke",
+            "tax": "Finanzamt / Nr.",
+            "mersis": "MERSİS-Nr.",
+            "address": "Adresse",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "verbis": "VERBİS-Registrierungsnr."
+          }
+        },
+        "s2": {
+          "title": "2. Verarbeitete personenbezogene Daten",
+          "p0": "Im Rahmen des Bestellvorgangs werden die folgenden Kategorien personenbezogener Daten verarbeitet:",
+          "items": {
+            "0": "Identitätsdaten: Vorname, Nachname, T.C.-Identitätsnummer (nur für die Ausstellung von e-Archiv/e-Rechnung erforderlich)",
+            "1": "Kontaktdaten: Telefonnummer, E-Mail-Adresse, Liefer- und Rechnungsadresse",
+            "2": "Schülerdaten (Daten von Kindern): Vorname, Nachname, Schul- und Klasseninformationen des Schülers",
+            "3": "Bestelldaten: Bestellnummer, Bestellinhalt, Betrag, Datum, Bestellnotiz",
+            "4": "Finanzdaten: Steuernummer, Finanzamt (bei Wahl einer Geschäftsrechnung), Rechnungsnummer",
+            "5": "Transaktionssicherheitsdaten: IP-Adresse, Sitzungsinformationen, fehlgeschlagene Anmeldeprotokolle",
+            "6": "Zahlungsdaten: Es werden nur die Transaktionsreferenznummer und der Betrag gespeichert; Kartennummer, CVV und Ablaufdatum werden nicht in unserem System gespeichert, sondern direkt an das lizenzierte Zahlungsinstitut (PCI-DSS-konform) übermittelt."
+          }
+        },
+        "s3": {
+          "title": "3. Besonderer Hinweis zu personenbezogenen Daten von Kindern",
+          "p0": "Während des Bestellvorgangs werden <strong>personenbezogene Daten von Schülern</strong> unter 18 Jahren (Vorname, Nachname, Klasse, Schule) verarbeitet. Diese Daten werden ausschließlich durch den <strong>Erziehungsberechtigten/gesetzlichen Vertreter</strong> des Schülers zum Zweck der Lieferung des Schulbedarfspakets an den Schüler im Rahmen der in der Eigenschaft als Erziehungsberechtigter erteilten Einwilligung verarbeitet.",
+          "p1": "Die Person, die das Bestellformular ausfüllt, erklärt, dass sie der Erziehungsberechtigte/gesetzliche Vertreter des Schülers ist und dass sie im Rahmen des KVKK befugt ist, die personenbezogenen Daten des Schülers zu verarbeiten. Die Daten des Kindes werden nur für den zur Erbringung der Dienstleistung erforderlichen Zeitraum verarbeitet und nicht zu Marketingzwecken verwendet."
+        },
+        "s4": {
+          "title": "4. Zwecke der Verarbeitung personenbezogener Daten",
+          "items": {
+            "0": "Durchführung der Bestell- und Zahlungsprozesse",
+            "1": "Planung und Durchführung des Produkt-/Paketlieferprozesses",
+            "2": "Erfüllung der gesetzlichen Rechnungspflichten durch Ausstellung von e-Archiv und e-Rechnung",
+            "3": "Verwaltung der Kundenbeziehungen, Bestellverfolgung, Bewertung von Storno- und Rückgabeanträgen",
+            "4": "Durchführung von Kommunikationstätigkeiten (Bestellbenachrichtigung, Versandbenachrichtigung)",
+            "5": "Durchführung von Informationssicherheitsprozessen (Sitzung, Brute-Force-Schutz, Prüfpfad)",
+            "6": "Erfüllung der Verpflichtungen im Rahmen von Rechtsvorschriften wie den Gesetzen Nr. 6502, 6698, 213 und dem VUK",
+            "7": "Bewertung von Verbraucherbeschwerden und Streitigkeiten"
+          }
+        },
+        "s5": {
+          "title": "5. Rechtsgrundlagen der Verarbeitung (KVKK Art. 5)",
+          "items": {
+            "0": "Unmittelbarer Zusammenhang mit dem Abschluss oder der Erfüllung eines Vertrags (Art. 5/2-c) — Bestell- und Lieferprozess",
+            "1": "Erforderlichkeit zur Erfüllung der gesetzlichen Verpflichtung des Verantwortlichen (Art. 5/2-ç) — Rechnungsausstellung, finanzielle Aufzeichnung",
+            "2": "Erforderlichkeit für die berechtigten Interessen des Verantwortlichen, sofern die Grundrechte und -freiheiten der betroffenen Person nicht beeinträchtigt werden (Art. 5/2-f) — Informationssicherheit, Betrugsprävention",
+            "3": "Ausdrückliche Einwilligung (Art. 5/1) — Marketingbenachrichtigungen und die Einwilligung als Erziehungsberechtigter zur Verarbeitung der Daten des Kindes"
+          }
+        },
+        "s6": {
+          "title": "6. Übermittlung personenbezogener Daten",
+          "p0": "Ihre personenbezogenen Daten dürfen nur zu den folgenden Zwecken und in begrenztem Umfang im Rahmen von KVKK Art. 8 und Art. 9 übermittelt werden:",
+          "items": {
+            "0": "Zahlungsdienstleister (Iyzico Ödeme Hizmetleri A.Ş.) — zum Zweck der Durchführung der Zahlungstransaktion",
+            "1": "e-Rechnungs-Integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — zum Zweck der Rechnungsausstellung",
+            "2": "Versandunternehmen (Aras Kargo) — für die Frachtlieferung nur Empfänger-, Telefon- und Adressinformationen",
+            "3": "E-Mail-Dienst (Resend) und SMS-Dienst (Twilio) — zur Übermittlung von Benachrichtigungen",
+            "4": "Rechtliche Stellen und öffentliche Einrichtungen — im Falle gesetzlicher Verpflichtungen oder eines Ersuchens des Gerichts/der Staatsanwaltschaft",
+            "5": "Cloud-Infrastrukturanbieter (Vercel Inc., TiDB Cloud / PingCAP Inc.) — Datenspeicherungs- und Bereitstellungsinfrastruktur; die Server befinden sich in der Region der Europäischen Union (Frankfurt)."
+          },
+          "p1": "Übermittlungen ins Ausland erfolgen im Rahmen der vom jeweiligen Anbieter gemäß KVKK Art. 9 gebotenen Garantien. In Fällen, in denen die Übermittlung ins Ausland mit ausdrücklicher Einwilligung erfolgt, wird eine gesonderte Einwilligung eingeholt."
+        },
+        "s7": {
+          "title": "7. Aufbewahrungsfristen",
+          "items": {
+            "0": "Bestell- und Rechnungsdaten: 10 (zehn) Jahre gemäß VUK und TTK",
+            "1": "KVKK-Informationsaufzeichnungen und Prüfpfad (system_logs): 5 (fünf) Jahre",
+            "2": "Kommunikations- und Marketingdaten: bis zum Widerruf der ausdrücklichen Einwilligung oder höchstens 3 Jahre",
+            "3": "Fehlgeschlagene Anmelde- und Sitzungssicherheitsprotokolle: höchstens 1 Jahr",
+            "4": "Storno-/Rückgabeaufzeichnungen: 10 (zehn) Jahre ab dem Datum der Aufzeichnung"
+          },
+          "p0": "Daten, deren Aufbewahrungsfrist abgelaufen ist, werden in der ersten Vernichtungsperiode gelöscht, vernichtet oder anonymisiert."
+        },
+        "s8": {
+          "title": "8. Rechte des Inhabers personenbezogener Daten (KVKK Art. 11)",
+          "p0": "Als Dateninhaber haben Sie gemäß Artikel 11 des KVKK die folgenden Rechte:",
+          "items": {
+            "0": "Zu erfahren, ob Ihre personenbezogenen Daten verarbeitet werden",
+            "1": "Informationen darüber zu verlangen, falls sie verarbeitet wurden",
+            "2": "Den Zweck der Verarbeitung zu erfahren und ob sie zweckentsprechend verwendet werden",
+            "3": "Die Dritten zu kennen, an die sie im In- oder Ausland übermittelt wurden",
+            "4": "Ihre Berichtigung zu verlangen, falls sie unvollständig oder unrichtig verarbeitet wurden",
+            "5": "Ihre Löschung oder Vernichtung im Rahmen der im KVKK vorgesehenen Bedingungen zu verlangen",
+            "6": "Zu verlangen, dass die Berichtigungs-, Lösch- und Vernichtungsvorgänge den Dritten mitgeteilt werden, an die die Daten übermittelt wurden",
+            "7": "Einem Ergebnis zu widersprechen, das sich infolge der Analyse durch automatisierte Systeme zu Ihrem Nachteil ergibt",
+            "8": "Den Ersatz des Schadens zu verlangen, falls Sie aufgrund einer rechtswidrigen Verarbeitung einen Schaden erleiden"
+          }
+        },
+        "s9": {
+          "title": "9. Antragsverfahren",
+          "p0": "Gemäß KVKK Art. 13 können Sie Ihre Anträge bezüglich der oben genannten Rechte auf eine Weise, die eine Identitätsfeststellung ermöglicht, über einen der folgenden Wege übermitteln:",
+          "items": {
+            "0": "E-Mail: {dpoEmail} (von Ihrer registrierten E-Mail-Adresse)",
+            "1": "Schriftlicher Antrag: {address}",
+            "2": "Im Rahmen des Kommuniqués über die Verfahren und Grundsätze des Antrags an den Verantwortlichen"
+          },
+          "p1": "Ihr Antrag wird gemäß KVKK Art. 13/2 spätestens innerhalb von 30 (dreißig) Tagen abgeschlossen. Falls Sie mit der auf Ihren Antrag gegebenen Antwort nicht zufrieden sind, haben Sie das Recht, eine Beschwerde beim KVKK-Ausschuss einzureichen (kvkk.gov.tr)."
+        },
+        "s10": {
+          "title": "10. Datensicherheit",
+          "p0": "Um die rechtswidrige Verarbeitung, den Zugriff auf und den Verlust Ihrer personenbezogenen Daten zu verhindern, werden die folgenden technischen und administrativen Maßnahmen angewendet:",
+          "items": {
+            "0": "TLS 1.2+ verschlüsselte Kommunikation, HSTS-Richtlinie",
+            "1": "Speicherung von Passwörtern mit einseitigem kryptografischem Hashing (bcrypt)",
+            "2": "Autorisierte Zugriffskontrolle und Sitzungssicherheit (httpOnly-, secure-, sameSite-Cookie-Richtlinien)",
+            "3": "Brute-Force-Schutz und Ratenbegrenzung (rate limiting)",
+            "4": "Datenbanksicherung (TiDB Cloud automatische tägliche Sicherung)",
+            "5": "Auftragsverarbeitungsverträge mit Drittsubunternehmern",
+            "6": "Mitarbeitersensibilisierung und Vertraulichkeitsverpflichtungen"
+          }
+        },
+        "s11": {
+          "title": "11. Zusammenfassung der Cookie-Richtlinie",
+          "p0": "Auf unserer Website werden nur <strong>Sitzungscookies</strong> (<code>token</code>, <code>mudur_token</code> für die Admin-/Schulleiter-Anmeldung) verwendet. Es werden keine Tracking-/Marketing-Cookies von Drittanbietern gesetzt und kein Analysetool verwendet. Sitzungscookies werden nur für angemeldete Benutzer und auf der Rechtsgrundlage von KVKK Art. 5/2-c (Erfüllung des Vertrags) gesetzt."
+        },
+        "s12": {
+          "title": "12. Aktualisierungen",
+          "p0": "Dieser Informationstext kann im Einklang mit Gesetzesänderungen und Entwicklungen im Umfang unserer Dienstleistung aktualisiert werden. Die aktuelle Version wird stets auf dieser Seite veröffentlicht."
+        },
+        "lastUpdated": "Zuletzt aktualisiert: April 2026 — Version 2.0"
+      },
+      "mesafeli": {
+        "eyebrow": "Rechtliches",
+        "title": "Fernabsatzvertrag",
+        "intro": "Ein gemäß dem Gesetz Nr. 6502 zum Schutz des Verbrauchers und der Verordnung über Fernabsatzverträge erstellter Vertragstext, der die Rechte und Pflichten zwischen dem Verkäufer und dem Käufer regelt.",
+        "s1": {
+          "title": "1. Parteien",
+          "p0": "Dieser Vertrag wurde zwischen den nachstehend genannten Parteien geschlossen.",
+          "sellerHeading": "1.1. Verkäufer",
+          "box": {
+            "legalName": "Handelsname",
+            "brand": "Marke",
+            "tax": "Finanzamt / Nr.",
+            "mersis": "MERSİS-Nr.",
+            "address": "Adresse",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "web": "Web"
+          },
+          "buyerHeading": "1.2. Käufer (Verbraucher)",
+          "p1": "Die natürliche/juristische Person, die ihre Identitäts-, Kontakt- und Lieferinformationen auf dem Bestellformular angibt. Der Erziehungsberechtigte/gesetzliche Vertreter, der Vertragspartei ist, erklärt, dass er hinsichtlich der Weitergabe der personenbezogenen Daten des Schülers befugt ist."
+        },
+        "s2": {
+          "title": "2. Gegenstand des Vertrags",
+          "p0": "Gegenstand dieses Vertrags ist die Regelung der Rechte und Pflichten der Parteien in Bezug auf den Verkauf und die Lieferung des Schulbedarfspakets, dessen Eigenschaften und Verkaufspreis in der Bestellbestätigung angegeben sind und das der Käufer auf elektronischem Wege über die dem Verkäufer gehörende Website <website></website> bestellt hat."
+        },
+        "s3": {
+          "title": "3. Vertragsgegenständliche Ware/Dienstleistung",
+          "p0": "<strong>Art, Menge, Marke/Modell, Inhalt, Verkaufspreis einschließlich MwSt.</strong> und <strong>Zahlungsweise</strong> der Ware/Dienstleistung sind im Bestellformular und in der Bestellbestätigungs-E-Mail angegeben. Alle Preise verstehen sich einschließlich MwSt. Sie sind in Türkischer Lira (₺) angegeben.",
+          "p1": "Die Pakete haben einen vom Verkäufer im Einklang mit den Bedürfnissen der jeweiligen Schule und Klasse vorab festgelegten Inhalt. Die visuellen Darstellungen der im Paket enthaltenen Produkte dienen Werbezwecken; bei Farbe und Markendetail kann es geringfügige Unterschiede geben."
+        },
+        "s4": {
+          "title": "4. Allgemeine Bestimmungen",
+          "p0": "Der Käufer akzeptiert, erklärt und verpflichtet sich, dass er die grundlegenden Eigenschaften des dem Verkaufsvertrag zugrunde liegenden Produkts, den Verkaufspreis (einschließlich MwSt.), die Zahlungsweise und die Vorabinformationen zur Lieferung auf der dem Verkäufer gehörenden Website gelesen und davon Kenntnis genommen hat und dass er die erforderliche Bestätigung auf elektronischem Wege erteilt hat. Der Abschluss der Bestellung durch den Käufer bedeutet, dass er diesen Vertrag und den KVKK-Informationstext akzeptiert."
+        },
+        "s5": {
+          "title": "5. Widerrufsrecht",
+          "p0": "Der Käufer hat das Recht, innerhalb von <strong>14 (vierzehn) Tagen</strong> ab dem Datum der Lieferung des Produkts an ihn oder an die Person/Einrichtung an der angegebenen Adresse ohne Angabe von Gründen und ohne Zahlung einer Vertragsstrafe vom Vertrag zurückzutreten.",
+          "p1": "Das Widerrufsrecht kann über den folgenden Kanal ausgeübt werden:",
+          "items": {
+            "0": "E-Mail: eine Benachrichtigung, die die Bestellnummer und den Widerrufsantrag eindeutig angibt, an die Adresse {email}",
+            "1": "Stornierungsantragsformular über die Bestellverfolgungsseite"
+          },
+          "p2": "Damit das Widerrufsrecht ausgeübt werden kann, müssen die Produkte <strong>unbenutzt sein, ihre Verpackung ungeöffnet</strong> und in wiederverkäuflichem Zustand sein. Falls die Produkte vom Käufer zerlegt, abgenutzt, benutzt wurden oder ihrer Beschaffenheit nach zu nicht rückgabefähigen Produkten geworden sind, kann das Widerrufsrecht nicht ausgeübt werden."
+        },
+        "s6": {
+          "title": "6. Ausnahmen vom Widerrufsrecht (Verord. Art. 15)",
+          "p0": "Gemäß Artikel 15 der Verordnung über Fernabsatzverträge kann das Widerrufsrecht für die folgenden Produkte nicht ausgeübt werden:",
+          "items": {
+            "0": "Waren, die im Einklang mit den Wünschen des Verbrauchers oder eindeutig seinen persönlichen Bedürfnissen entsprechend vorbereitet werden, individuell angefertigte Waren",
+            "1": "Produkte, deren Schutzelemente wie Verpackung, Band, Siegel oder Paket nach der Lieferung geöffnet wurden und deren Rückgabe aus Gesundheits- und Hygienegründen nicht geeignet ist",
+            "2": "Produkte, die sich nach der Lieferung mit anderen Produkten vermischen und ihrer Natur nach nicht getrennt werden können"
+          },
+          "p1": "Speziell für die Schule vorbereitete Schülerpakete können nach der Zustellung des Pakets an den Käufer/Schüler und dem Öffnen seiner Verpackung den Charakter einer <strong>individuell angefertigten Ware</strong> erlangen; in diesem Fall kann die Ausübung des Widerrufsrechts eingeschränkt sein. Diese Ausnahme wird dem Käufer für jede Bestellung im Voraus ausdrücklich mitgeteilt."
+        },
+        "s7": {
+          "title": "7. Lieferung",
+          "p0": "Nach der Bestellbestätigung erfolgt die Lieferung spätestens innerhalb von <strong>30 (dreißig) Tagen</strong> nach der Zahlungsbestätigung. Lieferoptionen:",
+          "items": {
+            "0": "Sammellieferung an die Schule — am von der Schule festgelegten Datum, über den Klassenlehrer oder die Verwaltung; es wird ein Empfangsbeleg ausgestellt",
+            "1": "Lieferung nach Hause per Fracht — über Aras Kargo, innerhalb von 2-4 Werktagen ab Bestellbestätigung, an die Adresse auf dem Bestellformular"
+          },
+          "p1": "Eine etwaige Frachtgebühr wird in der Bestellübersicht angegeben. Falls nicht angegeben, ist die Frachtgebühr im Paketpreis enthalten. Zusätzliche Frachtkosten, die durch Adressfehler entstehen, trägt der Käufer."
+        },
+        "s8": {
+          "title": "8. Zahlung",
+          "p0": "Die Zahlung erfolgt online mit Bank-/Kreditkarte über das lizenzierte Zahlungsinstitut (Iyzico) und die 3D-Secure-Infrastruktur. Karteninformationen werden nicht in den Systemen des Verkäufers gespeichert, sondern direkt an das Zahlungsinstitut übermittelt."
+        },
+        "s9": {
+          "title": "9. Rückgabe und Rückerstattung",
+          "p0": "Rückgaben im Rahmen des Widerrufsrechts erfolgen spätestens innerhalb von <strong>14 (vierzehn) Werktagen</strong> ab dem Eintreffen des Produkts beim Verkäufer in Form einer Rückerstattung auf die Karte/das Konto, von dem die Zahlung geleistet wurde. Der Zeitraum, in dem die Bank die Zahlung dem Konto gutschreibt, liegt außerhalb der Kontrolle des Verkäufers.",
+          "p1": "Die Rücksendefrachtkosten trägt bei Ausübung des Widerrufsrechts — falls die Bestellung auf ausdrücklichen Wunsch des Käufers mit der Frachtoption aufgegeben wurde und das Produkt mangelfrei ist — der Käufer."
+        },
+        "s10": {
+          "title": "10. Beilegung von Streitigkeiten",
+          "p0": "Bei Streitigkeiten, die sich aus diesem Vertrag ergeben, sind die <strong>Verbraucherschiedsausschüsse entsprechend den jährlich vom Handelsministerium bekannt gegebenen monetären Grenzen</strong> oder die <strong>Verbrauchergerichte</strong> zuständig. Mit Stand 2025 betragen die monetären Grenzen:",
+          "items": {
+            "0": "Bezirks-Verbraucherschiedsausschuss: Streitigkeiten unterhalb des festgelegten Werts",
+            "1": "Provinz-Verbraucherschiedsausschuss: Streitigkeiten im mittleren Wertebereich",
+            "2": "Verbrauchergerichte: Streitigkeiten, die die Obergrenze überschreiten"
+          },
+          "p1": "Die aktuellen monetären Grenzen sind auf der Verbraucherseite des Handelsministeriums (ticaret.gov.tr) verfügbar."
+        },
+        "s11": {
+          "title": "11. Beschwerden und Kontakt",
+          "p0": "Für Ihre Beschwerden und Fragen:",
+          "items": {
+            "0": "E-Mail: {email}",
+            "1": "Telefon: {phone}",
+            "2": "Verbraucherinformationssystem: tuketici.ticaret.gov.tr",
+            "3": "Alo 175 — Verbraucherberatungsstelle"
+          }
+        },
+        "s12": {
+          "title": "12. Inkrafttreten",
+          "p0": "Dieser Fernabsatzvertrag tritt mit der elektronischen Genehmigung durch den Käufer in Kraft. Eine Kopie des Vertrags wird zusammen mit der Bestellbestätigungsbenachrichtigung an die E-Mail-Adresse des Käufers übermittelt. Die Pflichten der Parteien, die sich aus der Durchführung dieses Vertrags ergeben, enden mit der Einziehung des Bestellbetrags und der Lieferung des Produkts/Pakets. Die Widerrufs- und Rückgaberechte bleiben vorbehalten."
+        },
+        "lastUpdated": "Dieser Vertrag wurde am Bestelldatum von den Parteien elektronisch gelesen und akzeptiert. Zuletzt aktualisiert: April 2026 — Version 2.0"
+      }
+    }
+  },
+  "ar": {
+    "legal": {
+      "header": {
+        "nav": {
+          "howItWorks": "كيف يعمل",
+          "faq": "الأسئلة الشائعة",
+          "orderTracking": "تتبع الطلب"
+        },
+        "backHome": "العودة إلى الصفحة الرئيسية"
+      },
+      "kvkk": {
+        "eyebrow": "قانوني",
+        "title": "نص الإفصاح بموجب قانون KVKK",
+        "intro": "تم إعداد هذا النص عملاً بالقانون رقم 6698 بشأن حماية البيانات الشخصية (\"KVKK\") بهدف إعلامكم بأغراض معالجة بياناتكم الشخصية وأسسها القانونية ونقلها ومدد حفظها وحقوقكم الناشئة عن قانون KVKK.",
+        "s1": {
+          "title": "1. المسؤول عن البيانات",
+          "p0": "بصفته المسؤول عن البيانات، تتم معالجة بياناتكم الشخصية من قبل الشخص الاعتباري/الطبيعي المبينة هويته أدناه.",
+          "box": {
+            "legalName": "الاسم التجاري",
+            "brand": "العلامة التجارية",
+            "tax": "مكتب الضرائب / الرقم",
+            "mersis": "رقم MERSİS",
+            "address": "العنوان",
+            "email": "البريد الإلكتروني",
+            "phone": "الهاتف",
+            "verbis": "رقم تسجيل VERBİS"
+          }
+        },
+        "s2": {
+          "title": "2. البيانات الشخصية المعالَجة",
+          "p0": "تتم معالجة فئات البيانات الشخصية التالية في إطار عملية الطلب:",
+          "items": {
+            "0": "بيانات الهوية: الاسم، اللقب، رقم الهوية الوطنية T.C. (إلزامي فقط لإصدار الأرشيف الإلكتروني/الفاتورة الإلكترونية)",
+            "1": "بيانات الاتصال: رقم الهاتف، عنوان البريد الإلكتروني، عنوان التسليم والفوترة",
+            "2": "بيانات الطالب (بيانات الطفل): اسم الطالب، لقبه، معلومات المدرسة والصف",
+            "3": "بيانات الطلب: رقم الطلب، محتوى الطلب، المبلغ، التاريخ، ملاحظة الطلب",
+            "4": "البيانات المالية: الرقم الضريبي، مكتب الضرائب (في حال تفضيل الفاتورة المؤسسية)، رقم الفاتورة",
+            "5": "بيانات أمان المعاملات: عنوان IP، معلومات الجلسة، سجلات تسجيل الدخول الفاشلة",
+            "6": "بيانات الدفع: يُحفظ فقط رقم مرجع المعاملة والمبلغ؛ ولا يتم حفظ رقم البطاقة وCVV وتاريخ الانتهاء في نظامنا، بل تُرسَل مباشرةً إلى مؤسسة الدفع المرخصة (المتوافقة مع PCI-DSS)."
+          }
+        },
+        "s3": {
+          "title": "3. إشعار خاص بشأن البيانات الشخصية للأطفال",
+          "p0": "أثناء عملية الطلب، تتم معالجة <strong>البيانات الشخصية الخاصة بالطلاب</strong> دون سن 18 عاماً (الاسم، اللقب، الصف، المدرسة). تتم معالجة هذه البيانات حصراً من قبل <strong>ولي أمر الطالب/ممثله القانوني</strong>، بغرض تسليم حزمة المستلزمات المدرسية إلى الطالب، في إطار الموافقة المقدمة بصفة ولي الأمر.",
+          "p1": "يقر الشخص الذي يملأ نموذج الطلب بأنه ولي أمر الطالب/ممثله القانوني وبأنه مخوّل بمعالجة البيانات الشخصية الخاصة بالطالب في إطار قانون KVKK. تتم معالجة بيانات الطفل فقط للمدة اللازمة لتنفيذ الخدمة ولا تُستخدم لأغراض التسويق."
+        },
+        "s4": {
+          "title": "4. أغراض معالجة البيانات الشخصية",
+          "items": {
+            "0": "إدارة عمليات الطلب والدفع",
+            "1": "تخطيط وتنفيذ عملية تسليم المنتج/الحزمة",
+            "2": "الوفاء بالالتزامات القانونية للفوترة من خلال إصدار الأرشيف الإلكتروني والفاتورة الإلكترونية",
+            "3": "إدارة علاقات العملاء، وتتبع الطلبات، وتقييم طلبات الإلغاء والإرجاع",
+            "4": "إدارة أنشطة الاتصال (إشعار الطلب، إشعار الشحن)",
+            "5": "إدارة عمليات أمن المعلومات (الجلسة، الحماية من هجمات القوة الغاشمة، مسار التدقيق)",
+            "6": "الوفاء بالالتزامات الواردة في التشريعات مثل القوانين رقم 6502 و6698 و213 وقانون VUK",
+            "7": "تقييم شكاوى المستهلكين والنزاعات"
+          }
+        },
+        "s5": {
+          "title": "5. الأسس القانونية للمعالجة (KVKK المادة 5)",
+          "items": {
+            "0": "ارتباطها المباشر بإبرام عقد أو تنفيذه (المادة 5/2-ج) — عملية الطلب والتسليم",
+            "1": "ضرورتها لتمكين المسؤول عن البيانات من الوفاء بالتزامه القانوني (المادة 5/2-چ) — إصدار الفاتورة، السجل المالي",
+            "2": "ضرورتها للمصالح المشروعة للمسؤول عن البيانات، بشرط عدم الإضرار بالحقوق والحريات الأساسية للشخص المعني (المادة 5/2-و) — أمن المعلومات، منع الاحتيال",
+            "3": "الموافقة الصريحة (المادة 5/1) — الإشعارات لأغراض التسويق وموافقة ولي الأمر على معالجة بيانات الطفل"
+          }
+        },
+        "s6": {
+          "title": "6. نقل البيانات الشخصية",
+          "p0": "يمكن نقل بياناتكم الشخصية فقط للأغراض التالية وبشكل محدود، في إطار المادتين 8 و9 من قانون KVKK:",
+          "items": {
+            "0": "مزود خدمة الدفع (Iyzico Ödeme Hizmetleri A.Ş.) — بغرض تنفيذ عملية الدفع",
+            "1": "مُكامِل الفاتورة الإلكترونية (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — بغرض إصدار الفاتورة",
+            "2": "شركة الشحن (Aras Kargo) — لتسليم الشحنة، فقط معلومات المستلم والهاتف والعنوان",
+            "3": "خدمة البريد الإلكتروني (Resend) وخدمة الرسائل القصيرة (Twilio) — لإرسال الإشعارات",
+            "4": "الجهات القانونية والمؤسسات العامة — في حال وجود التزامات قانونية أو طلب من المحكمة/النيابة العامة",
+            "5": "مزودو البنية التحتية السحابية (Vercel Inc., TiDB Cloud / PingCAP Inc.) — البنية التحتية لتخزين البيانات وتقديمها؛ الخوادم موجودة في منطقة الاتحاد الأوروبي (فرانكفورت)."
+          },
+          "p1": "يتم النقل إلى الخارج في إطار الضمانة التي يوفرها المزود المعني بموجب المادة 9 من قانون KVKK. في الحالات التي يتم فيها النقل إلى الخارج بموافقة صريحة، يتم الحصول على موافقة منفصلة."
+        },
+        "s7": {
+          "title": "7. مدد الحفظ",
+          "items": {
+            "0": "بيانات الطلب والفاتورة: 10 (عشر) سنوات وفقاً لقانون VUK وقانون TTK",
+            "1": "سجلات الإفصاح بموجب KVKK ومسار التدقيق (system_logs): 5 (خمس) سنوات",
+            "2": "بيانات الاتصال والتسويق: حتى سحب الموافقة الصريحة أو 3 سنوات كحد أقصى",
+            "3": "سجلات تسجيل الدخول الفاشلة وأمان الجلسة: سنة واحدة كحد أقصى",
+            "4": "سجلات الإلغاء/الإرجاع: 10 (عشر) سنوات من تاريخ التسجيل"
+          },
+          "p0": "البيانات التي انتهت مدة حفظها يتم حذفها أو إتلافها أو جعلها مجهولة الهوية في أول فترة إتلاف."
+        },
+        "s8": {
+          "title": "8. حقوق صاحب البيانات الشخصية (KVKK المادة 11)",
+          "p0": "بصفتكم صاحب البيانات، تتمتعون بالحقوق التالية عملاً بالمادة 11 من قانون KVKK:",
+          "items": {
+            "0": "معرفة ما إذا كانت بياناتكم الشخصية تتم معالجتها أم لا",
+            "1": "طلب معلومات بهذا الشأن في حال معالجتها",
+            "2": "معرفة غرض المعالجة وما إذا كانت تُستخدم بما يتوافق مع غرضها",
+            "3": "معرفة الأطراف الثالثة التي نُقلت إليها داخل البلاد أو خارجها",
+            "4": "طلب تصحيحها في حال معالجتها بشكل ناقص أو خاطئ",
+            "5": "طلب حذفها أو إتلافها في إطار الشروط المنصوص عليها في قانون KVKK",
+            "6": "طلب إخطار الأطراف الثالثة التي نُقلت إليها البيانات بعمليات التصحيح والحذف والإتلاف",
+            "7": "الاعتراض على نتيجة تظهر ضدكم نتيجة تحليلها عبر الأنظمة الآلية",
+            "8": "طلب جبر الضرر في حال تعرّضكم لضرر بسبب المعالجة غير المشروعة"
+          }
+        },
+        "s9": {
+          "title": "9. طريقة تقديم الطلب",
+          "p0": "عملاً بالمادة 13 من قانون KVKK، يمكنكم تقديم طلباتكم المتعلقة بحقوقكم المذكورة أعلاه بطريقة تتيح التحقق من الهوية عبر إحدى الطرق التالية:",
+          "items": {
+            "0": "البريد الإلكتروني: {dpoEmail} (من عنوان بريدكم الإلكتروني المسجل)",
+            "1": "طلب كتابي: {address}",
+            "2": "في إطار البلاغ المتعلق بإجراءات وأسس تقديم الطلب إلى المسؤول عن البيانات"
+          },
+          "p1": "يتم الفصل في طلبكم خلال مدة أقصاها 30 (ثلاثين) يوماً عملاً بالمادة 13/2 من قانون KVKK. في حال عدم رضاكم عن الرد المقدّم على طلبكم، يحق لكم تقديم شكوى إلى مجلس KVKK (kvkk.gov.tr)."
+        },
+        "s10": {
+          "title": "10. أمن البيانات",
+          "p0": "لمنع المعالجة غير المشروعة لبياناتكم الشخصية والوصول إليها وفقدانها، يتم تطبيق التدابير التقنية والإدارية التالية:",
+          "items": {
+            "0": "اتصال مشفّر بمعيار TLS 1.2+، وسياسة HSTS",
+            "1": "حفظ كلمات المرور عبر التجزئة التشفيرية أحادية الاتجاه (bcrypt)",
+            "2": "التحكم في الوصول المصرّح به وأمان الجلسة (سياسات ملفات تعريف الارتباط httpOnly وsecure وsameSite)",
+            "3": "الحماية من هجمات القوة الغاشمة وتحديد المعدل (rate limiting)",
+            "4": "النسخ الاحتياطي لقاعدة البيانات (النسخ الاحتياطي اليومي التلقائي عبر TiDB Cloud)",
+            "5": "عقود معالجي البيانات مع المتعاقدين الفرعيين من الأطراف الثالثة",
+            "6": "توعية الموظفين والتزامات السرية"
+          }
+        },
+        "s11": {
+          "title": "11. ملخص سياسة ملفات تعريف الارتباط",
+          "p0": "تُستخدَم في موقعنا فقط <strong>ملفات تعريف ارتباط الجلسة</strong> (<code>token</code>، <code>mudur_token</code> لتسجيل دخول المسؤول/المدير). لا يتم وضع ملفات تعريف ارتباط للتتبع/التسويق من أطراف ثالثة، ولا تُستخدم أي أداة تحليلات. تُنشأ ملفات تعريف ارتباط الجلسة فقط للمستخدمين الذين سجّلوا الدخول وعلى الأساس القانوني للمادة 5/2-ج من قانون KVKK (تنفيذ العقد)."
+        },
+        "s12": {
+          "title": "12. التحديثات",
+          "p0": "قد يتم تحديث نص الإفصاح هذا تماشياً مع التغييرات التشريعية والتطورات في نطاق خدمتنا. تُنشَر النسخة الحالية دائماً على هذه الصفحة."
+        },
+        "lastUpdated": "تاريخ آخر تحديث: أبريل 2026 — الإصدار 2.0"
+      },
+      "mesafeli": {
+        "eyebrow": "قانوني",
+        "title": "عقد البيع عن بُعد",
+        "intro": "نص عقد مُعدّ عملاً بالقانون رقم 6502 بشأن حماية المستهلك ولائحة العقود عن بُعد، ينظّم الحقوق والالتزامات بين البائع والمشتري.",
+        "s1": {
+          "title": "1. الأطراف",
+          "p0": "أُبرِم هذا العقد بين الأطراف المبينة أدناه.",
+          "sellerHeading": "1.1. البائع",
+          "box": {
+            "legalName": "الاسم التجاري",
+            "brand": "العلامة التجارية",
+            "tax": "مكتب الضرائب / الرقم",
+            "mersis": "رقم MERSİS",
+            "address": "العنوان",
+            "email": "البريد الإلكتروني",
+            "phone": "الهاتف",
+            "web": "الموقع الإلكتروني"
+          },
+          "buyerHeading": "1.2. المشتري (المستهلك)",
+          "p1": "الشخص الطبيعي/الاعتباري الذي يُصرّح ببيانات الهوية والاتصال والتسليم في نموذج الطلب. يقر ولي الأمر/الممثل القانوني الطرف في العقد بأنه مخوّل بشأن مشاركة البيانات الشخصية للطالب."
+        },
+        "s2": {
+          "title": "2. موضوع العقد",
+          "p0": "موضوع هذا العقد هو تنظيم حقوق والتزامات الأطراف فيما يتعلق ببيع وتسليم حزمة المستلزمات المدرسية التي طلبها المشتري إلكترونياً من الموقع الإلكتروني <website></website> العائد للبائع، والتي حُدّدت خصائصها وسعر بيعها في تأكيد الطلب."
+        },
+        "s3": {
+          "title": "3. السلعة/الخدمة موضوع العقد",
+          "p0": "إن <strong>نوع السلعة/الخدمة وكميتها وعلامتها التجارية/طرازها ومحتواها وسعر بيعها شامل ضريبة القيمة المضافة</strong> و<strong>طريقة الدفع</strong> محددة في نموذج الطلب وفي بريد تأكيد الطلب الإلكتروني. جميع الأسعار شاملة ضريبة القيمة المضافة. وهي بالليرة التركية (₺).",
+          "p1": "الحزم ذات محتوى محدّد مسبقاً من قبل البائع بما يتوافق مع احتياجات المدرسة والصف المعنيين. التمثيلات البصرية للمنتجات الواردة في الحزمة لأغراض ترويجية؛ وقد تكون هناك اختلافات طفيفة في تفاصيل اللون والعلامة التجارية."
+        },
+        "s4": {
+          "title": "4. الأحكام العامة",
+          "p0": "يقبل المشتري ويُصرّح ويتعهد بأنه قرأ وأصبح على علم بالخصائص الأساسية للمنتج موضوع عقد البيع، وسعر البيع (شامل ضريبة القيمة المضافة)، وطريقة الدفع، والمعلومات الأولية المتعلقة بالتسليم على الموقع الإلكتروني العائد للبائع، وأنه قدّم التأكيد اللازم إلكترونياً. إتمام المشتري للطلب يعني أنه قَبِل هذا العقد ونص الإفصاح بموجب KVKK."
+        },
+        "s5": {
+          "title": "5. حق الانسحاب",
+          "p0": "يحق للمشتري الانسحاب من العقد خلال <strong>14 (أربعة عشر) يوماً</strong> من تاريخ تسليم المنتج إليه أو إلى الشخص/الجهة في العنوان الذي حدده، دون إبداء أي سبب ودون دفع أي شرط جزائي.",
+          "p1": "يمكن ممارسة حق الانسحاب عبر القناة التالية:",
+          "items": {
+            "0": "البريد الإلكتروني: إشعار يبيّن بوضوح رقم الطلب وطلب الانسحاب، إلى العنوان {email}",
+            "1": "نموذج طلب الإلغاء عبر صفحة تتبع الطلب"
+          },
+          "p2": "لكي يتسنى ممارسة حق الانسحاب، يجب أن تكون المنتجات <strong>غير مستعملة، وعبوتها غير مفتوحة</strong> وفي حالة قابلة لإعادة البيع. في حال قام المشتري بتفكيك المنتجات أو إتلافها أو استعمالها أو أصبحت بطبيعتها منتجات غير قابلة للإرجاع، لا يمكن ممارسة حق الانسحاب."
+        },
+        "s6": {
+          "title": "6. استثناءات حق الانسحاب (اللائحة المادة 15)",
+          "p0": "عملاً بالمادة 15 من لائحة العقود عن بُعد، لا يمكن ممارسة حق الانسحاب بالنسبة للمنتجات التالية:",
+          "items": {
+            "0": "السلع المُعدّة وفقاً لرغبات المستهلك أو احتياجاته الشخصية بشكل صريح، السلع المُعدّة خصيصاً للشخص",
+            "1": "المنتجات التي فُتحت عناصرها الواقية مثل العبوة أو الشريط أو الختم أو الطرد بعد التسليم، والتي لا يكون إرجاعها مناسباً من الناحية الصحية والنظافة",
+            "2": "المنتجات التي تختلط بمنتجات أخرى بعد التسليم ولا يمكن فصلها بحكم طبيعتها"
+          },
+          "p1": "قد تكتسب حزم الطلاب المُعدّة خصيصاً للمدرسة صفة <strong>السلعة المُعدّة خصيصاً للشخص</strong> بعد إيصال الحزمة إلى المشتري/الطالب وفتح عبوتها؛ وفي هذه الحالة قد تكون ممارسة حق الانسحاب مقيّدة. يُبلَّغ المشتري بهذا الاستثناء بوضوح مسبقاً لكل طلب."
+        },
+        "s7": {
+          "title": "7. التسليم",
+          "p0": "بعد تأكيد الطلب، يتم التسليم خلال مدة أقصاها <strong>30 (ثلاثين) يوماً</strong> عقب تأكيد الدفع. خيارات التسليم:",
+          "items": {
+            "0": "التسليم الجماعي إلى المدرسة — في التاريخ الذي تحدده المدرسة، عن طريق معلم الصف أو الإدارة؛ ويُحرَّر مستند استلام",
+            "1": "التسليم إلى المنزل عبر الشحن — عن طريق Aras Kargo، خلال 2-4 أيام عمل من تأكيد الطلب، إلى العنوان المدوّن في نموذج الطلب"
+          },
+          "p1": "إن وُجدت رسوم شحن، تُذكَر في ملخص الطلب. وإن لم تُذكَر، تكون رسوم الشحن مشمولة في سعر الحزمة. تكاليف الشحن الإضافية الناشئة عن خطأ في العنوان تقع على عاتق المشتري."
+        },
+        "s8": {
+          "title": "8. الدفع",
+          "p0": "يتم الدفع عبر الإنترنت ببطاقة مصرفية/ائتمانية، من خلال مؤسسة الدفع المرخصة (Iyzico) والبنية التحتية 3D Secure. لا تُحفظ معلومات البطاقة في أنظمة البائع، بل تُرسَل مباشرةً إلى مؤسسة الدفع."
+        },
+        "s9": {
+          "title": "9. الإرجاع ورد المبلغ",
+          "p0": "تُنفَّذ عمليات الإرجاع في إطار حق الانسحاب خلال مدة أقصاها <strong>14 (أربعة عشر) يوم عمل</strong> من وصول المنتج إلى البائع، على شكل رد إلى البطاقة/الحساب الذي تم منه الدفع. مدة انعكاس البنك للدفعة على الحساب خارجة عن سيطرة البائع.",
+          "p1": "رسوم شحن الإرجاع، عند ممارسة حق الانسحاب — إذا قُدِّم الطلب بخيار الشحن بتفضيل صريح من المشتري وكان المنتج خالياً من العيوب — تقع على عاتق المشتري."
+        },
+        "s10": {
+          "title": "10. حل النزاعات",
+          "p0": "في النزاعات الناشئة عن هذا العقد، تكون <strong>لجان التحكيم الاستهلاكية بحسب الحدود المالية</strong> التي تعلنها وزارة التجارة كل عام أو <strong>المحاكم الاستهلاكية</strong> هي المختصة. اعتباراً من عام 2025، تكون الحدود المالية كالتالي:",
+          "items": {
+            "0": "لجنة التحكيم الاستهلاكية بالقضاء (المنطقة): النزاعات التي تقل عن القيمة المحددة",
+            "1": "لجنة التحكيم الاستهلاكية بالولاية: النزاعات في نطاق القيمة المتوسطة",
+            "2": "المحاكم الاستهلاكية: النزاعات التي تتجاوز الحد الأعلى"
+          },
+          "p1": "تتوفر الحدود المالية الحالية على صفحة المستهلك التابعة لوزارة التجارة (ticaret.gov.tr)."
+        },
+        "s11": {
+          "title": "11. الشكاوى والتواصل",
+          "p0": "لشكاواكم وأسئلتكم:",
+          "items": {
+            "0": "البريد الإلكتروني: {email}",
+            "1": "الهاتف: {phone}",
+            "2": "نظام معلومات المستهلك: tuketici.ticaret.gov.tr",
+            "3": "Alo 175 — خط استشارة المستهلك"
+          }
+        },
+        "s12": {
+          "title": "12. النفاذ",
+          "p0": "يدخل عقد البيع عن بُعد هذا حيز النفاذ بمصادقة المشتري إلكترونياً. تُرسَل نسخة من العقد إلى عنوان البريد الإلكتروني للمشتري مع إشعار تأكيد الطلب. تنتهي التزامات الأطراف الناشئة عن تطبيق هذا العقد بتحصيل قيمة الطلب وتسليم المنتج/الحزمة. تبقى حقوق الانسحاب والإرجاع محفوظة."
+        },
+        "lastUpdated": "قُرئ هذا العقد وقُبِل من قبل الأطراف إلكترونياً في تاريخ الطلب. تاريخ آخر تحديث: أبريل 2026 — الإصدار 2.0"
+      }
+    }
+  }
+}

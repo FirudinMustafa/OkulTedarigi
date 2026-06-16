@@ -4,13 +4,17 @@ import { getAdminSession, hashPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
 import { adminSchoolCreateSchema, formatZodError } from '@/lib/validators'
+import { buildTranslationData } from '@/lib/i18n-content'
 import { sendDirectorWelcome } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const schools = await prisma.school.findMany({
@@ -18,6 +22,9 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        name_en: true,
+        name_de: true,
+        name_ar: true,
         address: true,
         phone: true,
         email: true,
@@ -38,24 +45,25 @@ export async function GET() {
   } catch (error) {
     console.error('Okullar listelenemedi:', error)
     return NextResponse.json(
-      { error: 'Okullar yuklenemedi' },
+      { error: t('catalog.schoolsLoadFailed') },
       { status: 500 }
     )
   }
 }
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => null)
     const parsed = adminSchoolCreateSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: formatZodError(parsed.error) },
+        { error: formatZodError(parsed.error, await getApiLocale()) },
         { status: 400 }
       )
     }
@@ -68,7 +76,10 @@ export async function POST(request: Request) {
       directorName,
       directorEmail,
       directorPassword,
-      password // Veli giris sifresi (opsiyonel - verilmezse otomatik olusturulur)
+      password, // Veli giris sifresi (opsiyonel - verilmezse otomatik olusturulur)
+      name_en,
+      name_de,
+      name_ar
     } = parsed.data
 
     // Mudur sifresini hashle
@@ -83,7 +94,7 @@ export async function POST(request: Request) {
       })
       if (conflict) {
         return NextResponse.json(
-          { error: 'Bu sifre zaten kullanimda. Farkli bir sifre seciniz.' },
+          { error: t('catalog.passwordInUseChoose') },
           { status: 409 }
         )
       }
@@ -101,7 +112,7 @@ export async function POST(request: Request) {
       }
       if (!isUnique) {
         return NextResponse.json(
-          { error: 'Sifre olusturulamadi, tekrar deneyin' },
+          { error: t('catalog.passwordGenFailed') },
           { status: 500 }
         )
       }
@@ -110,6 +121,7 @@ export async function POST(request: Request) {
     const school = await prisma.school.create({
       data: {
         name,
+        ...buildTranslationData('name', { en: name_en, de: name_de, ar: name_ar }),
         address: address || null,
         phone: phone || null,
         email: email || null,
@@ -161,13 +173,13 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
-        { error: 'Bu e-posta adresi ile baska bir okul zaten mevcut.' },
+        { error: t('catalog.schoolEmailExists') },
         { status: 409 }
       )
     }
     console.error('Okul olusturulamadi:', error)
     return NextResponse.json(
-      { error: 'Okul olusturulamadi' },
+      { error: t('catalog.schoolCreateFailed') },
       { status: 500 }
     )
   }

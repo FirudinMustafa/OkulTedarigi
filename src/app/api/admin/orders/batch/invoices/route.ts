@@ -4,6 +4,8 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
 import { sendInvoiceCreated } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 interface BatchResult {
   orderId: string
@@ -14,26 +16,27 @@ interface BatchResult {
 }
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Gecersiz istek' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidRequest') }, { status: 400 })
     }
     const { orderIds } = body
 
     if (!Array.isArray(orderIds) || orderIds.length === 0 || orderIds.length > 500) {
       return NextResponse.json(
-        { error: 'Siparis ID listesi gerekli (max 500)' },
+        { error: t('orders.idListRequired500') },
         { status: 400 }
       )
     }
     if (!orderIds.every(id => typeof id === 'string' && id.length > 0 && id.length <= 40)) {
-      return NextResponse.json({ error: 'Gecersiz siparis ID' }, { status: 400 })
+      return NextResponse.json({ error: t('orders.invalidOrderId') }, { status: 400 })
     }
 
     // Fatura kesilebilir durumdaki siparisleri getir (zaten faturalanmamis olanlar)
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
 
     if (orders.length === 0) {
       return NextResponse.json(
-        { error: 'Fatura kesilebilir siparis bulunamadi' },
+        { error: t('orders.noInvoiceableOrders') },
         { status: 400 }
       )
     }
@@ -101,7 +104,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: invoiceResult.errorMessage || 'Fatura olusturulamadi'
+            error: invoiceResult.errorMessage || t('orders.invoiceCreateFailed')
           }
         }
 
@@ -122,7 +125,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             orderNumber: order.orderNumber,
             success: false,
-            error: 'Bu siparise daha onceden fatura kesilmis (concurrent)'
+            error: t('orders.alreadyInvoicedConcurrent')
           }
         }
 
@@ -147,6 +150,7 @@ export async function POST(request: Request) {
             parentName: order.parentName,
             invoiceNo: invoiceResult.invoiceNo,
             totalAmount: Number(order.totalAmount),
+            locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
           }).catch(notifError => console.error('Toplu fatura mail hatasi:', notifError))
         }
 
@@ -161,7 +165,7 @@ export async function POST(request: Request) {
           orderId: order.id,
           orderNumber: order.orderNumber,
           success: false,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+          error: error instanceof Error ? error.message : t('orders.unknownError')
         }
       }
     }
@@ -194,7 +198,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `${successCount} fatura olusturuldu${failCount > 0 ? `, ${failCount} hata` : ''}`,
+      message: t('orders.batchInvoiceResult', { success: successCount, failed: failCount }),
       results,
       summary: {
         total: orders.length,
@@ -206,7 +210,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Toplu fatura olusturulamadi:', error)
     return NextResponse.json(
-      { error: 'Toplu fatura olusturulamadi' },
+      { error: t('orders.batchInvoiceFailed') },
       { status: 500 }
     )
   }

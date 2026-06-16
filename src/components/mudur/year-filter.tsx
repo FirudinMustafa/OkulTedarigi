@@ -1,6 +1,8 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
@@ -8,6 +10,7 @@ import {
 export default function YearFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useTranslations('mudur.yearFilter')
   const currentYear = searchParams.get('year') || 'all'
 
   const years: string[] = []
@@ -27,10 +30,10 @@ export default function YearFilter() {
   return (
     <Select value={currentYear} onValueChange={handleChange}>
       <SelectTrigger className="w-[160px]">
-        <SelectValue placeholder="Yil secin" />
+        <SelectValue placeholder={t('placeholder')} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">Tum Yillar</SelectItem>
+        <SelectItem value="all">{t('allYears')}</SelectItem>
         {years.map(y => (
           <SelectItem key={y} value={y}>{y}</SelectItem>
         ))}

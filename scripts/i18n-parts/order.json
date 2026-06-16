@@ -1,0 +1,746 @@
+{
+  "tr": {
+    "order": {
+      "header": {
+        "homeAriaLabel": "okultedarigim.com ana sayfa",
+        "backToPassword": "Şifre ekranına dön",
+        "backToHome": "Ana Sayfaya Dön",
+        "nav": {
+          "howItWorks": "Nasıl Çalışır",
+          "faq": "S.S.S",
+          "orderTracking": "Sipariş Takibi"
+        }
+      },
+      "errors": {
+        "passwordRequired": "Lütfen okul şifrenizi girin",
+        "invalidPassword": "Geçersiz okul şifresi",
+        "generic": "Bir hata oluştu. Lütfen tekrar deneyin."
+      },
+      "delivery": {
+        "cargo": "Kargo ile teslim",
+        "school": "Okula teslim"
+      },
+      "selectPackage": {
+        "title": "Paketini <accent>seç.</accent>",
+        "subtitle": "Sınıfınıza uygun paketi inceleyin ve seçin.",
+        "classPackageAlt": "{className} sınıf paketi",
+        "classPackageLabel": "{className} Sınıf Paketi",
+        "packageContents": "Paket içeriği",
+        "hide": "Gizle",
+        "viewPackage": "Paketi görüntüle",
+        "choosePackage": "Paketi seç",
+        "differentPassword": "Farklı bir okul şifresi girin"
+      },
+      "passwordEntry": {
+        "imageAlt": "Şifre",
+        "eyebrow": "Sipariş",
+        "title": "<accent>Lütfen</accent> okul şifrenizi girin.",
+        "description": "Okulundan aldığın sınıf şifresini gir, paketini gör, ödemeni tamamla. Üyelik gerekmiyor.",
+        "label": "Okul Şifresi",
+        "placeholder": "Örn: ATATURK2024",
+        "checking": "Kontrol ediliyor…",
+        "continue": "Devam et",
+        "securityBadge": "256-bit SSL · 3D Secure güvenli ödeme"
+      },
+      "sessionWarning": {
+        "title": "Oturum bulunamadı",
+        "message": "Sipariş bilgileriniz kayboldu. Lütfen okul şifrenizi tekrar girin.",
+        "close": "Kapat"
+      }
+    },
+    "packageForm": {
+      "back": "Geri",
+      "loading": "Yükleniyor...",
+      "errorTitle": "Hata",
+      "backToHome": "Ana Sayfaya Dön",
+      "classLabel": "{className} Sınıfı",
+      "delivery": {
+        "cargoBadge": "Kargo ile Teslim",
+        "schoolBadge": "Okula Teslim"
+      },
+      "validation": {
+        "invalidEmail": "Geçerli bir e-posta adresi giriniz",
+        "invalidPhone": "Geçerli bir telefon numarası giriniz (05XX XXX XX XX)",
+        "tcLength": "TC Kimlik No 11 haneli olmalı",
+        "invalidTc": "Geçerli bir TC Kimlik Numarası giriniz",
+        "taxLength": "Vergi/TC No 10 veya 11 haneli rakam olmalı",
+        "genericError": "Bir hata oluştu",
+        "requiredPersonal": "Lütfen zorunlu kişisel bilgileri doldurun",
+        "invalidPhoneSubmit": "Lütfen geçerli bir telefon numarası girin (05XX XXX XX XX)",
+        "invalidEmailSubmit": "Lütfen geçerli bir e-posta adresi girin",
+        "atLeastOneStudent": "En az bir öğrenci eklemelisiniz",
+        "studentNames": "Lütfen tüm öğrencilerin ad ve soyadını doldurun",
+        "studentSections": "Lütfen tüm öğrenciler için şube bilgisini girin",
+        "tcRequired": "TC Kimlik Numarası zorunludur",
+        "addressIncomplete": "Lütfen adres bilgilerinizi eksiksiz doldurun",
+        "selectProvinceDistrict": "Lütfen il ve ilçe seçiniz",
+        "altAddressIncomplete": "Alternatif teslimat adresi bilgilerini eksiksiz doldurun",
+        "altSelectProvinceDistrict": "Alternatif adres için il ve ilçe seçiniz",
+        "corporateRequired": "Kurumsal fatura için Vergi No, Firma Ünvanı ve Vergi Dairesi zorunludur",
+        "invoiceAddressIncomplete": "Fatura adresi bilgilerini eksiksiz doldurun",
+        "acceptContracts": "Devam etmek için sözleşmeleri kabul etmeniz gerekmektedir"
+      },
+      "address": {
+        "country": "Ülke *",
+        "province": "İl *",
+        "district": "İlçe / Semt *",
+        "districtShort": "İlçe *",
+        "selectProvince": "İl Seçiniz",
+        "selectDistrict": "İlçe Seçiniz",
+        "selectProvinceFirst": "Önce il seçiniz",
+        "streetAddress": "Sokak Adresi *",
+        "streetAddressPlaceholder": "Bina numarası ve sokak adı",
+        "streetAddress2": "Apartman, daire, oda vb. *",
+        "streetAddress2Placeholder": "Apartman adı, kat, daire no, vb.",
+        "postalCode": "Posta Kodu (Opsiyonel)"
+      },
+      "contact": {
+        "title": "👤 Kargo ve İletişim Bilgileri",
+        "firstName": "Ad *",
+        "lastName": "Soyad *",
+        "phone": "Telefon *",
+        "phonePlaceholder": "05XX XXX XX XX",
+        "email": "E-posta *"
+      },
+      "schoolDelivery": {
+        "title": "Okula Teslim",
+        "description": "Satın alacağınız eğitim materyalleri, yeni eğitim-öğretim döneminin başlamasıyla birlikte sınıf ortamında öğrencilere elden teslim edilecektir."
+      },
+      "altAddress": {
+        "toggle": "🚚 Farklı bir adrese gönder",
+        "title": "Alternatif Teslimat Adresi"
+      },
+      "students": {
+        "title": "🎓 Öğrenci Bilgileri",
+        "count": "({count} öğrenci)",
+        "helper": "Birden fazla çocuğunuz için aynı paketi sipariş verebilirsiniz. Toplam tutar öğrenci sayısıyla orantılı olarak hesaplanır.",
+        "studentN": "{number}. Öğrenci",
+        "remove": "Sil",
+        "firstName": "Öğrenci Adı *",
+        "lastName": "Öğrenci Soyadı *",
+        "class": "Sınıf *",
+        "section": "Şube",
+        "add": "+ Öğrenci Ekle",
+        "maxReached": "En fazla {max} öğrenci eklenebilir."
+      },
+      "invoice": {
+        "title": "🧾 Fatura Bilgileri",
+        "individual": "👤 Bireysel",
+        "corporate": "🏢 Kurumsal",
+        "fullName": "Ad Soyad",
+        "tcNumber": "TC Kimlik No *",
+        "tcPlaceholder": "11 haneli TC no",
+        "individualAddressNote": "Fatura ve sevk adresi aşağıdaki adres bilgilerinden alınacaktır.",
+        "companyInfo": "Firma Bilgileri",
+        "taxNumber": "Vergi No *",
+        "taxPlaceholder": "10 haneli vergi numarası",
+        "companyTitle": "Firma Ünvanı *",
+        "companyTitlePlaceholder": "Şirket veya şahıs ismi",
+        "taxOffice": "Vergi Dairesi *",
+        "taxOfficePlaceholder": "Vergi dairesi adı",
+        "companyAddress": "Firma Adresi",
+        "companyAddressNote": "Fatura adresi aşağıdaki adres bilgilerinden alınacaktır. Farklı bir firma adresi için aşağıda \"Faturamı aynı adrese gönder\" seçeneğini kaldırın.",
+        "companyAddressHeading": "📍 Firma Adresi",
+        "sameAddress": "Faturamı aynı adrese gönder",
+        "invoiceAddress": "Fatura Adresi",
+        "streetAddress2": "Apartman, daire vb. *"
+      },
+      "note": {
+        "title": "📝 Sipariş Notu (Opsiyonel)",
+        "placeholder": "Siparişinizle ilgili eklemek istediğiniz notlar..."
+      },
+      "payment": {
+        "title": "Ödeme Yöntemi",
+        "cardLabel": "Kredi Kartı / Banka Kartı",
+        "cardDescription": "Güvenli online ödeme (3D Secure)"
+      },
+      "legal": {
+        "title": "✅ Yasal Onaylar",
+        "distanceSales": "<link>Mesafeli Satış Sözleşmesi</link>'ni okudum ve kabul ediyorum. *",
+        "kvkk": "<link>KVKK Aydınlatma Metni</link>'ni okudum ve kabul ediyorum. *"
+      },
+      "summary": {
+        "title": "Sipariş Özeti",
+        "school": "Okul:",
+        "class": "Sınıf:",
+        "package": "Paket:",
+        "delivery": "Teslimat:",
+        "cargo": "Kargo",
+        "schoolDelivery": "Okula Teslim",
+        "packageContents": "Paket İçeriği",
+        "customizableHint": "İhtiyacınız olmayan ürünleri çıkarabilirsiniz; toplam tutar buna göre güncellenir.",
+        "packagePerStudent": "Paket × {count} öğrenci",
+        "subtotal": "Ara Toplam",
+        "discount": "İndirim",
+        "total": "TOPLAM TUTAR",
+        "processing": "İşleniyor...",
+        "goToPayment": "Ödemeye Geç"
+      },
+      "discount": {
+        "title": "İndirim Kodu",
+        "percentage": "%{value} indirim",
+        "amount": "{value} TL indirim",
+        "placeholder": "Kod girin",
+        "apply": "Uygula"
+      }
+    }
+  },
+  "en": {
+    "order": {
+      "header": {
+        "homeAriaLabel": "okultedarigim.com home page",
+        "backToPassword": "Back to password screen",
+        "backToHome": "Back to Home",
+        "nav": {
+          "howItWorks": "How It Works",
+          "faq": "FAQ",
+          "orderTracking": "Order Tracking"
+        }
+      },
+      "errors": {
+        "passwordRequired": "Please enter your school password",
+        "invalidPassword": "Invalid school password",
+        "generic": "An error occurred. Please try again."
+      },
+      "delivery": {
+        "cargo": "Delivery by cargo",
+        "school": "Delivery to school"
+      },
+      "selectPackage": {
+        "title": "Choose your <accent>package.</accent>",
+        "subtitle": "Review and select the package suitable for your class.",
+        "classPackageAlt": "{className} class package",
+        "classPackageLabel": "{className} Class Package",
+        "packageContents": "Package contents",
+        "hide": "Hide",
+        "viewPackage": "View package",
+        "choosePackage": "Select package",
+        "differentPassword": "Enter a different school password"
+      },
+      "passwordEntry": {
+        "imageAlt": "Password",
+        "eyebrow": "Order",
+        "title": "<accent>Please</accent> enter your school password.",
+        "description": "Enter the class password you received from your school, view your package, and complete your payment. No membership required.",
+        "label": "School Password",
+        "placeholder": "e.g. ATATURK2024",
+        "checking": "Checking…",
+        "continue": "Continue",
+        "securityBadge": "256-bit SSL · 3D Secure secure payment"
+      },
+      "sessionWarning": {
+        "title": "Session not found",
+        "message": "Your order information was lost. Please enter your school password again.",
+        "close": "Close"
+      }
+    },
+    "packageForm": {
+      "back": "Back",
+      "loading": "Loading...",
+      "errorTitle": "Error",
+      "backToHome": "Back to Home",
+      "classLabel": "{className} Class",
+      "delivery": {
+        "cargoBadge": "Delivery by Cargo",
+        "schoolBadge": "Delivery to School"
+      },
+      "validation": {
+        "invalidEmail": "Please enter a valid email address",
+        "invalidPhone": "Please enter a valid phone number (05XX XXX XX XX)",
+        "tcLength": "National ID No. must be 11 digits",
+        "invalidTc": "Please enter a valid National ID number",
+        "taxLength": "Tax/National ID No. must be 10 or 11 digits",
+        "genericError": "An error occurred",
+        "requiredPersonal": "Please fill in the required personal information",
+        "invalidPhoneSubmit": "Please enter a valid phone number (05XX XXX XX XX)",
+        "invalidEmailSubmit": "Please enter a valid email address",
+        "atLeastOneStudent": "You must add at least one student",
+        "studentNames": "Please fill in the first and last name of all students",
+        "studentSections": "Please enter the section for all students",
+        "tcRequired": "National ID number is required",
+        "addressIncomplete": "Please fill in your address information completely",
+        "selectProvinceDistrict": "Please select a province and district",
+        "altAddressIncomplete": "Please fill in the alternative delivery address completely",
+        "altSelectProvinceDistrict": "Please select a province and district for the alternative address",
+        "corporateRequired": "For a corporate invoice, Tax No., Company Name and Tax Office are required",
+        "invoiceAddressIncomplete": "Please fill in the invoice address completely",
+        "acceptContracts": "You must accept the contracts to continue"
+      },
+      "address": {
+        "country": "Country *",
+        "province": "Province *",
+        "district": "District / Neighborhood *",
+        "districtShort": "District *",
+        "selectProvince": "Select Province",
+        "selectDistrict": "Select District",
+        "selectProvinceFirst": "Select a province first",
+        "streetAddress": "Street Address *",
+        "streetAddressPlaceholder": "Building number and street name",
+        "streetAddress2": "Apartment, flat, room, etc. *",
+        "streetAddress2Placeholder": "Building name, floor, flat no., etc.",
+        "postalCode": "Postal Code (Optional)"
+      },
+      "contact": {
+        "title": "👤 Shipping and Contact Information",
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "phone": "Phone *",
+        "phonePlaceholder": "05XX XXX XX XX",
+        "email": "Email *"
+      },
+      "schoolDelivery": {
+        "title": "Delivery to School",
+        "description": "The educational materials you purchase will be handed directly to the students in the classroom at the start of the new academic term."
+      },
+      "altAddress": {
+        "toggle": "🚚 Ship to a different address",
+        "title": "Alternative Delivery Address"
+      },
+      "students": {
+        "title": "🎓 Student Information",
+        "count": "({count} students)",
+        "helper": "You can order the same package for more than one child. The total amount is calculated in proportion to the number of students.",
+        "studentN": "Student {number}",
+        "remove": "Remove",
+        "firstName": "Student First Name *",
+        "lastName": "Student Last Name *",
+        "class": "Class *",
+        "section": "Section",
+        "add": "+ Add Student",
+        "maxReached": "A maximum of {max} students can be added."
+      },
+      "invoice": {
+        "title": "🧾 Invoice Information",
+        "individual": "👤 Individual",
+        "corporate": "🏢 Corporate",
+        "fullName": "Full Name",
+        "tcNumber": "National ID No. *",
+        "tcPlaceholder": "11-digit National ID no.",
+        "individualAddressNote": "The invoice and shipping address will be taken from the address information below.",
+        "companyInfo": "Company Information",
+        "taxNumber": "Tax No. *",
+        "taxPlaceholder": "10-digit tax number",
+        "companyTitle": "Company Name *",
+        "companyTitlePlaceholder": "Company or individual name",
+        "taxOffice": "Tax Office *",
+        "taxOfficePlaceholder": "Tax office name",
+        "companyAddress": "Company Address",
+        "companyAddressNote": "The invoice address will be taken from the address information below. For a different company address, clear the \"Send my invoice to the same address\" option below.",
+        "companyAddressHeading": "📍 Company Address",
+        "sameAddress": "Send my invoice to the same address",
+        "invoiceAddress": "Invoice Address",
+        "streetAddress2": "Apartment, flat, etc. *"
+      },
+      "note": {
+        "title": "📝 Order Note (Optional)",
+        "placeholder": "Any notes you would like to add about your order..."
+      },
+      "payment": {
+        "title": "Payment Method",
+        "cardLabel": "Credit Card / Debit Card",
+        "cardDescription": "Secure online payment (3D Secure)"
+      },
+      "legal": {
+        "title": "✅ Legal Approvals",
+        "distanceSales": "I have read and accept the <link>Distance Sales Agreement</link>. *",
+        "kvkk": "I have read and accept the <link>Personal Data Protection (KVKK) Notice</link>. *"
+      },
+      "summary": {
+        "title": "Order Summary",
+        "school": "School:",
+        "class": "Class:",
+        "package": "Package:",
+        "delivery": "Delivery:",
+        "cargo": "Cargo",
+        "schoolDelivery": "Delivery to School",
+        "packageContents": "Package Contents",
+        "customizableHint": "You can remove products you don't need; the total amount will update accordingly.",
+        "packagePerStudent": "Package × {count} students",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "total": "TOTAL AMOUNT",
+        "processing": "Processing...",
+        "goToPayment": "Proceed to Payment"
+      },
+      "discount": {
+        "title": "Discount Code",
+        "percentage": "{value}% discount",
+        "amount": "{value} TL discount",
+        "placeholder": "Enter code",
+        "apply": "Apply"
+      }
+    }
+  },
+  "de": {
+    "order": {
+      "header": {
+        "homeAriaLabel": "okultedarigim.com Startseite",
+        "backToPassword": "Zurück zum Passwortbildschirm",
+        "backToHome": "Zurück zur Startseite",
+        "nav": {
+          "howItWorks": "So funktioniert's",
+          "faq": "FAQ",
+          "orderTracking": "Bestellverfolgung"
+        }
+      },
+      "errors": {
+        "passwordRequired": "Bitte geben Sie Ihr Schulpasswort ein",
+        "invalidPassword": "Ungültiges Schulpasswort",
+        "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      },
+      "delivery": {
+        "cargo": "Lieferung per Versand",
+        "school": "Lieferung an die Schule"
+      },
+      "selectPackage": {
+        "title": "Wählen Sie Ihr <accent>Paket.</accent>",
+        "subtitle": "Sehen Sie sich das passende Paket für Ihre Klasse an und wählen Sie es aus.",
+        "classPackageAlt": "{className} Klassenpaket",
+        "classPackageLabel": "{className} Klassenpaket",
+        "packageContents": "Paketinhalt",
+        "hide": "Ausblenden",
+        "viewPackage": "Paket ansehen",
+        "choosePackage": "Paket auswählen",
+        "differentPassword": "Ein anderes Schulpasswort eingeben"
+      },
+      "passwordEntry": {
+        "imageAlt": "Passwort",
+        "eyebrow": "Bestellung",
+        "title": "<accent>Bitte</accent> geben Sie Ihr Schulpasswort ein.",
+        "description": "Geben Sie das von Ihrer Schule erhaltene Klassenpasswort ein, sehen Sie Ihr Paket und schließen Sie Ihre Zahlung ab. Keine Mitgliedschaft erforderlich.",
+        "label": "Schulpasswort",
+        "placeholder": "z. B. ATATURK2024",
+        "checking": "Wird geprüft…",
+        "continue": "Weiter",
+        "securityBadge": "256-Bit-SSL · 3D-Secure sichere Zahlung"
+      },
+      "sessionWarning": {
+        "title": "Sitzung nicht gefunden",
+        "message": "Ihre Bestelldaten sind verloren gegangen. Bitte geben Sie Ihr Schulpasswort erneut ein.",
+        "close": "Schließen"
+      }
+    },
+    "packageForm": {
+      "back": "Zurück",
+      "loading": "Wird geladen...",
+      "errorTitle": "Fehler",
+      "backToHome": "Zurück zur Startseite",
+      "classLabel": "Klasse {className}",
+      "delivery": {
+        "cargoBadge": "Lieferung per Versand",
+        "schoolBadge": "Lieferung an die Schule"
+      },
+      "validation": {
+        "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+        "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein (05XX XXX XX XX)",
+        "tcLength": "Die nationale ID-Nummer muss 11 Stellen haben",
+        "invalidTc": "Bitte geben Sie eine gültige nationale ID-Nummer ein",
+        "taxLength": "Die Steuer-/ID-Nummer muss 10 oder 11 Ziffern haben",
+        "genericError": "Ein Fehler ist aufgetreten",
+        "requiredPersonal": "Bitte füllen Sie die erforderlichen persönlichen Angaben aus",
+        "invalidPhoneSubmit": "Bitte geben Sie eine gültige Telefonnummer ein (05XX XXX XX XX)",
+        "invalidEmailSubmit": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+        "atLeastOneStudent": "Sie müssen mindestens einen Schüler hinzufügen",
+        "studentNames": "Bitte geben Sie Vor- und Nachnamen aller Schüler ein",
+        "studentSections": "Bitte geben Sie die Klassengruppe für alle Schüler ein",
+        "tcRequired": "Die nationale ID-Nummer ist erforderlich",
+        "addressIncomplete": "Bitte füllen Sie Ihre Adressdaten vollständig aus",
+        "selectProvinceDistrict": "Bitte wählen Sie Provinz und Bezirk aus",
+        "altAddressIncomplete": "Bitte füllen Sie die alternative Lieferadresse vollständig aus",
+        "altSelectProvinceDistrict": "Bitte wählen Sie Provinz und Bezirk für die alternative Adresse aus",
+        "corporateRequired": "Für eine Firmenrechnung sind Steuernummer, Firmenname und Finanzamt erforderlich",
+        "invoiceAddressIncomplete": "Bitte füllen Sie die Rechnungsadresse vollständig aus",
+        "acceptContracts": "Um fortzufahren, müssen Sie die Verträge akzeptieren"
+      },
+      "address": {
+        "country": "Land *",
+        "province": "Provinz *",
+        "district": "Bezirk / Stadtteil *",
+        "districtShort": "Bezirk *",
+        "selectProvince": "Provinz auswählen",
+        "selectDistrict": "Bezirk auswählen",
+        "selectProvinceFirst": "Zuerst Provinz auswählen",
+        "streetAddress": "Straßenadresse *",
+        "streetAddressPlaceholder": "Hausnummer und Straßenname",
+        "streetAddress2": "Wohnung, Apartment, Zimmer usw. *",
+        "streetAddress2Placeholder": "Gebäudename, Etage, Wohnungsnr. usw.",
+        "postalCode": "Postleitzahl (Optional)"
+      },
+      "contact": {
+        "title": "👤 Versand- und Kontaktdaten",
+        "firstName": "Vorname *",
+        "lastName": "Nachname *",
+        "phone": "Telefon *",
+        "phonePlaceholder": "05XX XXX XX XX",
+        "email": "E-Mail *"
+      },
+      "schoolDelivery": {
+        "title": "Lieferung an die Schule",
+        "description": "Die von Ihnen gekauften Lernmaterialien werden zu Beginn des neuen Schuljahres im Klassenzimmer direkt an die Schüler ausgehändigt."
+      },
+      "altAddress": {
+        "toggle": "🚚 An eine andere Adresse senden",
+        "title": "Alternative Lieferadresse"
+      },
+      "students": {
+        "title": "🎓 Schülerdaten",
+        "count": "({count} Schüler)",
+        "helper": "Sie können dasselbe Paket für mehrere Kinder bestellen. Der Gesamtbetrag wird proportional zur Anzahl der Schüler berechnet.",
+        "studentN": "{number}. Schüler",
+        "remove": "Entfernen",
+        "firstName": "Vorname des Schülers *",
+        "lastName": "Nachname des Schülers *",
+        "class": "Klasse *",
+        "section": "Klassengruppe",
+        "add": "+ Schüler hinzufügen",
+        "maxReached": "Es können maximal {max} Schüler hinzugefügt werden."
+      },
+      "invoice": {
+        "title": "🧾 Rechnungsdaten",
+        "individual": "👤 Privat",
+        "corporate": "🏢 Firma",
+        "fullName": "Vor- und Nachname",
+        "tcNumber": "Nationale ID-Nr. *",
+        "tcPlaceholder": "11-stellige nationale ID-Nr.",
+        "individualAddressNote": "Die Rechnungs- und Versandadresse wird aus den unten stehenden Adressdaten übernommen.",
+        "companyInfo": "Firmendaten",
+        "taxNumber": "Steuernummer *",
+        "taxPlaceholder": "10-stellige Steuernummer",
+        "companyTitle": "Firmenname *",
+        "companyTitlePlaceholder": "Firmen- oder Personenname",
+        "taxOffice": "Finanzamt *",
+        "taxOfficePlaceholder": "Name des Finanzamts",
+        "companyAddress": "Firmenadresse",
+        "companyAddressNote": "Die Rechnungsadresse wird aus den unten stehenden Adressdaten übernommen. Für eine andere Firmenadresse deaktivieren Sie unten die Option \"Meine Rechnung an dieselbe Adresse senden\".",
+        "companyAddressHeading": "📍 Firmenadresse",
+        "sameAddress": "Meine Rechnung an dieselbe Adresse senden",
+        "invoiceAddress": "Rechnungsadresse",
+        "streetAddress2": "Wohnung, Apartment usw. *"
+      },
+      "note": {
+        "title": "📝 Bestellnotiz (Optional)",
+        "placeholder": "Notizen, die Sie zu Ihrer Bestellung hinzufügen möchten..."
+      },
+      "payment": {
+        "title": "Zahlungsmethode",
+        "cardLabel": "Kreditkarte / Debitkarte",
+        "cardDescription": "Sichere Online-Zahlung (3D Secure)"
+      },
+      "legal": {
+        "title": "✅ Rechtliche Zustimmungen",
+        "distanceSales": "Ich habe den <link>Fernabsatzvertrag</link> gelesen und akzeptiere ihn. *",
+        "kvkk": "Ich habe die <link>Datenschutzerklärung (KVKK)</link> gelesen und akzeptiere sie. *"
+      },
+      "summary": {
+        "title": "Bestellübersicht",
+        "school": "Schule:",
+        "class": "Klasse:",
+        "package": "Paket:",
+        "delivery": "Lieferung:",
+        "cargo": "Versand",
+        "schoolDelivery": "Lieferung an die Schule",
+        "packageContents": "Paketinhalt",
+        "customizableHint": "Sie können nicht benötigte Produkte entfernen; der Gesamtbetrag wird entsprechend aktualisiert.",
+        "packagePerStudent": "Paket × {count} Schüler",
+        "subtotal": "Zwischensumme",
+        "discount": "Rabatt",
+        "total": "GESAMTBETRAG",
+        "processing": "Wird verarbeitet...",
+        "goToPayment": "Zur Zahlung"
+      },
+      "discount": {
+        "title": "Rabattcode",
+        "percentage": "{value}% Rabatt",
+        "amount": "{value} TL Rabatt",
+        "placeholder": "Code eingeben",
+        "apply": "Anwenden"
+      }
+    }
+  },
+  "ar": {
+    "order": {
+      "header": {
+        "homeAriaLabel": "الصفحة الرئيسية لـ okultedarigim.com",
+        "backToPassword": "العودة إلى شاشة كلمة المرور",
+        "backToHome": "العودة إلى الصفحة الرئيسية",
+        "nav": {
+          "howItWorks": "كيف يعمل",
+          "faq": "الأسئلة الشائعة",
+          "orderTracking": "تتبّع الطلب"
+        }
+      },
+      "errors": {
+        "passwordRequired": "يرجى إدخال كلمة مرور المدرسة",
+        "invalidPassword": "كلمة مرور المدرسة غير صحيحة",
+        "generic": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      },
+      "delivery": {
+        "cargo": "التوصيل عبر الشحن",
+        "school": "التوصيل إلى المدرسة"
+      },
+      "selectPackage": {
+        "title": "اختر <accent>حزمتك.</accent>",
+        "subtitle": "اطّلع على الحزمة المناسبة لصفّك واخترها.",
+        "classPackageAlt": "حزمة صف {className}",
+        "classPackageLabel": "حزمة صف {className}",
+        "packageContents": "محتويات الحزمة",
+        "hide": "إخفاء",
+        "viewPackage": "عرض الحزمة",
+        "choosePackage": "اختيار الحزمة",
+        "differentPassword": "أدخل كلمة مرور مدرسة مختلفة"
+      },
+      "passwordEntry": {
+        "imageAlt": "كلمة المرور",
+        "eyebrow": "الطلب",
+        "title": "<accent>يرجى</accent> إدخال كلمة مرور المدرسة.",
+        "description": "أدخل كلمة مرور الصف التي حصلت عليها من مدرستك، واطّلع على حزمتك، وأكمل الدفع. لا حاجة للعضوية.",
+        "label": "كلمة مرور المدرسة",
+        "placeholder": "مثال: ATATURK2024",
+        "checking": "جارٍ التحقق…",
+        "continue": "متابعة",
+        "securityBadge": "تشفير SSL 256 بت · دفع آمن 3D Secure"
+      },
+      "sessionWarning": {
+        "title": "لم يتم العثور على الجلسة",
+        "message": "فُقدت معلومات طلبك. يرجى إدخال كلمة مرور المدرسة مرة أخرى.",
+        "close": "إغلاق"
+      }
+    },
+    "packageForm": {
+      "back": "رجوع",
+      "loading": "جارٍ التحميل...",
+      "errorTitle": "خطأ",
+      "backToHome": "العودة إلى الصفحة الرئيسية",
+      "classLabel": "صف {className}",
+      "delivery": {
+        "cargoBadge": "التوصيل عبر الشحن",
+        "schoolBadge": "التوصيل إلى المدرسة"
+      },
+      "validation": {
+        "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح",
+        "invalidPhone": "يرجى إدخال رقم هاتف صالح (05XX XXX XX XX)",
+        "tcLength": "يجب أن يتكوّن رقم الهوية الوطنية من 11 رقمًا",
+        "invalidTc": "يرجى إدخال رقم هوية وطنية صالح",
+        "taxLength": "يجب أن يتكوّن الرقم الضريبي/رقم الهوية من 10 أو 11 رقمًا",
+        "genericError": "حدث خطأ",
+        "requiredPersonal": "يرجى تعبئة المعلومات الشخصية المطلوبة",
+        "invalidPhoneSubmit": "يرجى إدخال رقم هاتف صالح (05XX XXX XX XX)",
+        "invalidEmailSubmit": "يرجى إدخال عنوان بريد إلكتروني صالح",
+        "atLeastOneStudent": "يجب إضافة طالب واحد على الأقل",
+        "studentNames": "يرجى تعبئة الاسم الأول واسم العائلة لجميع الطلاب",
+        "studentSections": "يرجى إدخال الشعبة لجميع الطلاب",
+        "tcRequired": "رقم الهوية الوطنية مطلوب",
+        "addressIncomplete": "يرجى تعبئة معلومات عنوانك بالكامل",
+        "selectProvinceDistrict": "يرجى اختيار المحافظة والمنطقة",
+        "altAddressIncomplete": "يرجى تعبئة عنوان التوصيل البديل بالكامل",
+        "altSelectProvinceDistrict": "يرجى اختيار المحافظة والمنطقة للعنوان البديل",
+        "corporateRequired": "للفاتورة المؤسسية، الرقم الضريبي واسم الشركة ومكتب الضرائب مطلوبة",
+        "invoiceAddressIncomplete": "يرجى تعبئة عنوان الفاتورة بالكامل",
+        "acceptContracts": "للمتابعة يجب الموافقة على العقود"
+      },
+      "address": {
+        "country": "الدولة *",
+        "province": "المحافظة *",
+        "district": "المنطقة / الحي *",
+        "districtShort": "المنطقة *",
+        "selectProvince": "اختر المحافظة",
+        "selectDistrict": "اختر المنطقة",
+        "selectProvinceFirst": "اختر المحافظة أولاً",
+        "streetAddress": "عنوان الشارع *",
+        "streetAddressPlaceholder": "رقم المبنى واسم الشارع",
+        "streetAddress2": "العمارة، الشقة، الغرفة، إلخ *",
+        "streetAddress2Placeholder": "اسم العمارة، الطابق، رقم الشقة، إلخ",
+        "postalCode": "الرمز البريدي (اختياري)"
+      },
+      "contact": {
+        "title": "👤 معلومات الشحن والتواصل",
+        "firstName": "الاسم *",
+        "lastName": "اسم العائلة *",
+        "phone": "الهاتف *",
+        "phonePlaceholder": "05XX XXX XX XX",
+        "email": "البريد الإلكتروني *"
+      },
+      "schoolDelivery": {
+        "title": "التوصيل إلى المدرسة",
+        "description": "سيتم تسليم المواد التعليمية التي تشتريها مباشرةً إلى الطلاب داخل الصف مع بداية الفصل الدراسي الجديد."
+      },
+      "altAddress": {
+        "toggle": "🚚 الإرسال إلى عنوان مختلف",
+        "title": "عنوان التوصيل البديل"
+      },
+      "students": {
+        "title": "🎓 معلومات الطالب",
+        "count": "({count} طلاب)",
+        "helper": "يمكنك طلب الحزمة نفسها لأكثر من طفل. يُحسب المبلغ الإجمالي بما يتناسب مع عدد الطلاب.",
+        "studentN": "الطالب {number}",
+        "remove": "حذف",
+        "firstName": "اسم الطالب *",
+        "lastName": "اسم عائلة الطالب *",
+        "class": "الصف *",
+        "section": "الشعبة",
+        "add": "+ إضافة طالب",
+        "maxReached": "يمكن إضافة {max} طلاب كحدّ أقصى."
+      },
+      "invoice": {
+        "title": "🧾 معلومات الفاتورة",
+        "individual": "👤 فردي",
+        "corporate": "🏢 مؤسسي",
+        "fullName": "الاسم الكامل",
+        "tcNumber": "رقم الهوية الوطنية *",
+        "tcPlaceholder": "رقم هوية وطنية من 11 رقمًا",
+        "individualAddressNote": "سيتم أخذ عنوان الفاتورة والشحن من معلومات العنوان أدناه.",
+        "companyInfo": "معلومات الشركة",
+        "taxNumber": "الرقم الضريبي *",
+        "taxPlaceholder": "رقم ضريبي من 10 أرقام",
+        "companyTitle": "اسم الشركة *",
+        "companyTitlePlaceholder": "اسم الشركة أو الشخص",
+        "taxOffice": "مكتب الضرائب *",
+        "taxOfficePlaceholder": "اسم مكتب الضرائب",
+        "companyAddress": "عنوان الشركة",
+        "companyAddressNote": "سيتم أخذ عنوان الفاتورة من معلومات العنوان أدناه. لعنوان شركة مختلف، ألغِ تحديد خيار \"إرسال فاتورتي إلى العنوان نفسه\" أدناه.",
+        "companyAddressHeading": "📍 عنوان الشركة",
+        "sameAddress": "إرسال فاتورتي إلى العنوان نفسه",
+        "invoiceAddress": "عنوان الفاتورة",
+        "streetAddress2": "العمارة، الشقة، إلخ *"
+      },
+      "note": {
+        "title": "📝 ملاحظة الطلب (اختياري)",
+        "placeholder": "أي ملاحظات تودّ إضافتها بخصوص طلبك..."
+      },
+      "payment": {
+        "title": "طريقة الدفع",
+        "cardLabel": "بطاقة ائتمان / بطاقة مصرفية",
+        "cardDescription": "دفع آمن عبر الإنترنت (3D Secure)"
+      },
+      "legal": {
+        "title": "✅ الموافقات القانونية",
+        "distanceSales": "لقد قرأت <link>عقد البيع عن بُعد</link> وأوافق عليه. *",
+        "kvkk": "لقد قرأت <link>إشعار حماية البيانات الشخصية (KVKK)</link> وأوافق عليه. *"
+      },
+      "summary": {
+        "title": "ملخص الطلب",
+        "school": "المدرسة:",
+        "class": "الصف:",
+        "package": "الحزمة:",
+        "delivery": "التوصيل:",
+        "cargo": "شحن",
+        "schoolDelivery": "التوصيل إلى المدرسة",
+        "packageContents": "محتويات الحزمة",
+        "customizableHint": "يمكنك إزالة المنتجات التي لا تحتاجها؛ وسيتم تحديث المبلغ الإجمالي وفقًا لذلك.",
+        "packagePerStudent": "الحزمة × {count} طلاب",
+        "subtotal": "المجموع الفرعي",
+        "discount": "الخصم",
+        "total": "المبلغ الإجمالي",
+        "processing": "جارٍ المعالجة...",
+        "goToPayment": "المتابعة إلى الدفع"
+      },
+      "discount": {
+        "title": "رمز الخصم",
+        "percentage": "خصم {value}%",
+        "amount": "خصم {value} ليرة تركية",
+        "placeholder": "أدخل الرمز",
+        "apply": "تطبيق"
+      }
+    }
+  }
+}

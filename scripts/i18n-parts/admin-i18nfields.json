@@ -1,0 +1,38 @@
+{
+  "tr": { "admin": { "i18nFields": {
+    "translations": "Çeviriler",
+    "translationsHint": "Diğer diller boş bırakılırsa Türkçe gösterilir.",
+    "tr": "Türkçe",
+    "en": "İngilizce",
+    "de": "Almanca",
+    "ar": "Arapça",
+    "optional": "(opsiyonel)"
+  } } },
+  "en": { "admin": { "i18nFields": {
+    "translations": "Translations",
+    "translationsHint": "If other languages are left blank, Turkish is shown.",
+    "tr": "Turkish",
+    "en": "English",
+    "de": "German",
+    "ar": "Arabic",
+    "optional": "(optional)"
+  } } },
+  "de": { "admin": { "i18nFields": {
+    "translations": "Übersetzungen",
+    "translationsHint": "Wenn andere Sprachen leer bleiben, wird Türkisch angezeigt.",
+    "tr": "Türkisch",
+    "en": "Englisch",
+    "de": "Deutsch",
+    "ar": "Arabisch",
+    "optional": "(optional)"
+  } } },
+  "ar": { "admin": { "i18nFields": {
+    "translations": "الترجمات",
+    "translationsHint": "إذا تُركت اللغات الأخرى فارغة، تُعرض التركية.",
+    "tr": "التركية",
+    "en": "الإنجليزية",
+    "de": "الألمانية",
+    "ar": "العربية",
+    "optional": "(اختياري)"
+  } } }
+}

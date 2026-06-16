@@ -4,6 +4,8 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword, isLegacySchoolPassword } from '@/lib/password-generator'
 import { sendSchoolPasswordRegenerated } from '@/lib/email'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 /**
  * Eski format (SFR-1234, 9000 kombinasyon — enumeration zafiyetli) okul sifrelerini
@@ -13,10 +15,11 @@ import { sendSchoolPasswordRegenerated } from '@/lib/email'
  * doner. Admin bu listeyi mudurler ile paylasir, sonra response veriyi sifirlar.
  */
 export async function POST() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('catalog.unauthorized') }, { status: 401 })
     }
 
     const schools = await prisma.school.findMany({
@@ -27,7 +30,7 @@ export async function POST() {
     if (legacy.length === 0) {
       return NextResponse.json({
         rotated: 0,
-        message: 'Eski formatta sifresi olan okul bulunmadi'
+        message: t('catalog.noLegacyPasswords')
       })
     }
 
@@ -86,13 +89,13 @@ export async function POST() {
     return NextResponse.json({
       rotated: results.length,
       results,
-      warning: 'Bu sifreler veliye iletilmek uzere bir kez gosteriliyor. Liste sayfayi terk edince tekrar erisilemeyecek.'
+      warning: t('catalog.rotatePasswordsWarning')
     })
 
   } catch (error) {
     console.error('Toplu sifre yenileme hatasi:', error)
     return NextResponse.json(
-      { error: 'Toplu sifre yenileme basarisiz' },
+      { error: t('catalog.bulkRotateFailed') },
       { status: 500 }
     )
   }

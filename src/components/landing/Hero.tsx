@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { ShoppingBagOpen, ArrowRight, ShieldCheck } from '@phosphor-icons/react/dist/ssr'
 import FadeIn from '@/components/motion/FadeIn'
@@ -35,6 +36,7 @@ const ICON_SEQUENCE_MOBILE: readonly number[] = [
 ]
 
 export default function Hero() {
+  const t = useTranslations('landing.hero')
   return (
     <section className="relative block h-screen min-h-[640px] md:min-h-[780px] w-full overflow-hidden bg-apple-bg">
       {/* 3D ikon arka planı — breakpoint'e göre farklı grid yoğunluğu.
@@ -107,16 +109,15 @@ export default function Hero() {
         <div className="w-full max-w-5xl text-center">
           <FadeIn delay={0.05}>
             <h1 className="text-gradient-green-dark text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2">
-              Kaliteli hizmet için
+              {t('titleLine1')}
               <br />
-              doğru adres.
+              {t('titleLine2')}
             </h1>
           </FadeIn>
 
           <FadeIn delay={0.1}>
             <p className="mt-8 text-xl md:text-2xl text-apple-ink/85 leading-snug max-w-2xl mx-auto font-medium">
-              Eğitim paketini tek tıkla sipariş edin.
-              Şeffaf süreç, güvenli ödeme, eksiksiz teslimat.
+              {t('subtitle')}
             </p>
           </FadeIn>
 
@@ -127,7 +128,7 @@ export default function Hero() {
                 className="group inline-flex items-center gap-2 h-12 px-8 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[15px] font-medium transition-colors"
               >
                 <ShoppingBagOpen weight="regular" className="w-5 h-5" />
-                Sipariş Ver
+                {t('orderButton')}
                 <ArrowRight
                   weight="bold"
                   className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
@@ -137,7 +138,7 @@ export default function Hero() {
                 href="#nasil-calisir"
                 className="group inline-flex items-center gap-1.5 text-[15px] font-medium text-[#047857] hover:underline underline-offset-4"
               >
-                <span className="text-gradient-green-dark">Nasıl çalışıyor?</span>
+                <span className="text-gradient-green-dark">{t('howItWorks')}</span>
                 <ArrowRight
                   weight="bold"
                   className="w-3.5 h-3.5 text-[#047857] transition-transform group-hover:translate-x-0.5"
@@ -149,7 +150,7 @@ export default function Hero() {
           <FadeIn delay={0.2}>
             <p className="mt-6 text-[13px] text-apple-gray inline-flex items-center justify-center gap-1.5 w-full">
               <ShieldCheck weight="regular" className="w-4 h-4 text-apple-gray" />
-              3D Secure ile güvenli ödeme
+              {t('secure')}
             </p>
           </FadeIn>
         </div>

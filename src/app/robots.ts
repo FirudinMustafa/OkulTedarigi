@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://okul-tedarigi.vercel.app'
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://okultedarigim.com'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,7 +8,20 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: ['/'],
-        disallow: ['/admin/', '/mudur/', '/api/', '/odeme', '/paket/', '/siparis-onay/'],
+        // Locale onekli ve oneksiz korunan/teknik yollar (tr/en/de/ar tum dillerde)
+        disallow: [
+          '/*/admin/',
+          '/*/mudur/',
+          '/*/odeme',
+          '/*/paket/',
+          '/*/siparis-onay/',
+          '/admin/',
+          '/mudur/',
+          '/api/',
+          '/odeme',
+          '/paket/',
+          '/siparis-onay/',
+        ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

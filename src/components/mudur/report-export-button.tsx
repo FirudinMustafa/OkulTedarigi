@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button"
 import { FileSpreadsheet } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 export default function ReportExportButton() {
   const searchParams = useSearchParams()
+  const t = useTranslations('mudur.reportExport')
   const year = searchParams.get('year') || 'all'
 
   const handleExport = () => {
@@ -15,7 +17,7 @@ export default function ReportExportButton() {
   return (
     <Button variant="outline" onClick={handleExport}>
       <FileSpreadsheet className="h-4 w-4 mr-2" />
-      Excel Indir
+      {t('downloadExcel')}
     </Button>
   )
 }

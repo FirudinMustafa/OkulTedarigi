@@ -5,6 +5,8 @@ import { logAction } from '@/lib/logger'
 import { getTrackingInfo } from '@/lib/aras-kargo'
 import { sendDeliveryConfirmation } from '@/lib/email'
 import { OrderStatus } from '@prisma/client'
+import { getApiLocale } from '@/lib/api-locale'
+import { getTranslations } from 'next-intl/server'
 
 interface SyncResult {
   orderId: string
@@ -18,10 +20,11 @@ interface SyncResult {
 }
 
 export async function POST(request: Request) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
     if (!session) {
-      return NextResponse.json({ error: 'Yetkisiz erisim' }, { status: 401 })
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
     }
 
     const body = await request.json().catch(() => ({}))
@@ -45,14 +48,15 @@ export async function POST(request: Request) {
         trackingNo: true,
         status: true,
         email: true,
-        parentName: true
+        parentName: true,
+        locale: true
       }
     })
 
     if (orders.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'Sorgulanacak kargo bulunamadi',
+        message: t('orders.noCargoToQuery'),
         results: [],
         summary: { total: 0, updated: 0, noChange: 0, errors: 0 }
       })
@@ -120,7 +124,8 @@ export async function POST(request: Request) {
               email: order.email,
               orderNumber: order.orderNumber,
               parentName: order.parentName,
-              deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+              deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+              locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined)
             }).catch(err => console.error('[email] sendDeliveryConfirmation sync-cargo hatasi:', err))
           }
         } else {
@@ -144,7 +149,7 @@ export async function POST(request: Request) {
           newStatus: null,
           cargoStatus: 'SORGULAMA_HATASI',
           updated: false,
-          error: error instanceof Error ? error.message : 'Kargo sorgulanamadi'
+          error: error instanceof Error ? error.message : t('orders.cargoQueryFailed')
         })
       }
     }
@@ -169,7 +174,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `${orders.length} kargo sorgulandı, ${updatedCount} sipariş güncellendi`,
+      message: t('orders.cargoSyncResult', { queried: orders.length, updated: updatedCount }),
       results,
       summary: {
         total: orders.length,
@@ -182,7 +187,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Kargo senkronizasyon hatasi:', error)
     return NextResponse.json(
-      { error: 'Kargo durumu sorgulanamadi' },
+      { error: t('orders.cargoSyncFailed') },
       { status: 500 }
     )
   }

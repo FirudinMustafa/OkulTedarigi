@@ -1,0 +1,50 @@
+{
+  "tr": {
+    "landing": {
+      "hero": {
+        "titleLine1": "Kaliteli hizmet için",
+        "titleLine2": "doğru adres.",
+        "subtitle": "Eğitim paketini tek tıkla sipariş edin. Şeffaf süreç, güvenli ödeme, eksiksiz teslimat.",
+        "orderButton": "Sipariş Ver",
+        "howItWorks": "Nasıl çalışıyor?",
+        "secure": "3D Secure ile güvenli ödeme"
+      }
+    }
+  },
+  "en": {
+    "landing": {
+      "hero": {
+        "titleLine1": "The right address",
+        "titleLine2": "for quality service.",
+        "subtitle": "Order your education package with a single click. Transparent process, secure payment, complete delivery.",
+        "orderButton": "Place Order",
+        "howItWorks": "How does it work?",
+        "secure": "Secure payment with 3D Secure"
+      }
+    }
+  },
+  "de": {
+    "landing": {
+      "hero": {
+        "titleLine1": "Die richtige Adresse",
+        "titleLine2": "für Qualitätsservice.",
+        "subtitle": "Bestellen Sie Ihr Bildungspaket mit einem Klick. Transparenter Ablauf, sichere Zahlung, vollständige Lieferung.",
+        "orderButton": "Bestellen",
+        "howItWorks": "Wie funktioniert es?",
+        "secure": "Sichere Zahlung mit 3D Secure"
+      }
+    }
+  },
+  "ar": {
+    "landing": {
+      "hero": {
+        "titleLine1": "العنوان الصحيح",
+        "titleLine2": "لخدمة عالية الجودة.",
+        "subtitle": "اطلب باقتك التعليمية بنقرة واحدة. عملية شفافة، دفع آمن، تسليم كامل.",
+        "orderButton": "اطلب الآن",
+        "howItWorks": "كيف يعمل؟",
+        "secure": "دفع آمن عبر 3D Secure"
+      }
+    }
+  }
+}
