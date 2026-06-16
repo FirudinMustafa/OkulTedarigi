@@ -131,12 +131,12 @@ export default function Header() {
                   </Link>
                 )
               )}
-              <div className="pt-3 flex items-center gap-2">
-                <LanguageSwitcher align="start" />
+              <div className="pt-3 space-y-3">
+                <LanguageSwitcher variant="inline" />
                 <Link
                   href="/siparis"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex flex-1 items-center justify-center gap-2 h-11 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[14px] font-medium transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[14px] font-medium transition-colors"
                 >
                   {t('order')}
                   <ArrowRight weight="bold" className="w-4 h-4" />

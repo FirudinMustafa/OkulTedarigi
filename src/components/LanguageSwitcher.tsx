@@ -18,10 +18,12 @@ export function LanguageSwitcher({
   className,
   align = 'end',
   placement = 'down',
+  variant = 'dropdown',
 }: {
   className?: string
   align?: 'start' | 'end'
   placement?: 'down' | 'up'
+  variant?: 'dropdown' | 'inline'
 }) {
   const t = useTranslations('languageSwitcher')
   const locale = useLocale() as AppLocale
@@ -47,6 +49,33 @@ export function LanguageSwitcher({
     startTransition(() => {
       router.replace(pathname, { locale: next })
     })
+  }
+
+  // Inline varyant — mobil menü gibi overflow-hidden konteynerlerde dropdown
+  // kırpıldığından, 4 dili satır içi buton olarak gösterir.
+  if (variant === 'inline') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
+        {locales.map((l) => (
+          <button
+            key={l}
+            type="button"
+            onClick={() => change(l)}
+            disabled={isPending}
+            aria-pressed={l === locale}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition disabled:opacity-60',
+              l === locale
+                ? 'border-primary bg-primary/5 font-medium text-primary'
+                : 'border-border text-foreground hover:bg-secondary'
+            )}
+          >
+            <span className="text-base leading-none">{FLAGS[l]}</span>
+            <span>{l.toUpperCase()}</span>
+          </button>
+        ))}
+      </div>
+    )
   }
 
   return (

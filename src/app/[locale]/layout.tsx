@@ -25,6 +25,9 @@ export const viewport: Viewport = {
   themeColor: "#1e40af",
   width: "device-width",
   initialScale: 1,
+  // Safe-area (iOS home-indicator / cikinti) icin: fixed alt ogeler (chatbot)
+  // env(safe-area-inset-*) ile dogru konumlanir.
+  viewportFit: "cover",
 };
 
 export function generateStaticParams() {

@@ -116,7 +116,7 @@ export default function ChatWidget() {
     <>
       {/* "Bir yardıma ihtiyacınız var mı?" bildirim balonu */}
       {nudge && !open && (
-        <div className="fixed bottom-[5.5rem] right-5 z-[60] max-w-[15rem] animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-5 z-[60] max-w-[15rem] animate-in fade-in slide-in-from-bottom-2">
           <div className="relative bg-white border border-apple-border/60 rounded-2xl rounded-br-sm shadow-[0_12px_40px_-12px_rgba(0,0,0,0.25)] px-4 py-3 pr-7">
             <button
               type="button"
@@ -145,7 +145,7 @@ export default function ChatWidget() {
         type="button"
         aria-label={open ? t('closeChat') : t('openChat')}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-[60] flex items-center justify-center w-14 h-14 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-[0_8px_30px_-6px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-[60] flex items-center justify-center w-14 h-14 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-[0_8px_30px_-6px_rgba(37,99,235,0.5)] transition-all hover:scale-105 active:scale-95"
       >
         {open ? (
           <X weight="bold" className="w-6 h-6" />
@@ -160,7 +160,7 @@ export default function ChatWidget() {
 
       {/* Panel */}
       <div
-        className={`fixed bottom-24 right-5 z-[60] w-[calc(100vw-2.5rem)] max-w-sm origin-bottom-right transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-5 z-[60] w-[calc(100vw-2.5rem)] max-w-sm origin-bottom-right transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open
             ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
