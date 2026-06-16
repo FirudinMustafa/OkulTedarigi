@@ -65,7 +65,7 @@ export default function Process() {
               <p className="text-[13px] font-medium text-[#10b981] mb-5 tracking-wide uppercase">
                 {t('eyebrow')}
               </p>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-apple-ink leading-[1.05]">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-apple-ink leading-[1.05]">
                 {t('titleLine1')}
                 <br />
                 <span className="text-gradient-green">{t('titleLine2')}</span>
@@ -75,7 +75,7 @@ export default function Process() {
 
           {/* Kartlar — header'dan arta kalan alanda merkezde */}
           <div className="flex-1 min-h-0 flex items-center justify-center px-6 lg:px-8 pb-10">
-            <div className="relative w-full max-w-4xl h-[440px]">
+            <div className="relative w-full max-w-4xl h-[400px] sm:h-[440px]">
               {STEPS.map((step, i) => (
                 <ProcessCard
                   key={step.num}
@@ -142,8 +142,8 @@ function ProcessCard({
         zIndex: 10 + index,
       }}
     >
-      <div className="relative bg-white rounded-[32px] border border-apple-border/60 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)] h-[440px] overflow-hidden">
-        <div className="relative p-10 md:p-14 lg:p-16 h-full">
+      <div className="relative bg-white rounded-[32px] border border-apple-border/60 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)] h-[400px] sm:h-[440px] overflow-hidden">
+        <div className="relative p-8 md:p-14 lg:p-16 h-full">
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-center md:h-auto md:flex-row md:items-center md:justify-start md:text-left md:gap-10 lg:gap-12 md:max-w-xl lg:max-w-2xl lg:pe-28">
             <span className="shrink-0 text-[64px] md:text-[88px] lg:text-[104px] font-semibold text-gradient-green leading-[0.85] tracking-tight">

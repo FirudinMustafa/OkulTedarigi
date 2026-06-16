@@ -111,7 +111,7 @@ export default function Hero() {
       <div className="relative z-10 flex h-full w-full items-center justify-center px-6 lg:px-8">
         <div className="w-full max-w-5xl text-center">
           <FadeIn delay={0.05}>
-            <h1 className="text-gradient-green-dark text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2 text-balance">
+            <h1 className="text-gradient-green-dark text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2 text-balance">
               {t('titleLine1')}
               <br />
               {t('titleLine2')}
