@@ -159,8 +159,9 @@ function ProcessCard({
             </div>
           </div>
 
-          {/* Icon A — üst-bitiş köşesi (RTL'de otomatik sol-üste döner) */}
-          <div className="pointer-events-none absolute top-6 end-6 md:top-10 md:end-10 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+          {/* Icon A — üst-bitiş köşesi (RTL'de otomatik döner). Mobilde gizli,
+              md+ küçük köşe aksanı (metinle çakışmaz). */}
+          <div className="pointer-events-none absolute top-5 end-5 lg:top-7 lg:end-7 w-20 h-20 lg:w-24 lg:h-24 hidden md:block">
             <Image
               src={step.iconA}
               alt=""
@@ -170,8 +171,8 @@ function ProcessCard({
             />
           </div>
 
-          {/* Icon B — alt-başlangıç köşesi (RTL'de otomatik sağ-alta döner) */}
-          <div className="pointer-events-none absolute bottom-6 start-2 md:bottom-10 md:start-4 lg:start-2 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+          {/* Icon B — alt-başlangıç köşesi (RTL'de otomatik döner). Mobilde gizli. */}
+          <div className="pointer-events-none absolute bottom-5 start-5 lg:bottom-7 lg:start-7 w-20 h-20 lg:w-24 lg:h-24 hidden md:block">
             <Image
               src={step.iconB}
               alt=""
