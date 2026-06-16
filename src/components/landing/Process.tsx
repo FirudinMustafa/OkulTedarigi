@@ -56,11 +56,12 @@ export default function Process() {
         className="relative"
         style={{ height: `${TOTAL_SLOTS * 100}vh` }}
       >
-        {/* Sticky sahne — tam ekran, top-0, içinde header + kartlar */}
-        <div className="sticky top-0 h-screen overflow-hidden">
-          {/* Header — sahnenin üstünde sabit */}
-          <div className="absolute inset-x-0 top-0 pt-16 px-6 lg:px-8 z-40">
-            <div className="max-w-3xl mx-auto text-center">
+        {/* Sticky sahne — tam ekran, top-0. Header üstte (doğal yükseklik),
+            kartlar altta kalan alanda ortada → dil ne olursa olsun çakışmaz. */}
+        <div className="sticky top-0 h-screen overflow-hidden flex flex-col">
+          {/* Header — akış içinde, üstte */}
+          <div className="shrink-0 pt-16 px-6 lg:px-8 z-40">
+            <div className="max-w-3xl mx-auto text-center text-balance">
               <p className="text-[13px] font-medium text-[#10b981] mb-5 tracking-wide uppercase">
                 {t('eyebrow')}
               </p>
@@ -72,8 +73,8 @@ export default function Process() {
             </div>
           </div>
 
-          {/* Kartlar — merkezde üst üste binmiş */}
-          <div className="absolute inset-0 flex items-center justify-center px-6 lg:px-8">
+          {/* Kartlar — header'dan arta kalan alanda merkezde */}
+          <div className="flex-1 min-h-0 flex items-center justify-center px-6 lg:px-8 pb-10">
             <div className="relative w-full max-w-4xl h-[440px]">
               {STEPS.map((step, i) => (
                 <ProcessCard
@@ -144,22 +145,22 @@ function ProcessCard({
       <div className="relative bg-white rounded-[32px] border border-apple-border/60 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)] h-[440px] overflow-hidden">
         <div className="relative p-10 md:p-14 lg:p-16 h-full">
           {/* Content */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-center md:h-auto md:flex-row md:items-center md:justify-start md:text-left md:gap-10 lg:gap-12 md:max-w-2xl">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-center md:h-auto md:flex-row md:items-center md:justify-start md:text-left md:gap-10 lg:gap-12 md:max-w-xl lg:max-w-2xl lg:pe-28">
             <span className="shrink-0 text-[64px] md:text-[88px] lg:text-[104px] font-semibold text-gradient-green leading-[0.85] tracking-tight">
               {step.num}
             </span>
             <div className="mt-2 md:mt-0 min-w-0">
-              <h3 className="text-2xl md:text-4xl lg:text-5xl font-semibold text-apple-ink tracking-tight leading-[1.08]">
+              <h3 className="text-2xl md:text-4xl lg:text-5xl font-semibold text-apple-ink tracking-tight leading-[1.08] text-balance line-clamp-2">
                 {title}
               </h3>
-              <p className="mt-3 md:mt-4 text-[15px] md:text-lg text-apple-gray leading-relaxed max-w-md mx-auto md:mx-0">
+              <p className="mt-3 md:mt-4 text-[15px] md:text-lg text-apple-gray leading-relaxed max-w-md mx-auto md:mx-0 line-clamp-5 md:line-clamp-6">
                 {desc}
               </p>
             </div>
           </div>
 
-          {/* Icon A — top-right */}
-          <div className="pointer-events-none absolute top-6 right-6 md:top-10 md:right-10 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+          {/* Icon A — üst-bitiş köşesi (RTL'de otomatik sol-üste döner) */}
+          <div className="pointer-events-none absolute top-6 end-6 md:top-10 md:end-10 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
             <Image
               src={step.iconA}
               alt=""
@@ -169,8 +170,8 @@ function ProcessCard({
             />
           </div>
 
-          {/* Icon B — bottom-left (uzun metinle cakismamasi icin tum ekranlarda biraz sola cekildi) */}
-          <div className="pointer-events-none absolute bottom-6 left-2 md:bottom-10 md:left-4 lg:left-2 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+          {/* Icon B — alt-başlangıç köşesi (RTL'de otomatik sağ-alta döner) */}
+          <div className="pointer-events-none absolute bottom-6 start-2 md:bottom-10 md:start-4 lg:start-2 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
             <Image
               src={step.iconB}
               alt=""

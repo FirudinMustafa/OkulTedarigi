@@ -97,7 +97,7 @@ export default function MudurSidebar({ school }: SidebarProps) {
             <p className="text-xs text-gray-500 truncate">{school.name}</p>
           </div>
         </div>
-        <LanguageSwitcher className="mb-3 w-full" align="start" />
+        <LanguageSwitcher className="mb-3 w-full" align="start" placement="up" />
         <Button
           variant="outline"
           size="sm"

@@ -43,10 +43,11 @@ export default function Hero() {
           Mobile 4×6, tablet 6×6, desktop 9×6. Her hücre bir ikonla uçtan uca
           dolu (object-cover). Radial mask kenarlardaki koyu halo'yu yumuşatıyor. */}
 
-      {/* Mobile grid */}
+      {/* Mobile grid — dir=ltr: dekoratif ızgara her dilde aynı (Arapça'da aynalanmasın) */}
       <div
         className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-6 md:hidden"
         aria-hidden="true"
+        dir="ltr"
       >
         {ICON_SEQUENCE_MOBILE.map((iconId, idx) => (
           <div key={idx} className="relative">
@@ -66,6 +67,7 @@ export default function Hero() {
       <div
         className="absolute inset-0 z-0 hidden md:grid lg:hidden grid-cols-6 grid-rows-6"
         aria-hidden="true"
+        dir="ltr"
       >
         {ICON_SEQUENCE_TABLET.map((iconId, idx) => (
           <div key={idx} className="relative">
@@ -85,6 +87,7 @@ export default function Hero() {
       <div
         className="absolute inset-0 z-0 hidden lg:grid grid-cols-9 grid-rows-6"
         aria-hidden="true"
+        dir="ltr"
       >
         {ICON_SEQUENCE_DESKTOP.map((iconId, idx) => (
           <div key={idx} className="relative">
@@ -108,7 +111,7 @@ export default function Hero() {
       <div className="relative z-10 flex h-full w-full items-center justify-center px-6 lg:px-8">
         <div className="w-full max-w-5xl text-center">
           <FadeIn delay={0.05}>
-            <h1 className="text-gradient-green-dark text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2">
+            <h1 className="text-gradient-green-dark text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.15] pb-2 text-balance">
               {t('titleLine1')}
               <br />
               {t('titleLine2')}
@@ -116,7 +119,7 @@ export default function Hero() {
           </FadeIn>
 
           <FadeIn delay={0.1}>
-            <p className="mt-8 text-xl md:text-2xl text-apple-ink/85 leading-snug max-w-2xl mx-auto font-medium">
+            <p className="mt-8 text-xl md:text-2xl text-apple-ink/85 leading-snug max-w-2xl mx-auto font-medium text-balance">
               {t('subtitle')}
             </p>
           </FadeIn>

@@ -26,7 +26,7 @@ export default function Header() {
         <div className="flex items-center justify-between gap-3">
           {/* Sol pill — logo + nav */}
           <div
-            className="pointer-events-auto flex items-center gap-6 lg:gap-8 h-12 pl-5 pr-6 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
+            className="pointer-events-auto flex items-center gap-6 lg:gap-8 h-12 ps-5 pe-6 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
           >
             <Link
               href="/"
@@ -75,7 +75,7 @@ export default function Header() {
 
           {/* Sağ pill — dil seçici + Sipariş Ver */}
           <div
-            className="pointer-events-auto hidden sm:flex items-center gap-2 h-12 pl-2 pr-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
+            className="pointer-events-auto hidden sm:flex items-center gap-2 h-12 ps-2 pe-1.5 rounded-full backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
           >
             <LanguageSwitcher />
             <Link

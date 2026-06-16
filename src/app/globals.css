@@ -162,6 +162,20 @@ select:disabled {
   width: max-content;
 }
 
+/* ===== RTL (Arapça, dir="rtl") yön düzeltmeleri =====
+   Fiziksel/yön-bağımlı (auto-mirror olmayan) öğeler için. */
+@keyframes brandScrollRtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+html[dir="rtl"] .animate-brand-scroll {
+  animation-name: brandScrollRtl;
+}
+/* İleri yön oklarını RTL'de yatay çevir (okuma yönüne baksın) */
+html[dir="rtl"] .dir-flip {
+  transform: scaleX(-1);
+}
+
 /* Apple-style gradient text — restrained, playful for school theme */
 .text-gradient-spectrum {
   background-image: var(--gradient-spectrum);

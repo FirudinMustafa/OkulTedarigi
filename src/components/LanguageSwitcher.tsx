@@ -17,9 +17,11 @@ const FLAGS: Record<AppLocale, string> = {
 export function LanguageSwitcher({
   className,
   align = 'end',
+  placement = 'down',
 }: {
   className?: string
   align?: 'start' | 'end'
+  placement?: 'down' | 'up'
 }) {
   const t = useTranslations('languageSwitcher')
   const locale = useLocale() as AppLocale
@@ -68,7 +70,8 @@ export function LanguageSwitcher({
         <ul
           role="listbox"
           className={cn(
-            'absolute z-50 mt-1 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-white py-1 shadow-lg',
+            'absolute z-50 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-white py-1 shadow-lg',
+            placement === 'up' ? 'bottom-full mb-1' : 'mt-1',
             align === 'end' ? 'end-0' : 'start-0'
           )}
         >
