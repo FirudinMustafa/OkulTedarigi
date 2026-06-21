@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { createShipment } from '@/lib/aras-kargo'
+import { createShipment } from '@/lib/yurtici-kargo'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -61,6 +61,9 @@ export async function POST(request: Request) {
           receiverName: order.parentName,
           receiverPhone: order.phone,
           receiverAddress: order.deliveryAddress || order.address || '',
+          receiverCity: order.city || undefined,
+          receiverDistrict: order.district || undefined,
+          receiverEmail: order.email || undefined,
           packageCount: 1,
           packageWeight: 2,
           packageContent: 'Okul Malzemeleri'

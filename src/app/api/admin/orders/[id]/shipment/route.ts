@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
-import { createShipment } from '@/lib/aras-kargo'
+import { createShipment } from '@/lib/yurtici-kargo'
 import { sendInvoiceCreated, sendCargoNotification } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -157,6 +157,9 @@ export async function POST(
         receiverName: order.parentName,
         receiverPhone: order.phone,
         receiverAddress: order.deliveryAddress || order.address || '',
+        receiverCity: order.city || undefined,
+        receiverDistrict: order.district || undefined,
+        receiverEmail: order.email || undefined,
         packageCount: 1,
         packageWeight: 2, // varsayilan 2 kg
         packageContent: 'Okul Malzemeleri'
@@ -202,7 +205,7 @@ export async function POST(
           orderNumber: order.orderNumber,
           parentName: order.parentName,
           trackingNo: shipmentResult.trackingNo,
-          trackingUrl: shipmentResult.trackingUrl || `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${shipmentResult.trackingNo}`,
+          trackingUrl: shipmentResult.trackingUrl || `https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${shipmentResult.trackingNo}`,
           locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
         })
       } catch (notifError) {

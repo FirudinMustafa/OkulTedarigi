@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { getTrackingInfo } from '@/lib/aras-kargo'
+import { getTrackingInfo } from '@/lib/yurtici-kargo'
 import { sendDeliveryConfirmation } from '@/lib/email'
 import { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
@@ -74,10 +74,9 @@ export async function POST(request: Request) {
         let newStatus: OrderStatus | null = null
 
         // Kargo durumuna gore siparis durumunu belirle
-        // Aras Kargo status kodlari (ornek):
-        // - TESLIM_EDILDI, DELIVERED: Teslim edildi
-        // - DAGITIMDA, IN_TRANSIT: Dagitimda
-        // - TESLIM_EDILEMEDI: Teslim edilemedi
+        // Yurtici Kargo status kodlari (yurtici-kargo.ts uretir):
+        // - TESLIM_EDILDI: Teslim edildi (deliveryDate dolu veya "Teslim Edildi")
+        // - IN_TRANSIT: Dagitimda / yolda
         if (['TESLIM_EDILDI', 'DELIVERED'].includes(trackingInfo.statusCode)) {
           newStatus = OrderStatus.DELIVERED
         }
