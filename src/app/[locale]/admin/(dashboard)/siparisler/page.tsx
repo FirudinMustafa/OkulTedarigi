@@ -350,6 +350,26 @@ export default function SiparislerPage() {
     }
   }
 
+  // Kargoyu iptal et (yanlislikla kargolanan SHIPPED siparis) -> Yurtici iptal + CONFIRMED'e don
+  const cancelShipmentAction = async (order: OrderType) => {
+    if (!confirm(t('confirmCancelShipment', { orderNumber: order.orderNumber }))) return
+    setOrderBusy(order.id, t('actionCancelShipment'))
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/shipment/cancel`, {
+        method: 'POST', credentials: 'include'
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || t('cancelShipmentFailed'))
+      } else {
+        alert(t('cancelShipmentSuccess'))
+      }
+      await fetchOrders()
+    } finally {
+      clearOrderBusy(order.id)
+    }
+  }
+
   // ============================================================
   // Toplu islem — uygun olmayan siparisleri ATLA
   // ============================================================
@@ -615,6 +635,7 @@ export default function SiparislerPage() {
     const canRefund = order.status === 'CANCELLED'
     const showLabel = !!order.trackingNo
     const showUndeliver = order.status === 'SHIPPED'
+    const showCancelShipment = order.status === 'SHIPPED' && order.deliveryType === 'CARGO' && !!order.trackingNo
 
     return (
       <div className="flex items-center gap-1">
@@ -643,6 +664,15 @@ export default function SiparislerPage() {
             title={t('markUndeliveredTitle')}
           >
             <RotateCcw className="h-3 w-3 mr-1" />{t('actionUndeliver')}
+          </Button>
+        )}
+        {showCancelShipment && (
+          <Button
+            size="sm" variant="outline" className="h-7 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
+            onClick={() => cancelShipmentAction(order)}
+            title={t('actionCancelShipment')}
+          >
+            <X className="h-3 w-3 mr-1" />{t('actionCancelShipment')}
           </Button>
         )}
         {canRefund && (

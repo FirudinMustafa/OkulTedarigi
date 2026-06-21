@@ -554,7 +554,7 @@ export async function sendCargoNotification(data: {
     ${infoTable(
       infoRow(tr.orderNo, safeOrder) +
       infoRow(tr.tracking, `<span style="font-family: 'Courier New', monospace; font-size: 16px; background: ${COLORS.bgLight}; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px;">${safeTracking}</span>`) +
-      infoRow(tr.carrier, 'Aras Kargo')
+      infoRow(tr.carrier, 'Yurtiçi Kargo')
     )}
 
     ${ctaButton(tr.cta, safeTrackingUrl, COLORS.purple)}

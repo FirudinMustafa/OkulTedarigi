@@ -327,7 +327,15 @@ function SiparisTakipPage() {
                       extra={
                         order.trackingNo ? (
                           <p className="text-[12px] text-apple-gray mt-1">
-                            {t('detail.trackingNo')} <span className="font-mono font-medium text-apple-ink">{order.trackingNo}</span>
+                            {t('detail.trackingNo')}{' '}
+                            <a
+                              href={`https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${encodeURIComponent(order.trackingNo)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono font-medium text-blue-600 underline underline-offset-2 hover:opacity-80"
+                            >
+                              {order.trackingNo}
+                            </a>
                           </p>
                         ) : null
                       }

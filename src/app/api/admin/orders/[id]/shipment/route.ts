@@ -29,7 +29,8 @@ export async function POST(
             school: true,
             package: { include: { items: true } }
           }
-        }
+        },
+        _count: { select: { students: true } }
       }
     })
 
@@ -149,7 +150,10 @@ export async function POST(
       )
     }
 
-    // Aras kargo cagrisi (slot rezervasyonu sonrasi)
+    // Yurtici kargo cagrisi (slot rezervasyonu sonrasi)
+    // il/ilce: yapisal city/district FATURA adresinindir; yalnizca fatura=teslimat
+    // (invoiceAddressSame) iken teslimat il/ilcesi olarak kullanilir, aksi halde bos
+    // birakilir (Yurtici bos il/ilceyi kabul eder, adres metninden yonlendirir).
     let shipmentResult
     try {
       shipmentResult = await createShipment({
@@ -157,15 +161,15 @@ export async function POST(
         receiverName: order.parentName,
         receiverPhone: order.phone,
         receiverAddress: order.deliveryAddress || order.address || '',
-        receiverCity: order.city || undefined,
-        receiverDistrict: order.district || undefined,
+        receiverCity: order.invoiceAddressSame ? (order.city || undefined) : undefined,
+        receiverDistrict: order.invoiceAddressSame ? (order.district || undefined) : undefined,
         receiverEmail: order.email || undefined,
         packageCount: 1,
-        packageWeight: 2, // varsayilan 2 kg
+        studentCount: order._count.students,
         packageContent: 'Okul Malzemeleri'
       })
     } catch (cargoErr) {
-      // Kargo basarisiz - status'u geri al (rollback)
+      // Teknik hata (network/config/SOAP fault) - status'u geri al (rollback)
       await prisma.order.update({
         where: { id },
         data: { status: previousStatus, shippedAt: null }
@@ -174,6 +178,19 @@ export async function POST(
       return NextResponse.json(
         { error: t('orders.shipmentCreateRetry') },
         { status: 500 }
+      )
+    }
+
+    // Is hatasi (Yurtici outFlag!=0, ornn duplicate/hatali veri): success=false doner,
+    // throw etmez -> burada yakalayip rollback + gercek hata mesajini admin'e don.
+    if (!shipmentResult.success) {
+      await prisma.order.update({
+        where: { id },
+        data: { status: previousStatus, shippedAt: null }
+      })
+      return NextResponse.json(
+        { error: shipmentResult.errorMessage || t('orders.shipmentCreateRetry') },
+        { status: 400 }
       )
     }
 

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     // Kargolanabilir siparisler: CONFIRMED (Hazirlaniyor)
     const orders = await prisma.order.findMany({
       where: { id: { in: orderIds }, status: 'CONFIRMED' },
-      include: { class: { include: { school: true } } }
+      include: { class: { include: { school: true } }, _count: { select: { students: true } } }
     })
 
     // Sadece CARGO teslimat tipindekiler
@@ -61,11 +61,12 @@ export async function POST(request: Request) {
           receiverName: order.parentName,
           receiverPhone: order.phone,
           receiverAddress: order.deliveryAddress || order.address || '',
-          receiverCity: order.city || undefined,
-          receiverDistrict: order.district || undefined,
+          // il/ilce sadece fatura=teslimat iken kullanilir (yapisal city/district fatura adresinindir)
+          receiverCity: order.invoiceAddressSame ? (order.city || undefined) : undefined,
+          receiverDistrict: order.invoiceAddressSame ? (order.district || undefined) : undefined,
           receiverEmail: order.email || undefined,
           packageCount: 1,
-          packageWeight: 2,
+          studentCount: order._count.students,
           packageContent: 'Okul Malzemeleri'
         })
 

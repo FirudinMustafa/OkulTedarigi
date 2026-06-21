@@ -31,6 +31,7 @@ export interface ShipmentData {
   packageWeight?: number
   packageContent: string
   receiverEmail?: string
+  studentCount?: number // koli agirligini ogrenci sayisina gore olceklemek icin
 }
 
 export interface ShipmentResult {
@@ -71,6 +72,12 @@ const DISPATCH_URL = (
 const QUERY_URL = (process.env.YURTICI_QUERY_URL || DISPATCH_URL).replace(/\/$/, '')
 
 const SOAP_NS = 'http://yurticikargo.com.tr/ShippingOrderDispatcherServices'
+
+// Koli agirligi: ogrenci basina kg (AÖ'de alici desi/kg'ye gore oder). Env ile ayarlanabilir.
+const KG_PER_STUDENT = Number(process.env.YURTICI_KG_PER_STUDENT || '2') || 2
+
+// Yurtici hata kodlari
+const ERR_DUPLICATE_CARGO_KEY = '60020' // ayni cargoKey ile aktif kayit zaten var
 
 function isConfigured(): boolean {
   return !!(WS_USER && WS_PASS)
@@ -234,16 +241,13 @@ export async function createShipment(data: ShipmentData): Promise<ShipmentResult
     emailAddress: data.receiverEmail || '',
     taxOfficeId: 0,
     desi: '',
-    kg: data.packageWeight ?? 2,
+    kg: data.packageWeight ?? Math.max(1, (data.studentCount && data.studentCount > 0 ? data.studentCount : 1) * KG_PER_STUDENT),
     cargoCount: data.packageCount || 1,
     dcSelectedCredit: 0,
     dcCreditRule: 0,
     description: data.packageContent || '',
   }
-
-  if (!vo.cityName || !vo.townName) {
-    console.warn(`[YURTICI] ${data.orderNumber}: il/ilce bos — Yurtici kaydi reddedebilir.`)
-  }
+  // NOT: bos il/ilce Yurtici tarafindan KABUL edilir (canli test); blok yok.
 
   const voXml = Object.entries(vo)
     .map(([k, v]) => `<${k}>${xmlEscape(v)}</${k}>`)
@@ -266,8 +270,13 @@ export async function createShipment(data: ShipmentData): Promise<ShipmentResult
   const ok = outFlag === '0' && (errCode === '' || errCode === '0')
 
   if (!ok) {
-    const msg = errMessage || outResult || `Yurtici hata (outFlag=${outFlag}, errCode=${errCode})`
-    if (isDev) console.error('[YURTICI] createShipment basarisiz:', msg)
+    let msg = errMessage || outResult || `Yurtici hata (outFlag=${outFlag}, errCode=${errCode})`
+    // 60020: bu cargoKey (siparis no) icin Yurtici'de zaten aktif kayit var.
+    // Cozum: once kargoyu iptal et (cancelShipment) -> sonra tekrar kargola.
+    if (errCode === ERR_DUPLICATE_CARGO_KEY) {
+      msg = 'Bu siparis icin Yurtici sisteminde zaten aktif bir kargo kaydi mevcut. Once mevcut kargoyu iptal edip tekrar deneyin.'
+    }
+    if (isDev) console.error('[YURTICI] createShipment basarisiz:', errCode, msg)
     return { success: false, errorMessage: msg }
   }
 
