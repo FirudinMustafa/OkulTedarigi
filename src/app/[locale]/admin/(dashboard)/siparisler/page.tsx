@@ -390,6 +390,30 @@ export default function SiparislerPage() {
     }
   }
 
+  // TUM VERILERI SIFIRLA (kalici) — siparisler + hakedis + raporlar 0'lanir
+  const resetAllData = async () => {
+    const answer = window.prompt(t('resetAllPrompt'))
+    if (answer == null) return // iptal
+    if (answer.trim().toUpperCase() !== 'SIFIRLA') { alert(t('resetAllCancelled')); return }
+    try {
+      const res = await fetch('/api/admin/system/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirm: 'SIFIRLA' })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || t('resetAllFailed'))
+      } else {
+        alert(t('resetAllSuccess', { orders: data.deleted?.orders ?? 0 }))
+      }
+      await fetchOrders()
+    } catch {
+      alert(t('resetAllFailed'))
+    }
+  }
+
   // ============================================================
   // Toplu islem — uygun olmayan siparisleri ATLA
   // ============================================================
@@ -744,6 +768,15 @@ export default function SiparislerPage() {
           <Button variant="outline" onClick={handleSyncCargo} disabled={syncLoading}>
             {syncLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             {t('syncCargo')}
+          </Button>
+          <Button
+            variant="outline"
+            className="text-red-700 border-red-300 hover:bg-red-50"
+            onClick={resetAllData}
+            title={t('resetAllTitle')}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            {t('resetAllTitle')}
           </Button>
         </div>
       </div>
