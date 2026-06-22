@@ -1271,7 +1271,7 @@
         "items": {
           "0": "Payment service provider (Iyzico Ödeme Hizmetleri A.Ş.) — for the purpose of carrying out the payment transaction",
           "1": "e-Invoice integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — for the purpose of invoice issuance",
-          "2": "Shipping company (Aras Kargo) — for cargo delivery, only the recipient, phone, and address information",
+          "2": "Shipping company (Yurtiçi Kargo) — for cargo delivery, only the recipient, phone, and address information",
           "3": "E-mail service (Resend) and SMS service (Twilio) — for transmitting notifications",
           "4": "Legal authorities and public institutions — in the event of legal obligations or a court/prosecutor's office request",
           "5": "Cloud infrastructure providers (Vercel Inc., TiDB Cloud / PingCAP Inc.) — data storage and serving infrastructure; the servers are located in the European Union (Frankfurt) region."
@@ -1396,7 +1396,7 @@
         "p0": "Following the order confirmation, delivery is carried out within at most <strong>30 (thirty) days</strong> following payment confirmation. Delivery options:",
         "items": {
           "0": "Bulk delivery to the school — on the date determined by the school, through the class teacher or administration; a delivery receipt is issued",
-          "1": "Home delivery by cargo — through Aras Kargo, within 2-4 business days from order confirmation, to the address on the order form"
+          "1": "Home delivery by cargo — through Yurtiçi Kargo, within 2-4 business days from order confirmation, to the address on the order form"
         },
         "p1": "Any cargo fee is specified in the order summary. If not specified, the cargo fee is included in the package price. Additional cargo costs arising from address errors are borne by the Buyer."
       },

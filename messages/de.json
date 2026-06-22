@@ -1271,7 +1271,7 @@
         "items": {
           "0": "Zahlungsdienstleister (Iyzico Ödeme Hizmetleri A.Ş.) — zum Zweck der Durchführung der Zahlungstransaktion",
           "1": "e-Rechnungs-Integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — zum Zweck der Rechnungsausstellung",
-          "2": "Versandunternehmen (Aras Kargo) — für die Frachtlieferung nur Empfänger-, Telefon- und Adressinformationen",
+          "2": "Versandunternehmen (Yurtiçi Kargo) — für die Frachtlieferung nur Empfänger-, Telefon- und Adressinformationen",
           "3": "E-Mail-Dienst (Resend) und SMS-Dienst (Twilio) — zur Übermittlung von Benachrichtigungen",
           "4": "Rechtliche Stellen und öffentliche Einrichtungen — im Falle gesetzlicher Verpflichtungen oder eines Ersuchens des Gerichts/der Staatsanwaltschaft",
           "5": "Cloud-Infrastrukturanbieter (Vercel Inc., TiDB Cloud / PingCAP Inc.) — Datenspeicherungs- und Bereitstellungsinfrastruktur; die Server befinden sich in der Region der Europäischen Union (Frankfurt)."
@@ -1396,7 +1396,7 @@
         "p0": "Nach der Bestellbestätigung erfolgt die Lieferung spätestens innerhalb von <strong>30 (dreißig) Tagen</strong> nach der Zahlungsbestätigung. Lieferoptionen:",
         "items": {
           "0": "Sammellieferung an die Schule — am von der Schule festgelegten Datum, über den Klassenlehrer oder die Verwaltung; es wird ein Empfangsbeleg ausgestellt",
-          "1": "Lieferung nach Hause per Fracht — über Aras Kargo, innerhalb von 2-4 Werktagen ab Bestellbestätigung, an die Adresse auf dem Bestellformular"
+          "1": "Lieferung nach Hause per Fracht — über Yurtiçi Kargo, innerhalb von 2-4 Werktagen ab Bestellbestätigung, an die Adresse auf dem Bestellformular"
         },
         "p1": "Eine etwaige Frachtgebühr wird in der Bestellübersicht angegeben. Falls nicht angegeben, ist die Frachtgebühr im Paketpreis enthalten. Zusätzliche Frachtkosten, die durch Adressfehler entstehen, trägt der Käufer."
       },

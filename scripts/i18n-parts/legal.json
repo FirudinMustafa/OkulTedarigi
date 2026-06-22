@@ -73,7 +73,7 @@
           "items": {
             "0": "Ödeme hizmet sağlayıcısı (Iyzico Ödeme Hizmetleri A.Ş.) — ödeme işleminin gerçekleştirilmesi amacıyla",
             "1": "e-Fatura entegratörü (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — fatura kesimi amacıyla",
-            "2": "Kargo şirketi (Aras Kargo) — kargo teslimatı için yalnızca alıcı, telefon, adres bilgileri",
+            "2": "Kargo şirketi (Yurtiçi Kargo) — kargo teslimatı için yalnızca alıcı, telefon, adres bilgileri",
             "3": "E-posta servisi (Resend) ve SMS servisi (Twilio) — bildirim iletimi için",
             "4": "Yasal merci ve kamu kurumları — yasal yükümlülükler ya da mahkeme/savcılık talebi halinde",
             "5": "Bulut altyapı sağlayıcıları (Vercel Inc., TiDB Cloud / PingCAP Inc.) — veri saklama ve sunum altyapısı; sunucular Avrupa Birliği (Frankfurt) bölgesinde konumlanmıştır."
@@ -198,7 +198,7 @@
           "p0": "Sipariş onayının ardından, ödeme onayını takiben en geç <strong>30 (otuz) gün</strong> içinde teslimat gerçekleştirilir. Teslimat seçenekleri:",
           "items": {
             "0": "Okula toplu teslim — okul tarafından belirlenen tarihte, sınıf öğretmeni veya idare aracılığıyla; teslim alındı belgesi düzenlenir",
-            "1": "Kargo ile eve teslim — Aras Kargo aracılığıyla, sipariş onayından itibaren 2-4 iş günü içinde, sipariş formundaki adrese"
+            "1": "Kargo ile eve teslim — Yurtiçi Kargo aracılığıyla, sipariş onayından itibaren 2-4 iş günü içinde, sipariş formundaki adrese"
           },
           "p1": "Kargo ücreti varsa sipariş özetinde belirtilir. Belirtilmemişse, kargo ücreti paket fiyatına dahildir. Adres yanlışlığından doğan ek kargo masrafları Alıcıya aittir."
         },
@@ -313,7 +313,7 @@
           "items": {
             "0": "Payment service provider (Iyzico Ödeme Hizmetleri A.Ş.) — for the purpose of carrying out the payment transaction",
             "1": "e-Invoice integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — for the purpose of invoice issuance",
-            "2": "Shipping company (Aras Kargo) — for cargo delivery, only the recipient, phone, and address information",
+            "2": "Shipping company (Yurtiçi Kargo) — for cargo delivery, only the recipient, phone, and address information",
             "3": "E-mail service (Resend) and SMS service (Twilio) — for transmitting notifications",
             "4": "Legal authorities and public institutions — in the event of legal obligations or a court/prosecutor's office request",
             "5": "Cloud infrastructure providers (Vercel Inc., TiDB Cloud / PingCAP Inc.) — data storage and serving infrastructure; the servers are located in the European Union (Frankfurt) region."
@@ -438,7 +438,7 @@
           "p0": "Following the order confirmation, delivery is carried out within at most <strong>30 (thirty) days</strong> following payment confirmation. Delivery options:",
           "items": {
             "0": "Bulk delivery to the school — on the date determined by the school, through the class teacher or administration; a delivery receipt is issued",
-            "1": "Home delivery by cargo — through Aras Kargo, within 2-4 business days from order confirmation, to the address on the order form"
+            "1": "Home delivery by cargo — through Yurtiçi Kargo, within 2-4 business days from order confirmation, to the address on the order form"
           },
           "p1": "Any cargo fee is specified in the order summary. If not specified, the cargo fee is included in the package price. Additional cargo costs arising from address errors are borne by the Buyer."
         },
@@ -553,7 +553,7 @@
           "items": {
             "0": "Zahlungsdienstleister (Iyzico Ödeme Hizmetleri A.Ş.) — zum Zweck der Durchführung der Zahlungstransaktion",
             "1": "e-Rechnungs-Integrator (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — zum Zweck der Rechnungsausstellung",
-            "2": "Versandunternehmen (Aras Kargo) — für die Frachtlieferung nur Empfänger-, Telefon- und Adressinformationen",
+            "2": "Versandunternehmen (Yurtiçi Kargo) — für die Frachtlieferung nur Empfänger-, Telefon- und Adressinformationen",
             "3": "E-Mail-Dienst (Resend) und SMS-Dienst (Twilio) — zur Übermittlung von Benachrichtigungen",
             "4": "Rechtliche Stellen und öffentliche Einrichtungen — im Falle gesetzlicher Verpflichtungen oder eines Ersuchens des Gerichts/der Staatsanwaltschaft",
             "5": "Cloud-Infrastrukturanbieter (Vercel Inc., TiDB Cloud / PingCAP Inc.) — Datenspeicherungs- und Bereitstellungsinfrastruktur; die Server befinden sich in der Region der Europäischen Union (Frankfurt)."
@@ -678,7 +678,7 @@
           "p0": "Nach der Bestellbestätigung erfolgt die Lieferung spätestens innerhalb von <strong>30 (dreißig) Tagen</strong> nach der Zahlungsbestätigung. Lieferoptionen:",
           "items": {
             "0": "Sammellieferung an die Schule — am von der Schule festgelegten Datum, über den Klassenlehrer oder die Verwaltung; es wird ein Empfangsbeleg ausgestellt",
-            "1": "Lieferung nach Hause per Fracht — über Aras Kargo, innerhalb von 2-4 Werktagen ab Bestellbestätigung, an die Adresse auf dem Bestellformular"
+            "1": "Lieferung nach Hause per Fracht — über Yurtiçi Kargo, innerhalb von 2-4 Werktagen ab Bestellbestätigung, an die Adresse auf dem Bestellformular"
           },
           "p1": "Eine etwaige Frachtgebühr wird in der Bestellübersicht angegeben. Falls nicht angegeben, ist die Frachtgebühr im Paketpreis enthalten. Zusätzliche Frachtkosten, die durch Adressfehler entstehen, trägt der Käufer."
         },
@@ -793,7 +793,7 @@
           "items": {
             "0": "مزود خدمة الدفع (Iyzico Ödeme Hizmetleri A.Ş.) — بغرض تنفيذ عملية الدفع",
             "1": "مُكامِل الفاتورة الإلكترونية (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — بغرض إصدار الفاتورة",
-            "2": "شركة الشحن (Aras Kargo) — لتسليم الشحنة، فقط معلومات المستلم والهاتف والعنوان",
+            "2": "شركة الشحن (Yurtiçi Kargo) — لتسليم الشحنة، فقط معلومات المستلم والهاتف والعنوان",
             "3": "خدمة البريد الإلكتروني (Resend) وخدمة الرسائل القصيرة (Twilio) — لإرسال الإشعارات",
             "4": "الجهات القانونية والمؤسسات العامة — في حال وجود التزامات قانونية أو طلب من المحكمة/النيابة العامة",
             "5": "مزودو البنية التحتية السحابية (Vercel Inc., TiDB Cloud / PingCAP Inc.) — البنية التحتية لتخزين البيانات وتقديمها؛ الخوادم موجودة في منطقة الاتحاد الأوروبي (فرانكفورت)."
@@ -918,7 +918,7 @@
           "p0": "بعد تأكيد الطلب، يتم التسليم خلال مدة أقصاها <strong>30 (ثلاثين) يوماً</strong> عقب تأكيد الدفع. خيارات التسليم:",
           "items": {
             "0": "التسليم الجماعي إلى المدرسة — في التاريخ الذي تحدده المدرسة، عن طريق معلم الصف أو الإدارة؛ ويُحرَّر مستند استلام",
-            "1": "التسليم إلى المنزل عبر الشحن — عن طريق Aras Kargo، خلال 2-4 أيام عمل من تأكيد الطلب، إلى العنوان المدوّن في نموذج الطلب"
+            "1": "التسليم إلى المنزل عبر الشحن — عن طريق Yurtiçi Kargo، خلال 2-4 أيام عمل من تأكيد الطلب، إلى العنوان المدوّن في نموذج الطلب"
           },
           "p1": "إن وُجدت رسوم شحن، تُذكَر في ملخص الطلب. وإن لم تُذكَر، تكون رسوم الشحن مشمولة في سعر الحزمة. تكاليف الشحن الإضافية الناشئة عن خطأ في العنوان تقع على عاتق المشتري."
         },

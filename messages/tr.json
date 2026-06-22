@@ -1271,7 +1271,7 @@
         "items": {
           "0": "Ödeme hizmet sağlayıcısı (Iyzico Ödeme Hizmetleri A.Ş.) — ödeme işleminin gerçekleştirilmesi amacıyla",
           "1": "e-Fatura entegratörü (KolayBi / Türkiye Bilimsel ve Teknolojik Araştırma Kurumu — GİB) — fatura kesimi amacıyla",
-          "2": "Kargo şirketi (Aras Kargo) — kargo teslimatı için yalnızca alıcı, telefon, adres bilgileri",
+          "2": "Kargo şirketi (Yurtiçi Kargo) — kargo teslimatı için yalnızca alıcı, telefon, adres bilgileri",
           "3": "E-posta servisi (Resend) ve SMS servisi (Twilio) — bildirim iletimi için",
           "4": "Yasal merci ve kamu kurumları — yasal yükümlülükler ya da mahkeme/savcılık talebi halinde",
           "5": "Bulut altyapı sağlayıcıları (Vercel Inc., TiDB Cloud / PingCAP Inc.) — veri saklama ve sunum altyapısı; sunucular Avrupa Birliği (Frankfurt) bölgesinde konumlanmıştır."
@@ -1396,7 +1396,7 @@
         "p0": "Sipariş onayının ardından, ödeme onayını takiben en geç <strong>30 (otuz) gün</strong> içinde teslimat gerçekleştirilir. Teslimat seçenekleri:",
         "items": {
           "0": "Okula toplu teslim — okul tarafından belirlenen tarihte, sınıf öğretmeni veya idare aracılığıyla; teslim alındı belgesi düzenlenir",
-          "1": "Kargo ile eve teslim — Aras Kargo aracılığıyla, sipariş onayından itibaren 2-4 iş günü içinde, sipariş formundaki adrese"
+          "1": "Kargo ile eve teslim — Yurtiçi Kargo aracılığıyla, sipariş onayından itibaren 2-4 iş günü içinde, sipariş formundaki adrese"
         },
         "p1": "Kargo ücreti varsa sipariş özetinde belirtilir. Belirtilmemişse, kargo ücreti paket fiyatına dahildir. Adres yanlışlığından doğan ek kargo masrafları Alıcıya aittir."
       },

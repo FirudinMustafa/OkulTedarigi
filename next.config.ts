@@ -7,7 +7,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 // Content Security Policy
 // - Next.js inline script/style icin 'unsafe-inline' geriye uyumluluk gerekiyor (App Router runtime)
-// - Iyzico, KolayBi, Aras Kargo, Twilio, Resend, Gemini API'leri icin connect-src whitelist
+// - Iyzico, KolayBi, Yurtici Kargo, Twilio, Resend, Gemini API'leri icin connect-src whitelist
 // - frame-ancestors 'none' (X-Frame-Options DENY ile birlikte clickjacking korumasi)
 const cspDirectives = [
   "default-src 'self'",
@@ -20,7 +20,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "worker-src 'self' blob:",
-  "connect-src 'self' blob: https://api.iyzipay.com https://sandbox-api.iyzipay.com https://api.kolaybi.com https://api.araskargo.com.tr https://api.twilio.com https://api.resend.com https://generativelanguage.googleapis.com",
+  "connect-src 'self' blob: https://api.iyzipay.com https://sandbox-api.iyzipay.com https://api.kolaybi.com https://webservices.yurticikargo.com https://api.twilio.com https://api.resend.com https://generativelanguage.googleapis.com",
   "frame-src 'self' blob: https://sandbox-api.iyzipay.com https://api.iyzipay.com",
 ].join('; ')
 

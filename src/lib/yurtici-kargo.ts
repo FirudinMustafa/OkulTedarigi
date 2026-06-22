@@ -1,9 +1,8 @@
 /**
  * Yurtiçi Kargo SOAP Entegrasyonu (KOPS Web Servisleri)
  *
- * aras-kargo.ts ile AYNI arayuzu (ShipmentData/ShipmentResult/TrackingInfo +
- * createShipment/getTrackingInfo/cancelShipment) ihrac eder; tuketici route'lar
- * degismeden calismaya devam eder.
+ * ShipmentData/ShipmentResult/TrackingInfo arayuzlerini ve
+ * createShipment/getTrackingInfo/cancelShipment fonksiyonlarini ihrac eder.
  *
  * Ödeme tipi: AÖ (Alici Oder). Bu, wsUserName'deki "A" onekiyle (1149A...) belirlenir;
  * SOAP govdesinde ayri bir alan gonderilmez.
@@ -15,7 +14,7 @@
  * Auth: her istekte wsUserName + wsPassword govdede gonderilir (createShipment/cancelShipment
  *       icin userLanguage, queryShipment icin wsLanguage alani kullanilir).
  *
- * USE_MOCK_CARGO=true iken gercek cagri yapilmaz; aras-kargo.ts ile ayni simulasyon doner.
+ * USE_MOCK_CARGO=true iken gercek cagri yapilmaz; mock simulasyon doner.
  */
 
 import { XMLParser } from 'fast-xml-parser'
