@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { VALID_STATUS_TRANSITIONS } from '@/lib/constants'
+import { cancelShipment } from '@/lib/yurtici-kargo'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -180,6 +181,83 @@ export async function PUT(
     return NextResponse.json({ order })
   } catch (error) {
     console.error('Siparis guncellenemedi:', error)
+    return NextResponse.json(
+      { error: t('orders.orderUpdateFailed') },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * Siparisi KALICI siler (admin). Alt kayitlar (OrderStudent/OrderItem) cascade ile,
+ * iptal talebi (CancelRequest, cascade YOK) manuel silinir. Kullanilmis indirim sayaci
+ * geri alinir. SHIPPED + CARGO + trackingNo varsa Yurtici kargosu best-effort iptal edilir.
+ */
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
+  try {
+    const session = await getAdminSession()
+    if (!session) {
+      return NextResponse.json({ error: t('orders.unauthorized') }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { class: { include: { school: true } }, cancelRequest: true }
+    })
+    if (!order) {
+      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+    }
+
+    // SHIPPED + CARGO + trackingNo: Yurtici kargosunu iptal et (best-effort; silmeyi bloklamaz)
+    let cargoCancelNote: string | undefined
+    if (order.status === 'SHIPPED' && order.class.school.deliveryType === 'CARGO' && order.trackingNo) {
+      try {
+        const r = await cancelShipment(order.trackingNo)
+        cargoCancelNote = r.success ? 'cancelled' : `failed: ${r.message || ''}`
+      } catch (e) {
+        cargoCancelNote = 'error'
+        console.error('Silme oncesi kargo iptali hatasi:', e)
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (order.cancelRequest) {
+        await tx.cancelRequest.delete({ where: { orderId: id } })
+      }
+      await tx.order.delete({ where: { id } })
+      // Kullanilmis indirimi geri al (siparis discountCode tutar)
+      if (order.discountCode) {
+        await tx.$executeRaw`
+          UPDATE discounts SET usedCount = usedCount - 1, updatedAt = NOW(3)
+          WHERE code = ${order.discountCode} AND usedCount > 0
+        `
+      }
+    })
+
+    await logAction({
+      userId: session.id,
+      userType: 'ADMIN',
+      action: 'DELETE',
+      entity: 'ORDER',
+      entityId: id,
+      details: {
+        orderNumber: order.orderNumber,
+        status: order.status,
+        trackingNo: order.trackingNo,
+        discountCode: order.discountCode,
+        cargoCancelNote
+      }
+    })
+
+    return NextResponse.json({ success: true, cargoCancelNote })
+  } catch (error) {
+    console.error('Siparis silinemedi:', error)
     return NextResponse.json(
       { error: t('orders.orderUpdateFailed') },
       { status: 500 }

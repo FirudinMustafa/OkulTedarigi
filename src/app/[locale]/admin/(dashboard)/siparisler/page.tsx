@@ -22,7 +22,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Search, Eye, FileText, Truck, X, ArrowRight,
-  CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox
+  CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox, Trash2
 } from "lucide-react"
 import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
 import { ORDER_STATUS_COLORS } from "@/lib/constants"
@@ -370,6 +370,26 @@ export default function SiparislerPage() {
     }
   }
 
+  // Siparisi KALICI sil
+  const deleteOrder = async (order: OrderType) => {
+    if (!confirm(t('confirmDeleteOrder', { orderNumber: order.orderNumber }))) return
+    setOrderBusy(order.id, t('actionDeleteOrder'))
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'DELETE', credentials: 'include'
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || t('deleteOrderFailed'))
+      } else {
+        alert(t('deleteOrderSuccess'))
+      }
+      await fetchOrders()
+    } finally {
+      clearOrderBusy(order.id)
+    }
+  }
+
   // ============================================================
   // Toplu islem — uygun olmayan siparisleri ATLA
   // ============================================================
@@ -694,6 +714,13 @@ export default function SiparislerPage() {
             <X className="h-3.5 w-3.5" />
           </Button>
         )}
+        <Button
+          size="icon" variant="outline" className="h-7 w-7 text-red-700 border-red-300 hover:bg-red-100"
+          onClick={() => deleteOrder(order)}
+          title={t('actionDeleteOrder')}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
       </div>
     )
   }
