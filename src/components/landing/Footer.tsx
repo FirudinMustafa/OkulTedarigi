@@ -116,11 +116,11 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:destek@okultedarigim.com"
+                  href="mailto:info@okultedarigim.com"
                   className="inline-flex items-center gap-2.5 text-apple-gray hover:text-apple-ink transition-colors"
                 >
                   <EnvelopeSimple weight="regular" className="w-4 h-4" />
-                  destek@okultedarigim.com
+                  info@okultedarigim.com
                 </a>
               </li>
             </ul>

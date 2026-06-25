@@ -3,23 +3,21 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 
 // =====================================================================
-// ŞİRKET BİLGİLERİ — DOLDURUN
-// Üretime almadan önce aşağıdaki tüm placeholder'ları kendi
-// işletme/şirket bilgilerinizle değiştirin. Bu sayfa hukuki bir metindir
-// ve KVKK Kurumu denetiminde delil olarak değerlendirilir.
-// Mümkünse bir avukata gözden geçirtin.
+// ŞİRKET BİLGİLERİ (gerçek — 2026-06 dolduruldu)
+// Bu sayfa hukuki bir metindir ve KVKK Kurumu denetiminde delil olarak
+// değerlendirilir. Üretime almadan önce avukatınıza gözden geçirtmeniz önerilir.
 // =====================================================================
 const COMPANY = {
-  legalName: '[Ticaret Unvanı / Şahıs Adı]',
+  legalName: 'NEXT KIRTASİYE YAYINCILIK DAĞITIM OTOMOTİV GIDA İLETİŞİM HİZMETLERİ LİMİTED ŞİRKETİ',
   brand: 'OkulTedarigim',
-  taxOffice: '[Vergi Dairesi]',
-  taxNumber: '[Vergi Numarası]',
-  mersis: '[MERSİS No (varsa)]',
-  address: '[Tam Adres — Mahalle, Cadde, No, İlçe, İl, Posta Kodu]',
-  email: 'destek@okultedarigim.com',
+  taxOffice: 'Başakşehir',
+  taxNumber: '1258793967',
+  mersis: '0180070520100001',
+  address: 'Şamlar Mah. Hanedan Sk. Seher Hanım Apt. No: 11/1A Başakşehir / İstanbul',
+  email: 'info@okultedarigim.com',
   phone: '+90 549 774 71 37',
-  verbisNumber: '[VERBİS Kayıt No (kayıt yapıldıysa)]',
-  dpoEmail: 'kvkk@okultedarigim.com',
+  verbisNumber: '-',
+  dpoEmail: 'info@okultedarigim.com',
 }
 
 const rich = {

@@ -142,25 +142,25 @@ const WRAP_T: Record<EmailLocale, { tagline: string; footerLine1Html: string; fo
   tr: {
     tagline: 'Okul tedariğinizin tek adresi',
     footerLine1Html: 'Bu e-posta <strong>OkulTedarigim.com</strong> tarafından otomatik olarak gönderilmiştir.',
-    footerLine2Html: 'Herhangi bir sorunuz varsa <a href="mailto:destek@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">destek@okultedarigim.com</a> adresinden bize ulaşabilirsiniz.',
+    footerLine2Html: 'Herhangi bir sorunuz varsa <a href="mailto:info@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">info@okultedarigim.com</a> adresinden bize ulaşabilirsiniz.',
     rights: 'Tüm hakları saklıdır.',
   },
   en: {
     tagline: 'Your one-stop shop for school supplies',
     footerLine1Html: 'This email was sent automatically by <strong>OkulTedarigim.com</strong>.',
-    footerLine2Html: 'If you have any questions, you can reach us at <a href="mailto:destek@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">destek@okultedarigim.com</a>.',
+    footerLine2Html: 'If you have any questions, you can reach us at <a href="mailto:info@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">info@okultedarigim.com</a>.',
     rights: 'All rights reserved.',
   },
   de: {
     tagline: 'Ihre zentrale Anlaufstelle für Schulbedarf',
     footerLine1Html: 'Diese E-Mail wurde automatisch von <strong>OkulTedarigim.com</strong> gesendet.',
-    footerLine2Html: 'Bei Fragen erreichen Sie uns unter <a href="mailto:destek@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">destek@okultedarigim.com</a>.',
+    footerLine2Html: 'Bei Fragen erreichen Sie uns unter <a href="mailto:info@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">info@okultedarigim.com</a>.',
     rights: 'Alle Rechte vorbehalten.',
   },
   ar: {
     tagline: 'وجهتكم الأولى لتجهيزات المدرسة',
     footerLine1Html: 'تم إرسال هذا البريد الإلكتروني تلقائيًا بواسطة <strong>OkulTedarigim.com</strong>.',
-    footerLine2Html: 'إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر <a href="mailto:destek@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">destek@okultedarigim.com</a>.',
+    footerLine2Html: 'إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر <a href="mailto:info@okultedarigim.com" style="color: ${LINK}; text-decoration: none;">info@okultedarigim.com</a>.',
     rights: 'جميع الحقوق محفوظة.',
   },
 }
@@ -1457,7 +1457,7 @@ export async function sendDirectorPasswordReset(data: {
       badge: '\u015eifre Yenilendi',
       pwdLabel: 'Yeni \u015eifreniz',
       cta: 'M\u00fcd\u00fcr Paneline Giri\u015f Yap',
-      warning: `Bu i\u015flemi siz yapmad\u0131ysan\u0131z l\u00fctfen derhal <a href="mailto:destek@okultedarigim.com" style="color: ${COLORS.primaryLight};">destek@okultedarigim.com</a> adresine bildirin.`,
+      warning: `Bu i\u015flemi siz yapmad\u0131ysan\u0131z l\u00fctfen derhal <a href="mailto:info@okultedarigim.com" style="color: ${COLORS.primaryLight};">info@okultedarigim.com</a> adresine bildirin.`,
     },
     en: {
       defaultName: 'Dear Administrator',
@@ -1468,7 +1468,7 @@ export async function sendDirectorPasswordReset(data: {
       badge: 'Password Reset',
       pwdLabel: 'Your New Password',
       cta: 'Log in to Director Panel',
-      warning: `If you did not perform this action, please report it immediately to <a href="mailto:destek@okultedarigim.com" style="color: ${COLORS.primaryLight};">destek@okultedarigim.com</a>.`,
+      warning: `If you did not perform this action, please report it immediately to <a href="mailto:info@okultedarigim.com" style="color: ${COLORS.primaryLight};">info@okultedarigim.com</a>.`,
     },
     de: {
       defaultName: 'Sehr geehrte/r Verantwortliche/r',
@@ -1479,7 +1479,7 @@ export async function sendDirectorPasswordReset(data: {
       badge: 'Passwort zur\u00fcckgesetzt',
       pwdLabel: 'Ihr neues Passwort',
       cta: 'Beim Direktoren-Panel anmelden',
-      warning: `Falls Sie diese Aktion nicht durchgef\u00fchrt haben, melden Sie dies bitte umgehend unter <a href="mailto:destek@okultedarigim.com" style="color: ${COLORS.primaryLight};">destek@okultedarigim.com</a>.`,
+      warning: `Falls Sie diese Aktion nicht durchgef\u00fchrt haben, melden Sie dies bitte umgehend unter <a href="mailto:info@okultedarigim.com" style="color: ${COLORS.primaryLight};">info@okultedarigim.com</a>.`,
     },
     ar: {
       defaultName: '\u0639\u0632\u064a\u0632\u064a \u0627\u0644\u0645\u0633\u0624\u0648\u0644',
@@ -1490,7 +1490,7 @@ export async function sendDirectorPasswordReset(data: {
       badge: '\u062a\u0645\u062a \u0625\u0639\u0627\u062f\u0629 \u062a\u0639\u064a\u064a\u0646 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631',
       pwdLabel: '\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u0627\u0644\u062c\u062f\u064a\u062f\u0629',
       cta: '\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0625\u0644\u0649 \u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u062f\u064a\u0631',
-      warning: `\u0625\u0630\u0627 \u0644\u0645 \u062a\u0642\u0645 \u0628\u0647\u0630\u0627 \u0627\u0644\u0625\u062c\u0631\u0627\u0621\u060c \u0641\u064a\u0631\u062c\u0649 \u0625\u0628\u0644\u0627\u063a\u0646\u0627 \u0641\u0648\u0631\u064b\u0627 \u0639\u0628\u0631 <a href="mailto:destek@okultedarigim.com" style="color: ${COLORS.primaryLight};">destek@okultedarigim.com</a>.`,
+      warning: `\u0625\u0630\u0627 \u0644\u0645 \u062a\u0642\u0645 \u0628\u0647\u0630\u0627 \u0627\u0644\u0625\u062c\u0631\u0627\u0621\u060c \u0641\u064a\u0631\u062c\u0649 \u0625\u0628\u0644\u0627\u063a\u0646\u0627 \u0641\u0648\u0631\u064b\u0627 \u0639\u0628\u0631 <a href="mailto:info@okultedarigim.com" style="color: ${COLORS.primaryLight};">info@okultedarigim.com</a>.`,
     },
   }
   const tr = T[locale] ?? T.tr

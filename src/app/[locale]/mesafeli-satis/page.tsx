@@ -3,22 +3,22 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 
 // =====================================================================
-// SATICI BİLGİLERİ — DOLDURUN
+// SATICI BİLGİLERİ (gerçek — 2026-06 dolduruldu)
 // Bu metin 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli
 // Sözleşmeler Yönetmeliği uyarınca hazırlanmıştır. Üretime almadan önce
-// avukat onayından geçirin. Aşağıdaki placeholder'ları doldurun.
+// avukatınıza son bir kez gözden geçirtmeniz önerilir.
 // =====================================================================
 const SELLER = {
-  legalName: '[Ticaret Unvanı / Şahıs Adı]',
+  legalName: 'NEXT KIRTASİYE YAYINCILIK DAĞITIM OTOMOTİV GIDA İLETİŞİM HİZMETLERİ LİMİTED ŞİRKETİ',
   brand: 'OkulTedarigim',
-  taxOffice: '[Vergi Dairesi]',
-  taxNumber: '[Vergi Numarası]',
-  mersis: '[MERSİS No (varsa)]',
-  address: '[Tam Adres]',
-  email: 'destek@okultedarigim.com',
+  taxOffice: 'Başakşehir',
+  taxNumber: '1258793967',
+  mersis: '0180070520100001',
+  address: 'Şamlar Mah. Hanedan Sk. Seher Hanım Apt. No: 11/1A Başakşehir / İstanbul',
+  email: 'info@okultedarigim.com',
   phone: '+90 549 774 71 37',
   website: 'okultedarigim.com',
-  esnafSicilNo: '[Esnaf Sicil No (şahıs şirketi ise)]',
+  esnafSicilNo: '-',
 }
 
 const rich = {
