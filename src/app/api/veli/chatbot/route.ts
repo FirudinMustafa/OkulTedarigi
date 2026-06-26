@@ -134,10 +134,6 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
-      systemInstruction,
-    })
 
     // Gemini gecmisi: ilk mesaj 'user' olmali. Son mesaj kullanicinin sorusu.
     const history = messages.slice(0, -1).map((m) => ({
@@ -146,21 +142,44 @@ export async function POST(request: Request) {
     }))
     const lastMessage = messages[messages.length - 1]
 
-    const chat = model.startChat({
-      history,
-      generationConfig: {
-        maxOutputTokens: 600,
-        temperature: 0.4,
-      },
-    })
+    // Google zaman zaman "503 high demand" / "429 rate limit" donuyor (gecici).
+    // Bu yuzden birkac model uzerinde kisa backoff'la tekrar deniyoruz; biri
+    // cevap verene kadar sirayla geciyoruz. Kalici hatada (orn. 404) modeli atla.
+    const MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash']
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const result = await chat.sendMessage(lastMessage.content)
-    const reply = result.response.text().trim()
+    let reply = ''
+    let lastError: unknown = null
+    for (const modelName of MODELS) {
+      const model = genAI.getGenerativeModel({ model: modelName, systemInstruction })
+      let retriable = true
+      for (let attempt = 0; attempt < 2 && retriable; attempt++) {
+        try {
+          const chat = model.startChat({
+            history,
+            generationConfig: { maxOutputTokens: 600, temperature: 0.4 },
+          })
+          const result = await chat.sendMessage(lastMessage.content)
+          reply = result.response.text().trim()
+          if (reply) break
+        } catch (err) {
+          lastError = err
+          const status = (err as { status?: number })?.status
+          if (status === 503 || status === 429) {
+            await sleep(500 * (attempt + 1)) // gecici: bekle ve tekrar dene
+          } else {
+            retriable = false // kalici hata: bu modeli birak, sonrakine gec
+          }
+        }
+      }
+      if (reply) break
+    }
 
     if (!reply) {
+      console.error('Chatbot: tum modeller yanit veremedi.', lastError)
       return NextResponse.json(
-        { error: t('veli.chatEmptyReply') },
-        { status: 502 }
+        { error: t('veli.chatBusy') },
+        { status: 503 }
       )
     }
 
