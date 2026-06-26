@@ -15,7 +15,7 @@ const COMPANY = {
   mersis: '0180070520100001',
   address: 'Şamlar Mah. Hanedan Sk. Seher Hanım Apt. No: 11/1A Başakşehir / İstanbul',
   email: 'info@okultedarigim.com',
-  phone: '+90 549 774 71 37',
+  phone: '+90 554 167 47 37',
   verbisNumber: '-',
   dpoEmail: 'info@okultedarigim.com',
 }
