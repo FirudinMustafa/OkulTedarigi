@@ -19,7 +19,7 @@ model School {
   deliveryType                 DeliveryType    @default(SCHOOL_DELIVERY)
   password                     String          @unique // Veli giris sifresi (okul bazli)
   directorName                 String?
-  directorEmail                String          @unique
+  directorEmail                String // Birden fazla okul ayni mudur e-postasini paylasabilir (her okul ayri sifre)
   directorPassword             String
   directorPasswordResetToken   String?
   directorPasswordResetExpires DateTime?

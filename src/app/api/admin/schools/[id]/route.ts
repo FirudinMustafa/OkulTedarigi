@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAdminSession, hashPassword } from '@/lib/auth'
+import { getAdminSession, hashPassword, verifyPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { adminSchoolUpdateSchema, formatZodError } from '@/lib/validators'
 import { buildTranslationData } from '@/lib/i18n-content'
@@ -132,6 +132,26 @@ export async function PUT(
       select: { password: true, directorEmail: true, directorName: true, name: true }
     })
 
+    // Mudur sifresi degisiyorsa: ayni e-postayi paylasan DIGER okullarda ayni sifre olmamali
+    // (mudur girisi sifreye gore okula yonlendigi icin cakisma belirsizlik yaratir).
+    if (directorPassword && typeof directorPassword === 'string' && directorPassword.trim()) {
+      const targetEmail = (typeof updateData.directorEmail === 'string'
+        ? updateData.directorEmail
+        : previousSchool?.directorEmail) || ''
+      const others = await prisma.school.findMany({
+        where: { directorEmail: targetEmail, NOT: { id } },
+        select: { directorPassword: true }
+      })
+      for (const s of others) {
+        if (await verifyPassword(directorPassword.trim(), s.directorPassword)) {
+          return NextResponse.json(
+            { error: t('catalog.directorPasswordInUse') },
+            { status: 409 }
+          )
+        }
+      }
+    }
+
     const school = await prisma.school.update({
       where: { id },
       data: updateData
@@ -168,9 +188,10 @@ export async function PUT(
 
     return NextResponse.json({ school })
   } catch (error) {
+    // directorEmail artik unique degil; kalan unique alan veli giris sifresi
     if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
-        { error: t('catalog.schoolEmailExists') },
+        { error: t('catalog.passwordInUseOther') },
         { status: 409 }
       )
     }

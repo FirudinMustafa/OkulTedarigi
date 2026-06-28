@@ -322,7 +322,8 @@
       "permanentDeleteShort": "حذف نهائي",
       "saveFailed": "فشل الحفظ. يرجى التحقق من المعلومات.",
       "deleteFailed": "تعذّر حذف المدرسة",
-      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "directorEmailMultiHint": "يمكن استخدام نفس البريد الإلكتروني لعدة مدارس؛ أدخل كلمة مرور مدير مختلفة لكل مدرسة."
     },
     "classes": {
       "title": "الصفوف",
@@ -1543,7 +1544,8 @@
       "itemPriceInvalid": "سعر المنتج غير صالح ({name})",
       "packageUpdateFailed": "تعذر تحديث الحزمة",
       "packageHasActiveOrders": "يرتبط بهذه الحزمة {count} طلب نشط. قبل الحذف يجب إكمال الطلبات أو إلغاؤها.",
-      "packageDeleteFailed": "تعذر حذف الحزمة"
+      "packageDeleteFailed": "تعذر حذف الحزمة",
+      "directorPasswordInUse": "كلمة المرور هذه مستخدمة بالفعل لبريد المدير هذا. أدخل كلمة مرور مدير مختلفة لكل مدرسة تشترك في نفس البريد الإلكتروني."
     },
     "orders": {
       "unauthorized": "وصول غير مصرّح به",

@@ -322,7 +322,8 @@
       "permanentDeleteShort": "Delete Permanently",
       "saveFailed": "Save failed. Please check the information.",
       "deleteFailed": "Could not delete school",
-      "genericError": "An error occurred. Please try again."
+      "genericError": "An error occurred. Please try again.",
+      "directorEmailMultiHint": "The same email can be used for multiple schools; enter a different director password for each school."
     },
     "classes": {
       "title": "Classes",
@@ -1543,7 +1544,8 @@
       "itemPriceInvalid": "Item price is invalid ({name})",
       "packageUpdateFailed": "Failed to update package",
       "packageHasActiveOrders": "This package has {count} active orders. Before deleting, the orders must be completed or cancelled.",
-      "packageDeleteFailed": "Failed to delete package"
+      "packageDeleteFailed": "Failed to delete package",
+      "directorPasswordInUse": "This password is already in use for this director email. Enter a different director password for each school that shares the same email."
     },
     "orders": {
       "unauthorized": "Unauthorized access",

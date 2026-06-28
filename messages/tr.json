@@ -322,7 +322,8 @@
       "permanentDeleteShort": "Kalıcı Sil",
       "saveFailed": "Kayıt başarısız. Lütfen bilgileri kontrol edin.",
       "deleteFailed": "Okul silinemedi",
-      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin."
+      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "directorEmailMultiHint": "Aynı e-posta birden çok okulda kullanılabilir; her okul için farklı bir müdür şifresi girin."
     },
     "classes": {
       "title": "Sınıflar",
@@ -1543,7 +1544,8 @@
       "itemPriceInvalid": "Ürün fiyatı geçersiz ({name})",
       "packageUpdateFailed": "Paket güncellenemedi",
       "packageHasActiveOrders": "Bu pakete ait {count} aktif sipariş bulunuyor. Silmeden önce siparişlerin tamamlanması veya iptal edilmesi gerekiyor.",
-      "packageDeleteFailed": "Paket silinemedi"
+      "packageDeleteFailed": "Paket silinemedi",
+      "directorPasswordInUse": "Bu müdür e-postası için bu şifre zaten kullanımda. Aynı e-postalı her okul için farklı bir müdür şifresi giriniz."
     },
     "orders": {
       "unauthorized": "Yetkisiz erişim",

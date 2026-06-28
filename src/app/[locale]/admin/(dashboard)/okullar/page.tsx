@@ -498,6 +498,7 @@ export default function OkullarPage() {
                       onChange={(e) => setFormData({ ...formData, directorEmail: e.target.value })}
                       required
                     />
+                    <p className="text-xs text-gray-500">{t("directorEmailMultiHint")}</p>
                   </div>
                 </div>
                 <div className="space-y-2 mt-4">

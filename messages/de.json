@@ -322,7 +322,8 @@
       "permanentDeleteShort": "Endgültig löschen",
       "saveFailed": "Speichern fehlgeschlagen. Bitte überprüfen Sie die Angaben.",
       "deleteFailed": "Schule konnte nicht gelöscht werden",
-      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "directorEmailMultiHint": "Dieselbe E-Mail kann für mehrere Schulen verwendet werden; geben Sie für jede Schule ein anderes Direktor-Passwort ein."
     },
     "classes": {
       "title": "Klassen",
@@ -1543,7 +1544,8 @@
       "itemPriceInvalid": "Der Artikelpreis ist ungültig ({name})",
       "packageUpdateFailed": "Paket konnte nicht aktualisiert werden",
       "packageHasActiveOrders": "Diesem Paket sind {count} aktive Bestellungen zugeordnet. Vor dem Löschen müssen die Bestellungen abgeschlossen oder storniert werden.",
-      "packageDeleteFailed": "Paket konnte nicht gelöscht werden"
+      "packageDeleteFailed": "Paket konnte nicht gelöscht werden",
+      "directorPasswordInUse": "Dieses Passwort wird für diese Direktor-E-Mail bereits verwendet. Geben Sie für jede Schule mit derselben E-Mail ein anderes Direktor-Passwort ein."
     },
     "orders": {
       "unauthorized": "Unbefugter Zugriff",

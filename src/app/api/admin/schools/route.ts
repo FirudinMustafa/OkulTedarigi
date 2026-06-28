@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAdminSession, hashPassword } from '@/lib/auth'
+import { getAdminSession, hashPassword, verifyPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { generateSchoolPassword } from '@/lib/password-generator'
 import { adminSchoolCreateSchema, formatZodError } from '@/lib/validators'
@@ -82,6 +82,24 @@ export async function POST(request: Request) {
       name_ar
     } = parsed.data
 
+    const dirEmail = directorEmail.toLowerCase().trim()
+
+    // Ayni mudur e-postasini paylasan okullarda AYNI sifre kullanilamaz:
+    // mudur girisi sifreye gore okula yonlendigi icin cakisma girisi belirsizlestirir.
+    // (bcrypt hash'leri dogrudan karsilastirilamaz; plaintext eldeyken compare ediyoruz.)
+    const sameEmailSchools = await prisma.school.findMany({
+      where: { directorEmail: dirEmail },
+      select: { directorPassword: true }
+    })
+    for (const s of sameEmailSchools) {
+      if (await verifyPassword(directorPassword, s.directorPassword)) {
+        return NextResponse.json(
+          { error: t('catalog.directorPasswordInUse') },
+          { status: 409 }
+        )
+      }
+    }
+
     // Mudur sifresini hashle
     const hashedPassword = await hashPassword(directorPassword)
 
@@ -128,7 +146,7 @@ export async function POST(request: Request) {
         deliveryType: deliveryType || 'SCHOOL_DELIVERY',
         password: schoolPassword,
         directorName: directorName || null,
-        directorEmail: directorEmail.toLowerCase(),
+        directorEmail: dirEmail,
         directorPassword: hashedPassword
       }
     })
@@ -171,9 +189,10 @@ export async function POST(request: Request) {
       { headers: { 'Cache-Control': 'no-store' } }
     )
   } catch (error) {
+    // directorEmail artik unique degil; kalan unique alan veli giris sifresi (nadiren yarista cakisir)
     if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
-        { error: t('catalog.schoolEmailExists') },
+        { error: t('catalog.passwordInUseChoose') },
         { status: 409 }
       )
     }

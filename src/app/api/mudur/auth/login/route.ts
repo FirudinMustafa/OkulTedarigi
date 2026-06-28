@@ -44,17 +44,27 @@ export async function POST(request: Request) {
       )
     }
 
-    const school = await prisma.school.findFirst({
+    // Ayni mudur e-postasi birden fazla okulda olabilir; her okulun ayri sifresi var.
+    // Girilen sifre, eslesen okula yonlendirir (ilk eslesen, createdAt sirasiyla deterministik).
+    const candidates = await prisma.school.findMany({
       where: {
         directorEmail: email,
         isActive: true
-      }
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 20 // bcrypt maliyetini sinirla (pratikte cok kucuk)
     })
 
     // Kullanici-enumeration koruması: hesap yok / pasif / yanlış sifre — hep aynı mesaj
-    const isValid = school && await verifyPassword(password, school.directorPassword)
+    let school: (typeof candidates)[number] | null = null
+    for (const candidate of candidates) {
+      if (await verifyPassword(password, candidate.directorPassword)) {
+        school = candidate
+        break
+      }
+    }
 
-    if (!isValid) {
+    if (!school) {
       await Promise.all([
         recordFailedAttempt(rlSpecific),
         recordFailedAttempt(rlGlobal),
