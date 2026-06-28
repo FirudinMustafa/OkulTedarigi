@@ -295,6 +295,15 @@ model SystemLog {
   @@map("system_logs")
 }
 
+// Genel ayar deposu (key/value). Ornek: PAYMENT_COMMISSION_RATE = "2.39"
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
 model Discount {
   id          String       @id @default(cuid())
   code        String       @unique
