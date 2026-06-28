@@ -4,7 +4,7 @@ import { getAdminSession, hashPassword, verifyPassword } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { adminSchoolUpdateSchema, formatZodError } from '@/lib/validators'
 import { buildTranslationData } from '@/lib/i18n-content'
-import { sendDirectorPasswordReset, sendSchoolPasswordRegenerated } from '@/lib/email'
+import { sendDirectorPasswordReset, sendSchoolPasswordRegenerated, sendDirectorEmailChanged } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -184,6 +184,21 @@ export async function PUT(
         schoolName: school.name,
         newPassword: updateData.password as string
       }).catch(err => console.error('[email] sendSchoolPasswordRegenerated hatasi:', err))
+    }
+
+    // Mudur giris e-postasi degistiyse YENI adrese sifresiz bildirim gonder (best-effort).
+    // Mudur sifresi hash'li oldugu icin mailde yer almaz; veli sifresi + bilgilendirme gider.
+    if (
+      typeof updateData.directorEmail === 'string' &&
+      previousSchool &&
+      previousSchool.directorEmail !== updateData.directorEmail
+    ) {
+      sendDirectorEmailChanged({
+        directorEmail: school.directorEmail, // yeni adres
+        directorName: school.directorName,
+        schoolName: school.name,
+        veliPassword: school.password
+      }).catch(err => console.error('[email] sendDirectorEmailChanged hatasi:', err))
     }
 
     return NextResponse.json({ school })

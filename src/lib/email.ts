@@ -1434,6 +1434,124 @@ export async function sendDirectorWelcome(data: {
 }
 
 /**
+ * Mudur giris e-postasi degistiginde YENI adrese gonderilen sifresiz bildirim.
+ * Mudur sifresi DB'de hash'li oldugu icin mailde yer almaz; giris e-postasi +
+ * veli siparis sifresi + "sifreniz yonetici tarafindan belirlendi" notu gonderilir.
+ */
+export async function sendDirectorEmailChanged(data: {
+  directorEmail: string
+  directorName: string | null
+  schoolName: string
+  veliPassword: string
+  locale?: EmailLocale
+}): Promise<EmailResult> {
+  const locale = pickLocale(data.locale)
+  const safeSchool = escapeHtml(data.schoolName)
+  const safeEmail = escapeHtml(data.directorEmail)
+  const safeVeliPwd = escapeHtml(data.veliPassword)
+
+  const T = {
+    tr: {
+      defaultName: 'Sayın Yetkili',
+      dear: 'Sayın',
+      subject: `Müdür Giriş E-postanız Güncellendi - ${safeSchool}`,
+      title: `Giriş E-postası Güncellendi - ${safeSchool}`,
+      intro: `<strong>${safeSchool}</strong> için müdür paneli giriş e-posta adresiniz bu adres olarak güncellenmiştir.`,
+      badge: 'E-posta Güncellendi',
+      emailLabel: 'Giriş E-postanız',
+      loginCta: 'Müdür Paneline Giriş Yap',
+      veliHeading: 'Velilerinize İletmeniz Gereken Şifre',
+      veliIntro: 'Velilerinizin sipariş verirken kullanacağı okul şifresi aşağıdadır:',
+      veliLabel: 'Veli Sipariş Şifresi',
+      orderCta: 'Sipariş Sayfası',
+      noteLabel: 'Müdür Şifreniz:',
+      noteText: 'Müdür paneli giriş şifreniz yönetici tarafından belirlenmiştir. Şifrenizi bilmiyorsanız okul yöneticinizle iletişime geçin.',
+    },
+    en: {
+      defaultName: 'Dear Administrator',
+      dear: 'Dear',
+      subject: `Your Director Login Email Has Been Updated - ${safeSchool}`,
+      title: `Login Email Updated - ${safeSchool}`,
+      intro: `Your director panel login email address for <strong>${safeSchool}</strong> has been updated to this address.`,
+      badge: 'Email Updated',
+      emailLabel: 'Your Login Email',
+      loginCta: 'Log in to Director Panel',
+      veliHeading: 'Password to Share with Your Parents',
+      veliIntro: 'Below is the school password your parents will use when placing orders:',
+      veliLabel: 'Parent Order Password',
+      orderCta: 'Order Page',
+      noteLabel: 'Your Director Password:',
+      noteText: 'Your director panel login password was set by the administrator. If you do not know your password, please contact your school administrator.',
+    },
+    de: {
+      defaultName: 'Sehr geehrte/r Verantwortliche/r',
+      dear: 'Sehr geehrte/r',
+      subject: `Ihre Direktor-Anmelde-E-Mail wurde aktualisiert - ${safeSchool}`,
+      title: `Anmelde-E-Mail aktualisiert - ${safeSchool}`,
+      intro: `Ihre Anmelde-E-Mail-Adresse für das Direktoren-Panel von <strong>${safeSchool}</strong> wurde auf diese Adresse aktualisiert.`,
+      badge: 'E-Mail aktualisiert',
+      emailLabel: 'Ihre Anmelde-E-Mail',
+      loginCta: 'Beim Direktoren-Panel anmelden',
+      veliHeading: 'Passwort zur Weitergabe an die Eltern',
+      veliIntro: 'Nachfolgend finden Sie das Schulpasswort, das Ihre Eltern bei der Bestellung verwenden:',
+      veliLabel: 'Eltern-Bestellpasswort',
+      orderCta: 'Bestellseite',
+      noteLabel: 'Ihr Direktoren-Passwort:',
+      noteText: 'Ihr Anmeldepasswort für das Direktoren-Panel wurde vom Administrator festgelegt. Wenn Sie Ihr Passwort nicht kennen, wenden Sie sich bitte an Ihren Schuladministrator.',
+    },
+    ar: {
+      defaultName: 'عزيزي المسؤول',
+      dear: 'عزيزي',
+      subject: `تم تحديث بريد دخول المدير - ${safeSchool}`,
+      title: `تم تحديث بريد الدخول - ${safeSchool}`,
+      intro: `تم تحديث عنوان بريد تسجيل الدخول إلى لوحة المدير لـ <strong>${safeSchool}</strong> إلى هذا العنوان.`,
+      badge: 'تم تحديث البريد',
+      emailLabel: 'بريد تسجيل الدخول',
+      loginCta: 'تسجيل الدخول إلى لوحة المدير',
+      veliHeading: 'كلمة المرور التي يجب إبلاغها لأولياء الأمور',
+      veliIntro: 'فيما يلي كلمة مرور المدرسة التي سيستخدمها أولياء الأمور عند تقديم الطلبات:',
+      veliLabel: 'كلمة مرور طلب ولي الأمر',
+      orderCta: 'صفحة الطلب',
+      noteLabel: 'كلمة مرور المدير الخاصة بك:',
+      noteText: 'تم تعيين كلمة مرور تسجيل الدخول إلى لوحة المدير من قبل المسؤول. إذا كنت لا تعرف كلمة المرور الخاصة بك، يرجى التواصل مع مسؤول مدرستك.',
+    },
+  }
+  const tr = T[locale] ?? T.tr
+  const safeName = escapeHtml(data.directorName || tr.defaultName)
+
+  const content = `
+    ${greetingL(safeName, tr.dear)}
+    ${paragraph(tr.intro)}
+
+    <div style="text-align: center; margin: 24px 0;">
+      ${statusBadge(tr.badge, COLORS.success)}
+    </div>
+
+    ${passwordBox(tr.emailLabel, safeEmail, COLORS.primary)}
+
+    ${ctaButton(tr.loginCta, `${EMAIL_BASE_URL}/mudur/login`)}
+
+    <div style="background-color: #fffbeb; border-left: 4px solid ${COLORS.warning}; border-radius: 4px; padding: 14px 16px; margin: 24px 0;">
+      <p style="color: ${COLORS.textDark}; font-size: 13px; line-height: 1.5; margin: 0;">
+        <strong>${tr.noteLabel}</strong> ${tr.noteText}
+      </p>
+    </div>
+
+    <h3 style="color: ${COLORS.textDark}; font-size: 16px; margin: 24px 0 8px;">${tr.veliHeading}</h3>
+    ${paragraph(tr.veliIntro)}
+    ${passwordBox(tr.veliLabel, safeVeliPwd, COLORS.success)}
+
+    ${ctaButton(tr.orderCta, `${EMAIL_BASE_URL}/siparis`, COLORS.success)}
+  `
+
+  return sendEmailInternal({
+    to: data.directorEmail,
+    subject: tr.subject,
+    html: wrapTemplate(tr.title, content, locale)
+  })
+}
+
+/**
  * Mudur sifresi yenilendiginde gonderilen mail.
  */
 export async function sendDirectorPasswordReset(data: {
