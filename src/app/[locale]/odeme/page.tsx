@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import { Link, useRouter } from "@/i18n/navigation"
@@ -22,7 +22,7 @@ interface CheckoutDraft {
   }
 }
 
-export default function OdemePage() {
+function OdemeInner() {
   const t = useTranslations('payment')
   const locale = useLocale()
   const router = useRouter()
@@ -207,5 +207,18 @@ export default function OdemePage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+// useSearchParams() prerender sirasinda Suspense gerektirir (Next.js statik export).
+export default function OdemePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <OdemeInner />
+    </Suspense>
   )
 }
