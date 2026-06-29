@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { processRefund } from '@/lib/iyzico'
+import { processRefund } from '@/lib/paynkolay'
 import { sendCancellationConfirmation, sendCancellationRejected } from '@/lib/email'
 import { CANCELLABLE_STATUSES } from '@/lib/constants'
 import { getApiLocale } from '@/lib/api-locale'
@@ -111,12 +111,21 @@ export async function POST(
 
     let finalRequest = result.request
 
-    // Mock iade islemi - DB transaction'in disinda (external call)
+    // PayNKolay iade/iptal - DB transaction'in disinda (external call).
+    // referenceCode = PayNKolay referansi (callback'te paymentId'ye yazilir, IKSIRPF...).
+    // Ayni gun cekim ise "cancel" (iptal), sonraki gunler "refund" (iade).
     if (status === 'APPROVED' && result.order?.paymentId) {
       try {
+        const paidAt = result.order.paidAt ? new Date(result.order.paidAt) : new Date()
+        const now = new Date()
+        const sameDay = paidAt.getFullYear() === now.getFullYear() &&
+          paidAt.getMonth() === now.getMonth() &&
+          paidAt.getDate() === now.getDate()
         const refundResult = await processRefund({
-          paymentId: result.order.paymentId,
-          amount: Number(result.order.totalAmount)
+          referenceCode: result.order.paymentId,
+          amount: Number(result.order.totalAmount),
+          trxDate: paidAt,
+          type: sameDay ? 'cancel' : 'refund',
         })
 
         if (refundResult.success && refundResult.refundId) {

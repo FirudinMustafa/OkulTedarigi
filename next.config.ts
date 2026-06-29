@@ -7,21 +7,24 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 // Content Security Policy
 // - Next.js inline script/style icin 'unsafe-inline' geriye uyumluluk gerekiyor (App Router runtime)
-// - Iyzico, KolayBi, Yurtici Kargo, Twilio, Resend, Gemini API'leri icin connect-src whitelist
+// - PayNKolay, KolayBi, Yurtici Kargo, Twilio, Resend, Gemini API'leri icin connect-src whitelist
+// - PayNKolay 3D formu banka domain'lerine yonlenebildiginden form-action/frame-src genis tutulur
 // - frame-ancestors 'none' (X-Frame-Options DENY ile birlikte clickjacking korumasi)
 const cspDirectives = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "form-action 'self'",
+  // PayNKolay'in 3D formu bankanin 3DS sayfasina POST eder; banka domain'leri onceden bilinemez.
+  "form-action 'self' https://paynkolay.nkolayislem.com.tr https://paynkolaytest.nkolayislem.com.tr https:",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "worker-src 'self' blob:",
-  "connect-src 'self' blob: https://api.iyzipay.com https://sandbox-api.iyzipay.com https://api.kolaybi.com https://webservices.yurticikargo.com https://api.twilio.com https://api.resend.com https://generativelanguage.googleapis.com",
-  "frame-src 'self' blob: https://sandbox-api.iyzipay.com https://api.iyzipay.com",
+  "connect-src 'self' blob: https://paynkolay.nkolayislem.com.tr https://paynkolaytest.nkolayislem.com.tr https://api.kolaybi.com https://ofis-api.kolaybi.com https://ofis-sandbox-api.kolaybi.com https://webservices.yurticikargo.com https://api.twilio.com https://api.resend.com https://generativelanguage.googleapis.com",
+  // 3DS banka pencereleri farkli domain'lerde acilir.
+  "frame-src 'self' blob: https://paynkolay.nkolayislem.com.tr https://paynkolaytest.nkolayislem.com.tr https:",
 ].join('; ')
 
 const securityHeaders = [
@@ -58,6 +61,10 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // DEV-ONLY: cloudflared tunnel domaininden gelen /_next/* dev kaynaklarina izin ver
+  // (sandbox testinde tarayici tunel uzerinden eristiginde hydration icin gerekli).
+  // Prod'u etkilemez.
+  allowedDevOrigins: ['*.trycloudflare.com', 'laugh-fabrics-cedar-organizational.trycloudflare.com'],
   turbopack: {
     root: __dirname,
   },
