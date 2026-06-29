@@ -24,13 +24,9 @@ import crypto from 'crypto'
 
 // ---- Config -------------------------------------------------------------
 
-const isDev = process.env.NODE_ENV !== 'production'
-// GUVENLIK: mock SADECE dev'de calisir. Prod'da USE_MOCK_PAYMENT=true yanlislikla set edilse bile
-// yok sayilir -> gercek hash dogrulamasi her zaman devrede (sahte callback ile siparis PAID yapilamaz).
-const USE_MOCK = process.env.USE_MOCK_PAYMENT === 'true' && isDev
-if (process.env.USE_MOCK_PAYMENT === 'true' && !isDev) {
-  console.error("[PAYNKOLAY] GUVENLIK: USE_MOCK_PAYMENT prod'da yok sayildi (gercek dogrulama zorunlu).")
-}
+// GUVENLIK: mock odeme sistemi TAMAMEN kaldirildi. Gercek PayNKolay hash dogrulamasi
+// her zaman zorunludur; USE_MOCK_PAYMENT env degiskeni artik hicbir etkiye sahip degildir.
+// (Sahte bir callback ile siparis asla PAID yapilamaz.)
 
 const SX = process.env.PAYNKOLAY_SX || ''
 const SECRET_KEY = process.env.PAYNKOLAY_SECRET_KEY || ''
@@ -47,7 +43,6 @@ export const PAYNKOLAY_HOSTED_URL = `${BASE_URL}/Vpos`
 export const PAYNKOLAY_REFUND_URL = `${BASE_URL}/Vpos/v1/CancelRefundPayment`
 
 export function assertPaynkolayConfig(): void {
-  if (USE_MOCK) return
   const missing: string[] = []
   if (!SX) missing.push('PAYNKOLAY_SX')
   if (!SECRET_KEY) missing.push('PAYNKOLAY_SECRET_KEY')
@@ -105,26 +100,6 @@ export function buildHostedPaymentForm(input: BuildHostedInput): HostedPaymentFo
   // Nkolay dil destegi: tr (varsayilan), en, ru. de/ar icin en'e dus.
   const language = input.locale && input.locale !== 'tr' ? 'en' : ''
 
-  if (USE_MOCK) {
-    if (isDev) console.log('[MOCK PAYNKOLAY] Hosted form:', input.clientRefCode, amountStr, 'TL')
-    // Mock'ta gercek Nkolay yok: form dogrudan callback'imize (successUrl) gercek alan adlariyla POST eder.
-    return {
-      actionUrl: input.successUrl,
-      fields: {
-        CLIENT_REFERENCE_CODE: input.clientRefCode,
-        RESPONSE_CODE: '2',
-        RESPONSE_DATA: 'Mock basarili',
-        AUTH_CODE: `MOCKAUTH${Date.now()}`,
-        REFERENCE_CODE: `IKSIRPFMOCK${Date.now()}`,
-        AUTHORIZATION_AMOUNT: amountStr,
-        INSTALLMENT: '1',
-        USE_3D: 'true',
-        CURRENCY_CODE: CURRENCY_CODE,
-        mockSuccess: 'true',
-      },
-    }
-  }
-
   assertPaynkolayConfig()
   // CANLI SANDBOX ILE DOGRULANDI: hash'e cardHolderIP DAHIL DEGIL (cardHolderIP form alani olarak ayrica gonderilir).
   // Dogru formul: sx|clientRefCode|amount|successUrl|failUrl|rnd|customerKey|secret
@@ -176,11 +151,6 @@ export function evaluateCallback(body: Record<string, string>): CallbackVerdict 
   const authorizationAmount = body.AUTHORIZATION_AMOUNT ? Number(body.AUTHORIZATION_AMOUNT) : undefined
   const installment = body.INSTALLMENT ? Number(body.INSTALLMENT) : undefined
 
-  if (USE_MOCK) {
-    const ok = responseCode === '2' || body.mockSuccess === 'true'
-    return { verified: true, success: ok, clientRefCode, paynkolayReference, authCode, authorizationAmount, installment }
-  }
-
   const verified = verifyResponseHash(body)
   const success = verified && responseCode === '2'
   return {
@@ -203,8 +173,12 @@ export function evaluateCallback(body: Record<string, string>): CallbackVerdict 
  * DOGRULANDI (2026-06-29): prod'da gercek 1 TL odemesi bu formulle PAID oldu (response hash gecti).
  */
 export function verifyResponseHash(body: Record<string, string>): boolean {
+  assertPaynkolayConfig() // Config eksikse hemen patla (sessizce false donup PAID yapma)
   const received = body.hashDataV2 || body.hashDatav2
-  if (!received || !SECRET_KEY) return false
+  if (!received || !SECRET_KEY) {
+    console.error('[PAYNKOLAY] Hash dogrulamasi REDDEDILDI - hash veya secret eksik')
+    return false
+  }
   const parts = [
     body.MERCHANT_NO, body.REFERENCE_CODE, body.AUTH_CODE, body.RESPONSE_CODE,
     body.USE_3D, body.RND, body.INSTALLMENT, body.AUTHORIZATION_AMOUNT, body.CURRENCY_CODE,
@@ -247,12 +221,6 @@ export function computeRefundHash(input: { referenceCode: string; type: string; 
 }
 
 export async function processRefund(input: RefundInput): Promise<RefundResult> {
-  if (USE_MOCK) {
-    if (isDev) console.log('[MOCK PAYNKOLAY] Iade:', input.referenceCode, input.amount, 'TL', input.type || 'refund')
-    await new Promise(r => setTimeout(r, 500))
-    return { success: true, refundId: `REF_${Date.now()}`, message: 'Iade (mock) tamamlandi' }
-  }
-
   if (!REFUND_SX || !SECRET_KEY) {
     return { success: false, message: 'PayNKolay iade konfigurasyonu eksik (PAYNKOLAY_REFUND_SX/SECRET_KEY)' }
   }

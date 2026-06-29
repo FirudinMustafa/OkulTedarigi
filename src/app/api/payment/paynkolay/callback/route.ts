@@ -5,7 +5,7 @@ import { createInvoice } from '@/lib/kolaybi'
 import { sendOrderConfirmation } from '@/lib/email'
 import { logAction } from '@/lib/logger'
 import { getLocalized } from '@/lib/i18n-content'
-import { getClientIp } from '@/lib/security'
+import { getClientIp, sanitizeForLog } from '@/lib/security'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -38,8 +38,8 @@ export async function POST(request: Request) {
   const refCode = verdict.clientRefCode
 
   if (!refCode) {
-    // Tum govdeyi loglama; sadece guvenli/tani alanlari.
-    console.error('[paynkolay/callback] clientRefCode yok', { responseCode: body.RESPONSE_CODE, message: body.RESPONSE_DATA })
+    // Govde sanitize edilerek loglanir (kart/secret alanlari maskelenir).
+    console.error('[paynkolay/callback] clientRefCode yok', sanitizeForLog(body))
     return redirectTo('/tr/odeme?reason=failed')
   }
 
@@ -68,7 +68,11 @@ export async function POST(request: Request) {
   // Tutar tutarliligi (taksitte vade farki ile AUTHORIZATION_AMOUNT >= principal olabilir).
   // Eksik tahsilati reddet (taksitte vade farki ile USTUNE cikabilir; ALTINA inemez). Epsilon yalniz float toleransi.
   if (verdict.authorizationAmount != null && verdict.authorizationAmount + 0.001 < Number(order.totalAmount)) {
-    console.error('[paynkolay/callback] Tutar uyusmazligi:', { refCode, beklenen: Number(order.totalAmount), gelen: verdict.authorizationAmount })
+    console.error('[paynkolay/callback] Tutar uyusmazligi', sanitizeForLog({
+      orderNumber: refCode,
+      expectedAmount: Number(order.totalAmount),
+      receivedAmount: verdict.authorizationAmount,
+    }))
     return redirectTo(`/${locale}/odeme?reason=failed`)
   }
 

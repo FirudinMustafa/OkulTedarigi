@@ -4,7 +4,7 @@ import { generateOrderNumber } from '@/lib/order-number'
 import { buildHostedPaymentForm } from '@/lib/paynkolay'
 import { isValidTCKimlik } from '@/lib/utils'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
-import { getClientIp } from '@/lib/security'
+import { getClientIp, generateOrderAccessToken } from '@/lib/security'
 import { veliOrderBodySchema, formatZodError } from '@/lib/validators'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -234,6 +234,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       orderNumber: order.orderNumber,
+      orderId: order.id,
+      accessToken: generateOrderAccessToken(order.id),
       actionUrl,
       fields,
     })

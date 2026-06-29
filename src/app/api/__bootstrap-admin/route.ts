@@ -21,6 +21,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'already_initialized' }, { status: 403 })
   }
 
+  // Cift onay: kazara/otomatik tetiklemeye karsi ek bariyer.
+  const reqBody = await request.json().catch(() => ({})) as { confirm?: string }
+  if (reqBody?.confirm !== 'BOOTSTRAP_ADMIN_INIT') {
+    return NextResponse.json(
+      { error: 'Confirmation token required. Send: {"confirm":"BOOTSTRAP_ADMIN_INIT"}' },
+      { status: 400 }
+    )
+  }
+
   const email = process.env.ADMIN_EMAIL
   const password = process.env.ADMIN_PASSWORD
   const name = process.env.ADMIN_NAME || 'Admin'
