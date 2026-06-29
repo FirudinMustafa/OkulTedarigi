@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useParams } from "next/navigation"
 import { Link } from "@/i18n/navigation"
 import { formatDateTime, formatPrice } from "@/lib/utils"
+import { CHECKOUT_DRAFT_KEY } from "@/lib/constants"
 
 interface OrderData {
   orderNumber: string
@@ -49,6 +50,12 @@ export default function SiparisOnayPage() {
   useEffect(() => {
     fetchOrder()
   }, [orderNumber])
+
+  // Odeme basariyla tamamlandi (bu sayfaya ancak callback PAID yapinca gelinir):
+  // checkout taslagini temizle ki kullanici /odeme'ye geri donerse tekrar odeme denemesin.
+  useEffect(() => {
+    try { sessionStorage.removeItem(CHECKOUT_DRAFT_KEY) } catch {}
+  }, [])
 
   const fetchOrder = async () => {
     try {

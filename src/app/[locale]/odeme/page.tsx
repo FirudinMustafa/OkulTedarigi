@@ -110,10 +110,8 @@ function OdemeInner() {
         return
       }
 
-      // Siparis sunucuda PAYMENT_PENDING olarak yazildi; taslak artik gereksiz.
-      try { sessionStorage.removeItem(CHECKOUT_DRAFT_KEY) } catch {}
-      try { localStorage.removeItem(`paket-form-${draft.payload.classId}`) } catch {}
-
+      // Taslagi SILME — odeme basarisiz/iptal donerse kullanici geri gelip tekrar deneyebilsin.
+      // Taslak, odeme basarili olunca siparis-onay sayfasinda temizlenir.
       // PayNKolay Ortak Odeme sayfasina yonlendir (kart + taksit orada alinir).
       submitToPaynkolay(data.actionUrl, data.fields)
       // Not: processing true kalir; sayfa PayNKolay'a gider.
