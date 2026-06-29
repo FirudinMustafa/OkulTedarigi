@@ -48,6 +48,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Siparis-bazli brute-force korumasi: ayni siparis icin phoneLast4 (10bin kombinasyon)
+    // denemesini IP rotasyonundan bagimsiz kilitler. 5 hatali deneme / 60 dk.
+    const orderRlId = `veli-cancel-order:${orderId}`
+    const orderRl = await checkRateLimit(orderRlId, 5, 60)
+    if (!orderRl.allowed) {
+      return NextResponse.json({ error: t('veli.authFailed') }, { status: 403 })
+    }
+
     // Kimlik dogrulama: accessToken (POST yaratandan) VEYA phoneLast4 (takip sayfasindan)
     let authorized = false
     if (accessToken && verifyOrderAccessToken(order.id, accessToken)) {
@@ -61,6 +69,7 @@ export async function POST(request: Request) {
     }
     if (!authorized) {
       await recordFailedAttempt(rlIdentifier)
+      await recordFailedAttempt(orderRlId)
       return NextResponse.json(
         { error: t('veli.authFailed') },
         { status: 403 }
@@ -109,8 +118,9 @@ export async function POST(request: Request) {
       }
     })
 
-    // Başarılı talep — sayaç sıfırlansın
+    // Başarılı talep — sayaçlar sıfırlansın (IP + sipariş)
     await resetRateLimit(rlIdentifier)
+    await resetRateLimit(orderRlId)
 
     // Admine bilgi maili (best-effort, transaction'i bozmaz)
     const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL

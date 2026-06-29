@@ -14,6 +14,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
+  // GUVENLIK: yalnizca ILK kurulum. Admin zaten varsa reddet — token sizsa bile
+  // mevcut admin sifresi EZILEMEZ (hesap ele gecirme onlenir).
+  const adminCount = await prisma.admin.count()
+  if (adminCount > 0) {
+    return NextResponse.json({ error: 'already_initialized' }, { status: 403 })
+  }
+
   const email = process.env.ADMIN_EMAIL
   const password = process.env.ADMIN_PASSWORD
   const name = process.env.ADMIN_NAME || 'Admin'
@@ -24,10 +31,9 @@ export async function POST(request: Request) {
 
   const hashed = await hashPassword(password)
 
-  const admin = await prisma.admin.upsert({
-    where: { email },
-    update: { password: hashed, isActive: true, name },
-    create: { email, password: hashed, name, isActive: true },
+  // upsert degil create — sadece admin yokken calisir (yukarida garanti edildi).
+  const admin = await prisma.admin.create({
+    data: { email, password: hashed, name, isActive: true },
   })
 
   return NextResponse.json({

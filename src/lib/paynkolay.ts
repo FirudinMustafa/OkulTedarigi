@@ -24,8 +24,13 @@ import crypto from 'crypto'
 
 // ---- Config -------------------------------------------------------------
 
-const USE_MOCK = process.env.USE_MOCK_PAYMENT === 'true'
 const isDev = process.env.NODE_ENV !== 'production'
+// GUVENLIK: mock SADECE dev'de calisir. Prod'da USE_MOCK_PAYMENT=true yanlislikla set edilse bile
+// yok sayilir -> gercek hash dogrulamasi her zaman devrede (sahte callback ile siparis PAID yapilamaz).
+const USE_MOCK = process.env.USE_MOCK_PAYMENT === 'true' && isDev
+if (process.env.USE_MOCK_PAYMENT === 'true' && !isDev) {
+  console.error("[PAYNKOLAY] GUVENLIK: USE_MOCK_PAYMENT prod'da yok sayildi (gercek dogrulama zorunlu).")
+}
 
 const SX = process.env.PAYNKOLAY_SX || ''
 const SECRET_KEY = process.env.PAYNKOLAY_SECRET_KEY || ''
@@ -195,9 +200,7 @@ export function evaluateCallback(body: Record<string, string>): CallbackVerdict 
  *   MERCHANT_NO|REFERENCE_CODE|AUTH_CODE|RESPONSE_CODE|USE_3D|RND|INSTALLMENT|AUTHORIZATION_AMOUNT|CURRENCY_CODE|SECRET
  *   -> Base64(SHA512). Gelen hashDataV2 ile timing-safe karsilastir.
  *
- * NOT: Bu formul tek bir sandbox islemiyle henuz dogrulanmadi. Ilk sandbox odemesinde
- * callback'e POST edilen alanlari + gelen hashDataV2'yi loglayip teyit edecegiz; alan
- * adlari/sirasi farkliysa burada ayarlanir.
+ * DOGRULANDI (2026-06-29): prod'da gercek 1 TL odemesi bu formulle PAID oldu (response hash gecti).
  */
 export function verifyResponseHash(body: Record<string, string>): boolean {
   const received = body.hashDataV2 || body.hashDatav2

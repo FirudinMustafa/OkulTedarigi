@@ -38,7 +38,8 @@ export async function POST(request: Request) {
   const refCode = verdict.clientRefCode
 
   if (!refCode) {
-    console.error('[paynkolay/callback] clientRefCode yok:', body)
+    // Tum govdeyi loglama; sadece guvenli/tani alanlari.
+    console.error('[paynkolay/callback] clientRefCode yok', { responseCode: body.RESPONSE_CODE, message: body.RESPONSE_DATA })
     return redirectTo('/tr/odeme?reason=failed')
   }
 
@@ -65,7 +66,8 @@ export async function POST(request: Request) {
   }
 
   // Tutar tutarliligi (taksitte vade farki ile AUTHORIZATION_AMOUNT >= principal olabilir).
-  if (verdict.authorizationAmount != null && verdict.authorizationAmount + 0.01 < Number(order.totalAmount)) {
+  // Eksik tahsilati reddet (taksitte vade farki ile USTUNE cikabilir; ALTINA inemez). Epsilon yalniz float toleransi.
+  if (verdict.authorizationAmount != null && verdict.authorizationAmount + 0.001 < Number(order.totalAmount)) {
     console.error('[paynkolay/callback] Tutar uyusmazligi:', { refCode, beklenen: Number(order.totalAmount), gelen: verdict.authorizationAmount })
     return redirectTo(`/${locale}/odeme?reason=failed`)
   }
