@@ -6,11 +6,22 @@ import { X, PaperPlaneRight, Robot } from '@phosphor-icons/react'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
-// Yanıt içindeki /siparis, /siparis-takip gibi iç linkleri ve WhatsApp (wa.me) linkini
-// tıklanabilir yapar.
+// Yanıt içindeki /siparis, /siparis-takip gibi iç linkleri, WhatsApp (wa.me) linkini
+// ve destek e-postasını tıklanabilir yapar.
 function renderContent(text: string, whatsappLabel: string) {
-  const parts = text.split(/(\/(?:siparis-takip|siparis|kvkk|mesafeli-satis)\b|#sss|https?:\/\/wa\.me\/\d+)/g)
+  const parts = text.split(/(\/(?:siparis-takip|siparis|kvkk|mesafeli-satis)\b|#sss|https?:\/\/wa\.me\/\d+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g)
   return parts.map((part, i) => {
+    if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(part)) {
+      return (
+        <a
+          key={i}
+          href={`mailto:${part}`}
+          className="text-apple-blue underline underline-offset-2 hover:opacity-80"
+        >
+          {part}
+        </a>
+      )
+    }
     if (/^https?:\/\/wa\.me\/\d+$/.test(part)) {
       return (
         <a
