@@ -39,11 +39,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: t('orders.invalidOrderId') }, { status: 400 })
     }
 
-    // Fatura kesilebilir durumdaki siparisleri getir (zaten faturalanmamis olanlar)
+    // Fatura kesilebilir durumdaki siparisleri getir (zaten faturalanmamis olanlar).
+    // Normal akista fatura artik COMPLETED gecisinde otomatik kesilir; bu toplu islem
+    // sadece o otomatik kesim basarisiz olduysa manuel yedek olarak kullanilir.
     const orders = await prisma.order.findMany({
       where: {
         id: { in: orderIds },
-        status: { in: ['PAID', 'CONFIRMED'] },
+        status: { in: ['PAID', 'CONFIRMED', 'SHIPPED', 'COMPLETED'] },
         invoiceNo: null
       },
       include: {
@@ -110,10 +112,13 @@ export async function POST(request: Request) {
 
         // Idempotency: invoiceNo bos olanlari atomic olarak guncelle.
         // Iki paralel batch ayni siparise gelse 2.si count=0 doner.
+        // PAID/CONFIRMED'de status INVOICED'a alinir (eski davranis); SHIPPED/COMPLETED'de
+        // status DEGISTIRILMEZ (zaten ilerlemis/tamamlanmis bir siparisi geriye almamak icin).
+        const shouldAdvanceStatus = ['PAID', 'CONFIRMED'].includes(order.status)
         const updated = await prisma.order.updateMany({
           where: { id: order.id, invoiceNo: null },
           data: {
-            status: 'INVOICED',
+            ...(shouldAdvanceStatus ? { status: 'INVOICED' as const } : {}),
             invoiceNo: invoiceResult.invoiceNo,
             invoicePdfPath: invoiceResult.invoiceUrl,
             invoiceDate: new Date(),

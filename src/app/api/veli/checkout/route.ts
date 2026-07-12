@@ -53,6 +53,7 @@ export async function POST(request: Request) {
       selectedItemIds,
       city,
       district,
+      installments,
     } = parsed.data
 
     const primaryStudent = students[0]
@@ -229,6 +230,7 @@ export async function POST(request: Request) {
       failUrl: callbackUrl,
       cardHolderIP: ip,
       locale: reqLocale,
+      installments: installments || undefined,
     })
 
     return NextResponse.json({

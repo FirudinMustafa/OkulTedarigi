@@ -177,6 +177,10 @@ export default function PaketPage() {
   const [taxOffice, setTaxOffice] = useState("")
   const [tcNumber, setTcNumber] = useState("")
 
+  // Taksit (opsiyonel). 0 = secim yapilmadi (varsayilan) -> PayNKolay sayfasi kartin
+  // uygun oldugu tum taksit seceneklerini kendisi gosterir. >0 ise o sayi zorlanir (1=tek cekim).
+  const [installments, setInstallments] = useState<number>(0)
+
   // Fatura adresi (farkli adres secenegi)
   const [invoiceAddressSame, setInvoiceAddressSame] = useState(true)
   const [invoiceStreetAddress, setInvoiceStreetAddress] = useState("")
@@ -293,6 +297,7 @@ export default function PaketPage() {
       if (data.taxNumber !== undefined) setTaxNumber(data.taxNumber)
       if (data.taxOffice !== undefined) setTaxOffice(data.taxOffice)
       if (data.tcNumber !== undefined) setTcNumber(data.tcNumber)
+      if (data.installments !== undefined) setInstallments(data.installments)
       if (data.invoiceAddressSame !== undefined) setInvoiceAddressSame(data.invoiceAddressSame)
       if (data.invoiceStreetAddress !== undefined) setInvoiceStreetAddress(data.invoiceStreetAddress)
       if (data.invoiceStreetAddress2 !== undefined) setInvoiceStreetAddress2(data.invoiceStreetAddress2)
@@ -319,6 +324,7 @@ export default function PaketPage() {
           altSelectedIl, altSelectedIlce, altPostalCode,
           students, orderNote,
           invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
+          installments,
           invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
           invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
         }
@@ -336,6 +342,7 @@ export default function PaketPage() {
     altSelectedIl, altSelectedIlce, altPostalCode,
     students, orderNote,
     invoiceType, isCorporateInvoice, companyTitle, taxNumber, taxOffice, tcNumber,
+    installments,
     invoiceAddressSame, invoiceStreetAddress, invoiceStreetAddress2,
     invoiceSelectedIl, invoiceSelectedIlce, invoicePostalCode,
     FORM_STORAGE_KEY
@@ -674,6 +681,7 @@ export default function PaketPage() {
       companyTitle: invoiceType === 'kurumsal' ? companyTitle : null,
       taxNumber: invoiceType === 'kurumsal' ? taxNumber : (tcNumber || null),
       taxOffice: invoiceType === 'kurumsal' ? taxOffice : null,
+      installments: installments > 0 ? installments : null,
       orderNote,
       discountCode: discountApplied ? discountApplied.code : null,
       selectedItemIds: classData?.package.isCustomizable ? selectedItemIds : undefined,
@@ -1649,6 +1657,26 @@ export default function PaketPage() {
                           {formatPrice(getFinalPrice())} TL
                         </span>
                       </div>
+                    </div>
+
+                    {/* Taksit (Opsiyonel) */}
+                    <div>
+                      <label htmlFor="f-installments" className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('invoice.installmentTitle')}
+                      </label>
+                      <select
+                        id="f-installments"
+                        value={installments}
+                        onChange={(e) => setInstallments(Number(e.target.value))}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-sm"
+                      >
+                        <option value={0}>{t('invoice.installmentNone')}</option>
+                        <option value={1}>{t('invoice.installmentSingle')}</option>
+                        {[2, 3, 6, 9, 12].map(count => (
+                          <option key={count} value={count}>{t('invoice.installmentCount', { count })}</option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500">{t('invoice.installmentNote')}</p>
                     </div>
 
                     {/* Ödeme Butonu */}

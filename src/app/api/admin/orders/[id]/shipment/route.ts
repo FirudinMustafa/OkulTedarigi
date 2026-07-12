@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { createInvoice } from '@/lib/kolaybi'
 import { createShipment } from '@/lib/yurtici-kargo'
-import { sendInvoiceCreated, sendCargoNotification } from '@/lib/email'
+import { sendCargoNotification } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -53,79 +52,8 @@ export async function POST(
       )
     }
 
-    let autoInvoiced = false
-    let invoiceNo: string | null = order.invoiceNo
-
-    // OTOMATIK FATURA: Henuz faturalanmamis siparisler icin once fatura kes
-    if (['PAID', 'CONFIRMED'].includes(order.status)) {
-      const invoiceResult = await createInvoice({
-        orderNumber: order.orderNumber,
-        customerName: order.parentName,
-        customerEmail: order.email || undefined,
-        customerPhone: order.phone,
-        customerAddress: order.invoiceAddress || order.address || order.class.school.address || undefined,
-        isCorporate: order.isCorporateInvoice,
-        taxNumber: order.taxNumber || undefined,
-        taxOffice: order.taxOffice || undefined,
-        items: order.class.package?.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: Number(item.price),
-          totalPrice: Number(item.price) * item.quantity
-        })) || [],
-        totalAmount: Number(order.totalAmount)
-      })
-
-      if (!invoiceResult.success) {
-        return NextResponse.json(
-          { error: t('orders.autoInvoiceFailed', { message: invoiceResult.errorMessage ?? '' }) },
-          { status: 500 }
-        )
-      }
-
-      invoiceNo = invoiceResult.invoiceNo || null
-      autoInvoiced = true
-
-      // Fatura bilgilerini kaydet
-      await prisma.order.update({
-        where: { id },
-        data: {
-          invoiceNo: invoiceResult.invoiceNo,
-          invoicePdfPath: invoiceResult.invoiceUrl,
-          invoiceDate: new Date(),
-          invoicedAt: new Date()
-        }
-      })
-
-      await logAction({
-        userId: session.id,
-        userType: 'ADMIN',
-        action: 'AUTO_INVOICE_CREATED',
-        entity: 'ORDER',
-        entityId: order.id,
-        details: {
-          orderNumber: order.orderNumber,
-          invoiceNo: invoiceResult.invoiceNo,
-          autoCreated: true
-        }
-      })
-
-      // Veliye otomatik fatura kesim bildirimi (best-effort)
-      if (order.email && invoiceResult.invoiceNo) {
-        try {
-          await sendInvoiceCreated({
-            email: order.email,
-            orderNumber: order.orderNumber,
-            parentName: order.parentName,
-            invoiceNo: invoiceResult.invoiceNo,
-            totalAmount: Number(order.totalAmount),
-            locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
-          })
-        } catch (notifError) {
-          console.error('Otomatik fatura bildirim maili gonderilemedi:', notifError)
-        }
-      }
-    }
+    // Fatura BURADA kesilmez — siparis COMPLETED durumuna gectiginde otomatik kesilir
+    // (bkz. src/app/api/admin/orders/[id]/route.ts PUT). Kargo, fatura durumundan bagimsiz islenir.
 
     // Atomic claim: SHIPPED slot'u rezerve et (concurrent POST'lar engellenir).
     // Sadece kargolanmamis (trackingNo: null) ve uygun statuslu siparisler claim edilir.
@@ -233,9 +161,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       trackingNo: shipmentResult.trackingNo,
-      trackingUrl: shipmentResult.trackingUrl,
-      autoInvoiced,
-      invoiceNo: invoiceNo || undefined
+      trackingUrl: shipmentResult.trackingUrl
     })
   } catch (error) {
     console.error('Kargo olusturulamadi:', error)

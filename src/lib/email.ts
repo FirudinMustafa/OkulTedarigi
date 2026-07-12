@@ -381,6 +381,53 @@ export async function sendOrderConfirmation(data: {
   })
 }
 
+const ORDER_NOTIFICATION_EMAIL = process.env.ORDER_NOTIFICATION_EMAIL || 'info@okultedarigim.com'
+
+/**
+ * Yeni siparis geldiginde ISLETMEYE (veliye degil) giden ic bildirim maili.
+ * Her zaman TR, tek alici (ORDER_NOTIFICATION_EMAIL / varsayilan info@okultedarigim.com).
+ */
+export async function sendNewOrderAdminNotification(data: {
+  orderNumber: string
+  parentName: string
+  parentPhone: string
+  parentEmail?: string
+  studentName: string
+  schoolName: string
+  packageName: string
+  totalAmount: number
+}): Promise<EmailResult> {
+  const safeOrder = escapeHtml(data.orderNumber)
+  const safeParent = escapeHtml(data.parentName)
+  const safePhone = escapeHtml(data.parentPhone)
+  const safeStudent = escapeHtml(data.studentName)
+  const safeSchool = escapeHtml(data.schoolName)
+  const safePackage = escapeHtml(data.packageName)
+
+  const content = `
+    ${paragraph(`<strong>${safeOrder}</strong> numaralı yeni bir sipariş ödemesi alındı.`)}
+
+    ${infoTable(
+      infoRow('Sipariş No', safeOrder) +
+      infoRow('Veli', safeParent) +
+      infoRow('Telefon', safePhone) +
+      (data.parentEmail ? infoRow('E-posta', escapeHtml(data.parentEmail)) : '') +
+      infoRow('Öğrenci', safeStudent) +
+      infoRow('Okul', safeSchool) +
+      infoRow('Paket', safePackage) +
+      infoRow('Toplam Tutar', `<span style="color: ${COLORS.primary}; font-size: 18px;">${data.totalAmount.toLocaleString('tr-TR')} TL</span>`)
+    )}
+
+    ${ctaButton('Admin Panelde Gor', `${EMAIL_BASE_URL}/admin/orders`)}
+  `
+
+  return sendEmailInternal({
+    to: ORDER_NOTIFICATION_EMAIL,
+    subject: `🛒 Yeni Sipariş - ${data.orderNumber}`,
+    html: wrapTemplate(`Yeni Sipariş - ${safeOrder}`, content, 'tr')
+  })
+}
+
 /**
  * Odeme onay maili
  */

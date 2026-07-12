@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { evaluateCallback } from '@/lib/paynkolay'
-import { createInvoice } from '@/lib/kolaybi'
-import { sendOrderConfirmation } from '@/lib/email'
+import { sendOrderConfirmation, sendNewOrderAdminNotification } from '@/lib/email'
 import { logAction } from '@/lib/logger'
 import { getLocalized } from '@/lib/i18n-content'
 import { getClientIp, sanitizeForLog } from '@/lib/security'
@@ -22,8 +21,10 @@ function redirectTo(path: string): NextResponse {
  * Nkolay/banka sonucu buraya form-data POST eder. Burada:
  *   - sonuc dogrulanir (response hash + responseCode)
  *   - siparis PAYMENT_PENDING -> PAID (atomik, idempotent)
- *   - indirim usedCount (best-effort), KolayBi fatura (best-effort), onay e-postasi (best-effort)
+ *   - indirim usedCount (best-effort), onay e-postasi + isletme bildirimi (best-effort)
  *   - veli onay/hata sayfasina yonlendirilir
+ *   - KolayBi fatura BURADA kesilmez; siparis COMPLETED durumuna gectiginde kesilir
+ *     (bkz. src/app/api/admin/orders/[id]/route.ts PUT)
  */
 export async function POST(request: Request) {
   let body: Record<string, string> = {}
@@ -91,7 +92,6 @@ export async function POST(request: Request) {
     return redirectTo(`/${locale}/siparis-onay/${order.orderNumber}`)
   }
 
-  const studentCount = order.students.length
   const effectiveAmount = Number(order.totalAmount)
 
   // Indirim usedCount (best-effort, guarded). Odeme alindigi icin limit asilsa bile honor edilir.
@@ -120,64 +120,35 @@ export async function POST(request: Request) {
     },
   }).catch(() => {})
 
-  // KolayBi fatura (best-effort). Adetler ogrenci sayisiyla carpilir.
-  try {
-    const invoiceResult = await createInvoice({
-      orderNumber: order.orderNumber,
-      customerName: order.parentName,
-      customerEmail: order.email || undefined,
-      customerPhone: order.phone,
-      customerAddress: order.invoiceAddress || order.address || order.class.school.address || undefined,
-      isCorporate: order.isCorporateInvoice || false,
-      taxNumber: order.taxNumber || undefined,
-      taxOffice: order.isCorporateInvoice ? (order.taxOffice || undefined) : undefined,
-      city: order.city || undefined,
-      district: order.district || undefined,
-      items: order.items.map(it => ({
-        name: it.name,
-        quantity: it.quantity * studentCount,
-        unitPrice: Number(it.price),
-        totalPrice: Math.round(Number(it.price) * it.quantity * studentCount * 100) / 100,
-      })),
-      totalAmount: effectiveAmount,
-    })
-    if (invoiceResult.success && invoiceResult.invoiceNo) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          invoiceNo: invoiceResult.invoiceNo,
-          invoicePdfPath: invoiceResult.invoiceUrl,
-          invoiceDate: new Date(),
-          invoicedAt: new Date(),
-        },
-      })
-      logAction({
-        action: 'INVOICE_CREATED',
-        entity: 'ORDER',
-        entityId: order.id,
-        ipAddress: ip,
-        details: { orderNumber: order.orderNumber, invoiceNo: invoiceResult.invoiceNo, auto: true },
-      }).catch(() => {})
-    } else {
-      console.error('[paynkolay/callback] KolayBi gonderimi basarisiz:', invoiceResult.errorMessage)
-    }
-  } catch (err) {
-    console.error('[paynkolay/callback] KolayBi gonderim hatasi:', err)
-  }
+  // KolayBi fatura ARTIK burada kesilmiyor — siparis COMPLETED durumuna gectiginde
+  // (src/app/api/admin/orders/[id]/route.ts PUT) otomatik kesilir.
 
-  // Onay e-postasi (best-effort).
+  // Onay e-postasi (veliye, best-effort).
+  const packageName = order.class.package ? getLocalized(order.class.package, 'name', locale) : ''
   if (order.email && order.class.package) {
     sendOrderConfirmation({
       email: order.email,
       orderNumber: order.orderNumber,
       parentName: order.parentName,
       studentName: order.studentName,
-      packageName: getLocalized(order.class.package, 'name', locale),
+      packageName,
       totalAmount: effectiveAmount,
       isSchoolDelivery: order.class.school.deliveryType === 'SCHOOL_DELIVERY',
       locale,
     }).catch(err => console.error('[email] sendOrderConfirmation hatasi:', err))
   }
+
+  // Siparis bildirimi (isletmeye, best-effort) — ayni PAID anina bagli, ayri bir akis degil.
+  sendNewOrderAdminNotification({
+    orderNumber: order.orderNumber,
+    parentName: order.parentName,
+    parentPhone: order.phone,
+    parentEmail: order.email || undefined,
+    studentName: order.studentName,
+    schoolName: order.class.school.name,
+    packageName,
+    totalAmount: effectiveAmount,
+  }).catch(err => console.error('[email] sendNewOrderAdminNotification hatasi:', err))
 
   return redirectTo(`/${locale}/siparis-onay/${order.orderNumber}`)
 }

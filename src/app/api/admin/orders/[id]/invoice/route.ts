@@ -38,7 +38,10 @@ export async function POST(
       return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
     }
 
-    if (!['PAID', 'CONFIRMED'].includes(order.status)) {
+    // Normal akista fatura artik COMPLETED gecisinde otomatik kesilir; bu buton
+    // sadece o otomatik kesim basarisiz olduysa (veya erken kesim istenirse) manuel
+    // yedek olarak kullanilir — bu yuzden PAID/CONFIRMED disinda SHIPPED/COMPLETED'i de kabul eder.
+    if (!['PAID', 'CONFIRMED', 'SHIPPED', 'COMPLETED'].includes(order.status)) {
       return NextResponse.json(
         { error: t('orders.notInvoiceable') },
         { status: 400 }
@@ -57,10 +60,15 @@ export async function POST(
     }
 
     // Atomic claim: Fatura kesim slot'u rezerve et (concurrent POST'lar engellenir).
-    // Status'u INVOICED'a guncelle ve invoiceNo bos olanlari sec; count=0 ise baska slot once kapilmistir.
+    // PAID/CONFIRMED'de status INVOICED'a alinir (eski davranis, sonrasinda SHIPPED'e gecebilir).
+    // SHIPPED/COMPLETED'de status DEGISTIRILMEZ — zaten ilerlemis/tamamlanmis bir siparisi
+    // geriye (INVOICED'a) almamak icin sadece invoiceNo:null guard'iyla slot rezerve edilir.
+    const shouldAdvanceStatus = ['PAID', 'CONFIRMED'].includes(order.status)
     const claimResult = await prisma.order.updateMany({
       where: { id, status: order.status, invoiceNo: null },
-      data: { status: 'INVOICED', invoicedAt: new Date() }
+      data: shouldAdvanceStatus
+        ? { status: 'INVOICED', invoicedAt: new Date() }
+        : { invoicedAt: new Date() }
     })
     if (claimResult.count === 0) {
       return NextResponse.json(
