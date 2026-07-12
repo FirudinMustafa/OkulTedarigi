@@ -230,7 +230,7 @@ function encodeFormBody(obj: Record<string, unknown>, prefix?: string): string {
 
 interface AssociateResponse {
   id: number
-  addresses?: Array<{ id: number; address_type?: string }>
+  address?: Array<{ id: number; address_type?: string }>
 }
 
 interface ProductResponse {
@@ -241,6 +241,12 @@ interface InvoiceResponse {
   document_id: number
   grand_total?: number
   grand_currency?: string
+}
+
+interface InvoiceListItem {
+  id: number
+  commercial_doc_status?: { value?: string; key?: string; description?: string }
+  e_document_status?: string
 }
 
 /**
@@ -281,17 +287,37 @@ async function createAssociateForOrder(data: InvoiceData): Promise<{ contactId: 
     }
   }
 
-  const associate = await kolayBiCall<AssociateResponse>('POST', '/associates', associateBody)
+  let associate: AssociateResponse
+  try {
+    associate = await kolayBiCall<AssociateResponse>('POST', '/associates', associateBody)
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : ''
+    // KolayBi ayni identity_no (TC/VKN) icin associate'i tekillestiriyor -> 412 "Kayit zaten mevcut"
+    if (data.taxNumber && (errMsg.includes('412') || errMsg.includes('zaten mevcut'))) {
+      const existing = await findAssociateByIdentity(data.taxNumber)
+      if (!existing) throw new Error(`KolayBi associate zaten mevcut ama identity_no (${data.taxNumber}) ile bulunamadi`)
+      associate = existing
+    } else {
+      throw err
+    }
+  }
+
   const contactId = associate?.id
   if (!contactId) throw new Error('KolayBi associate olusturuldu ama id donmedi')
 
-  // Adres id'si: response icindeki addresses[0].id veya billing/shipping
-  const addressId = associate.addresses?.[0]?.id
+  // Adres id'si: response'ta "address" (tekil isim, dizi deger) alaninda doner
+  const addressId = associate.address?.[0]?.id
   if (!addressId) {
-    throw new Error('KolayBi associate olustu ama address_id alinamadi')
+    throw new Error('KolayBi associate bulundu/olusturuldu ama address_id alinamadi')
   }
 
   return { contactId, addressId }
+}
+
+async function findAssociateByIdentity(identityNo: string): Promise<AssociateResponse | null> {
+  const result = await kolayBiCall<AssociateResponse[]>('GET', `/associates?identity_no=${encodeURIComponent(identityNo)}`)
+  const list = Array.isArray(result) ? result : []
+  return list[0] || null
 }
 
 async function createProduct(item: InvoiceData['items'][number]): Promise<number> {
@@ -322,7 +348,9 @@ async function createInvoiceReal(data: InvoiceData): Promise<InvoiceResponse> {
     order_date: new Date().toISOString().slice(0, 10),
     currency: 'try',
     description: `Siparis No: ${data.orderNumber}`,
-    document_scenario: data.isCorporate ? 'TICARIFATURA' : 'EARSIVFATURA',
+    // KolayBi/GIB alicinin e-Fatura mukellefi olup olmadigina gore e-Fatura/e-Arsiv'i kendisi belirler.
+    // Gecerli degerler: TICARIFATURA (varsayilan/ticari), TEMELFATURA (temel/bireysel).
+    document_scenario: data.isCorporate ? 'TICARIFATURA' : 'TEMELFATURA',
     document_type: 'SATIS',
     receiver_email: data.customerEmail,
     items: data.items.map((item, idx) => ({
@@ -432,10 +460,12 @@ export async function cancelInvoice(invoiceNo: string): Promise<{ success: boole
 }
 
 /**
- * Fatura durumu sorgula
- * Endpoint: GET /v1/invoices/{id}
+ * Fatura durumu sorgula.
+ * GET /invoices/{id} sadece { uuid } (ETTN) doner, durum bilgisi yok.
+ * Gercek durum (commercial_doc_status/e_document_status) GET /invoices (liste) response'unda;
+ * liste id'ye gore filtrelenemiyor, bu yuzden orderNumber ile description'a gore filtreleniyor.
  */
-export async function getInvoiceStatus(invoiceNo: string): Promise<{ status: string; message?: string }> {
+export async function getInvoiceStatus(invoiceNo: string, orderNumber?: string): Promise<{ status: string; message?: string }> {
   if (USE_MOCK) {
     if (isDev) console.log('[MOCK KOLAYBI] Fatura durumu sorgusu:', invoiceNo)
     return { status: 'APPROVED', message: 'Fatura onaylandi (Mock)' }
@@ -446,11 +476,16 @@ export async function getInvoiceStatus(invoiceNo: string): Promise<{ status: str
   }
 
   try {
-    const invoice = await kolayBiCall<{ status?: string; document_status?: string }>(
-      'GET',
-      `/invoices/${encodeURIComponent(invoiceNo)}`,
-    )
-    const status = invoice?.status || invoice?.document_status || 'UNKNOWN'
+    const query = orderNumber
+      ? `?${new URLSearchParams({ description: `Siparis No: ${orderNumber}` }).toString()}`
+      : ''
+    const invoices = await kolayBiCall<InvoiceListItem[]>('GET', `/invoices${query}`)
+    const list = Array.isArray(invoices) ? invoices : []
+    const match = list.find(inv => String(inv.id) === invoiceNo) || list[0]
+
+    if (!match) return { status: 'UNKNOWN', message: 'Fatura bulunamadi' }
+
+    const status = match.commercial_doc_status?.value || match.e_document_status || 'UNKNOWN'
     return { status: String(status).toUpperCase() }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Bilinmeyen hata'

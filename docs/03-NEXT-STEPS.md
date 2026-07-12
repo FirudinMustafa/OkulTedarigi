@@ -11,7 +11,8 @@
 - [ ] Database backup plani kurulmali (ozellikle classes DELETE duzeltmesi sonrasi soft-delete patterni var, hard-delete yok artik ama yine de gerekli)
 - [ ] **CSP `unsafe-inline`/`unsafe-eval`** (FIX-14) gercekten gerekli mi tekrar test et; nonce-based CSP'ye gec
 - [ ] **Rate-limit log temizleme cron'u** (FIX-12/13) — `cleanupExpiredRateLimits()` periyodik calistirilmali (Vercel cron ya da manuel)
-- [ ] iyzico/kolaybi/aras "henuz yapilandirilmadi" hatalari icin gercek client implementasyonu yazilmali (FIX-9 sonrasi mock kapanirsa direkt prod'da patliyor)
+- [ ] iyzico/aras "henuz yapilandirilmadi" hatalari icin gercek client implementasyonu yazilmali (FIX-9 sonrasi mock kapanirsa direkt prod'da patliyor)
+- [x] **KolayBi** — gercek sandbox'a karsi dogrulandi (2026-07-12): create/status/cancel uctan uca calisiyor. Prod'a gecmeden once: (1) prod KolayBi hesabinda panelden E-Belge On Ekleri (MA/ME gibi) tanimlanmali, yoksa "On ek bulunamadi" hatasi alinir; (2) fatura PDF/e-belge URL'i (`invoiceUrl`) icin endpoint hala bulunamadi, `createInvoice` bunu `undefined` donduruyor. Detay: `CREDENTIALS.local.md` KolayBi bolumu.
 
 ## Yarim Birakilan Akislar
 - [ ] **REFUNDED status workflow'u** — schema/constants tanımlı ama hicbir endpoint set etmiyor. Admin paneline "Iade Et" butonu + iyzico refund integration eklenmeli. (K8)

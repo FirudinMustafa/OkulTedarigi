@@ -9,11 +9,13 @@
 import { createInvoice, cancelInvoice, getInvoiceStatus, kolayBiConfig, _clearKolayBiTokenCache } from '../src/lib/kolaybi'
 
 const fakeOrder = {
-  orderNumber: 'ORD-2026-TEST0001',
+  orderNumber: 'ORD-2026-TEST0004',
   customerName: 'Ahmet Yilmaz',
   customerPhone: '+905551234567',
   customerEmail: 'test@example.com',
-  customerAddress: 'Test Mahallesi, No: 1, Istanbul',
+  customerAddress: 'Test Mahallesi, No: 1',
+  city: 'İstanbul',
+  district: 'Kadıköy',
   isCorporate: false,
   taxNumber: '12345678901', // Sahte TC
   taxOffice: undefined,
@@ -50,7 +52,7 @@ async function run() {
   console.log('  ✓ Fatura olusturuldu:', result.invoiceNo)
 
   console.log('\n[TEST 2] getInvoiceStatus')
-  const status = await getInvoiceStatus(result.invoiceNo)
+  const status = await getInvoiceStatus(result.invoiceNo, fakeOrder.orderNumber)
   console.log('  Status:', JSON.stringify(status, null, 2))
 
   console.log('\n[TEST 3] cancelInvoice')
