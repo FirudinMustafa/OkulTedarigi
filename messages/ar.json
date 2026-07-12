@@ -1000,12 +1000,7 @@
       "companyAddressHeading": "📍 عنوان الشركة",
       "sameAddress": "إرسال فاتورتي إلى العنوان نفسه",
       "invoiceAddress": "عنوان الفاتورة",
-      "streetAddress2": "العمارة، الشقة، إلخ *",
-      "installmentTitle": "التقسيط (اختياري)",
-      "installmentNone": "لا تفضيل (اختر في صفحة الدفع)",
-      "installmentSingle": "دفعة واحدة",
-      "installmentCount": "{count} أقساط",
-      "installmentNote": "إذا لم تختر، سيتم عرض جميع خيارات التقسيط المتاحة لبطاقتك في صفحة الدفع."
+      "streetAddress2": "العمارة، الشقة، إلخ *"
     },
     "note": {
       "title": "📝 ملاحظة الطلب (اختياري)",

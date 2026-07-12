@@ -1000,12 +1000,7 @@
       "companyAddressHeading": "📍 Company Address",
       "sameAddress": "Send my invoice to the same address",
       "invoiceAddress": "Invoice Address",
-      "streetAddress2": "Apartment, flat, etc. *",
-      "installmentTitle": "Installments (Optional)",
-      "installmentNone": "No preference (choose on payment page)",
-      "installmentSingle": "Single Payment",
-      "installmentCount": "{count} Installments",
-      "installmentNote": "If you don't choose, all installment options available for your card will be shown on the payment page."
+      "streetAddress2": "Apartment, flat, etc. *"
     },
     "note": {
       "title": "📝 Order Note (Optional)",

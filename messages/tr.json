@@ -1000,12 +1000,7 @@
       "companyAddressHeading": "📍 Firma Adresi",
       "sameAddress": "Faturamı aynı adrese gönder",
       "invoiceAddress": "Fatura Adresi",
-      "streetAddress2": "Apartman, daire vb. *",
-      "installmentTitle": "Taksit (Opsiyonel)",
-      "installmentNone": "Fark etmez (ödeme sayfasında seç)",
-      "installmentSingle": "Tek Çekim",
-      "installmentCount": "{count} Taksit",
-      "installmentNote": "Seçmezseniz ödeme sayfasında kartınıza uygun tüm taksit seçenekleri gösterilir."
+      "streetAddress2": "Apartman, daire vb. *"
     },
     "note": {
       "title": "📝 Sipariş Notu (Opsiyonel)",

@@ -245,8 +245,6 @@ export const veliOrderBodySchema = z.object({
   taxNumber: z.string().trim().min(10).max(11).regex(/^\d+$/, 'Vergi/TC No sadece rakam icerebilir'),
   taxOffice: z.string().trim().max(100).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
   orderNote: z.string().trim().max(500).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
-  // Taksit (opsiyonel). Bos/null ise PayNKolay sayfasi tum secenekleri kendisi gosterir.
-  installments: z.coerce.number().int().min(1).max(12).optional().nullable(),
   discountCode: z.string().trim().max(40).optional().nullable(),
   selectedItemIds: z.array(z.string().trim().min(1).max(40)).max(100).optional().nullable(),
 })

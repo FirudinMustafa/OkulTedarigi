@@ -1000,12 +1000,7 @@
       "companyAddressHeading": "📍 Firmenadresse",
       "sameAddress": "Meine Rechnung an dieselbe Adresse senden",
       "invoiceAddress": "Rechnungsadresse",
-      "streetAddress2": "Wohnung, Apartment usw. *",
-      "installmentTitle": "Raten (Optional)",
-      "installmentNone": "Keine Präferenz (auf der Zahlungsseite auswählen)",
-      "installmentSingle": "Einmalzahlung",
-      "installmentCount": "{count} Raten",
-      "installmentNote": "Wenn Sie nichts auswählen, werden auf der Zahlungsseite alle für Ihre Karte verfügbaren Ratenoptionen angezeigt."
+      "streetAddress2": "Wohnung, Apartment usw. *"
     },
     "note": {
       "title": "📝 Bestellnotiz (Optional)",
