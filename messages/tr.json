@@ -509,6 +509,8 @@
       "methodLabel": "Yöntem:",
       "creditCard": "Kredi Kartı",
       "statusLabel": "Durum:",
+      "invoiceLabel": "Fatura:",
+      "invoiceMissing": "Kesilemedi",
       "cargoLabelTitle": "Kargo Etiketi — {orderNumber}",
       "label": "Etiket",
       "close": "Kapat",

@@ -509,6 +509,8 @@
       "methodLabel": "الطريقة:",
       "creditCard": "بطاقة ائتمان",
       "statusLabel": "الحالة:",
+      "invoiceLabel": "الفاتورة:",
+      "invoiceMissing": "لم يتم الإصدار",
       "cargoLabelTitle": "ملصق الشحن — {orderNumber}",
       "label": "الملصق",
       "close": "إغلاق",

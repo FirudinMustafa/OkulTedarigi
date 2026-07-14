@@ -509,6 +509,8 @@
       "methodLabel": "Methode:",
       "creditCard": "Kreditkarte",
       "statusLabel": "Status:",
+      "invoiceLabel": "Rechnung:",
+      "invoiceMissing": "Nicht ausgestellt",
       "cargoLabelTitle": "Versandetikett — {orderNumber}",
       "label": "Etikett",
       "close": "Schließen",

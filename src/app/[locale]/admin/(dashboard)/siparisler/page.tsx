@@ -52,6 +52,9 @@ interface OrderType {
   deliveryAddress: string | null
   trackingNo: string | null
   invoiceNo: string | null
+  invoicePdfPath: string | null
+  invoiceDate: string | null
+  invoicedAt: string | null
   discountCode: string | null
   discountAmount: number | null
   totalAmount: number
@@ -1007,10 +1010,13 @@ export default function SiparislerPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div>
+                        <div className="flex flex-col gap-1 items-start">
                           <Badge className={ORDER_STATUS_COLORS[order.status] || ""}>
                             {ts.has(order.status) ? ts(order.status) : order.status}
                           </Badge>
+                          {order.status === "COMPLETED" && !order.invoiceNo && (
+                            <Badge className="bg-red-100 text-red-800">{t('invoiceMissing')}</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">{formatDateTime(order.createdAt)}</TableCell>
@@ -1145,6 +1151,11 @@ export default function SiparislerPage() {
                   )}
                   <p><span className="text-gray-500">{t('methodLabel')}</span> {selectedOrder.paymentMethod === "CREDIT_CARD" ? t('creditCard') : selectedOrder.paymentMethod || "-"}</p>
                   <p><span className="text-gray-500">{t('statusLabel')}</span> <Badge className={ORDER_STATUS_COLORS[selectedOrder.status] || ""}>{ts.has(selectedOrder.status) ? ts(selectedOrder.status) : selectedOrder.status}</Badge></p>
+                  {selectedOrder.invoiceNo ? (
+                    <p><span className="text-gray-500">{t('invoiceLabel')}</span> <span className="font-mono">{selectedOrder.invoiceNo}</span></p>
+                  ) : selectedOrder.status === "COMPLETED" ? (
+                    <p><span className="text-gray-500">{t('invoiceLabel')}</span> <Badge className="bg-red-100 text-red-800">{t('invoiceMissing')}</Badge></p>
+                  ) : null}
                 </div>
               </div>
             </div>
