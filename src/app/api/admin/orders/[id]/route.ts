@@ -4,8 +4,7 @@ import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { VALID_STATUS_TRANSITIONS } from '@/lib/constants'
 import { cancelShipment } from '@/lib/yurtici-kargo'
-import { createInvoice } from '@/lib/kolaybi'
-import { sendInvoiceCreated } from '@/lib/email'
+import { autoInvoiceOrderOnComplete } from '@/lib/auto-invoice'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -90,8 +89,7 @@ export async function PUT(
       return NextResponse.json({ error: t('orders.noFieldsToUpdate') }, { status: 400 })
     }
 
-    // Mevcut siparisi tek bir okumayla cek (audit trail icin onceki degerler +
-    // COMPLETED gecisinde otomatik fatura icin gerekli alanlar)
+    // Mevcut siparisi tek bir okumayla cek (audit trail icin onceki degerler)
     const previousOrder = await prisma.order.findUnique({
       where: { id },
       select: {
@@ -103,23 +101,6 @@ export async function PUT(
         orderNote: true,
         invoiceNo: true,
         orderNumber: true,
-        parentName: true,
-        isCorporateInvoice: true,
-        taxNumber: true,
-        taxOffice: true,
-        city: true,
-        district: true,
-        invoiceAddress: true,
-        totalAmount: true,
-        locale: true,
-        items: true,
-        students: { select: { id: true } },
-        class: {
-          select: {
-            school: true,
-            package: { include: { items: true } }
-          }
-        }
       }
     })
     if (!previousOrder) {
@@ -203,73 +184,12 @@ export async function PUT(
     // COMPLETED gecisinde otomatik fatura (idempotent, best-effort — basarisiz olsa da
     // siparisin COMPLETED olmasini engellemez; teslimat zaten fiziksel olarak tamamlandi).
     if (updateData.status === 'COMPLETED' && !previousOrder.invoiceNo) {
-      try {
-        const studentCount = Math.max(1, previousOrder.students.length)
-        const snapshotItems = previousOrder.items.length > 0
-          ? previousOrder.items
-          : (previousOrder.class.package?.items ?? [])
-        const invoiceItems = snapshotItems.map(item => ({
-          name: item.name,
-          quantity: item.quantity * studentCount,
-          unitPrice: Number(item.price),
-          totalPrice: Number(item.price) * item.quantity * studentCount,
-        }))
-
-        const invoiceResult = await createInvoice({
-          orderNumber: previousOrder.orderNumber,
-          customerName: previousOrder.parentName,
-          customerEmail: previousOrder.email || undefined,
-          customerPhone: previousOrder.phone,
-          customerAddress: previousOrder.invoiceAddress || previousOrder.address || previousOrder.class.school.address || undefined,
-          isCorporate: previousOrder.isCorporateInvoice,
-          taxNumber: previousOrder.taxNumber || undefined,
-          taxOffice: previousOrder.taxOffice || undefined,
-          city: previousOrder.city || undefined,
-          district: previousOrder.district || undefined,
-          items: invoiceItems,
-          totalAmount: Number(previousOrder.totalAmount)
-        })
-
-        if (invoiceResult.success && invoiceResult.invoiceNo) {
-          const invoiceDate = new Date()
-          await prisma.order.update({
-            where: { id },
-            data: {
-              invoiceNo: invoiceResult.invoiceNo,
-              invoicePdfPath: invoiceResult.invoiceUrl,
-              invoiceDate,
-              invoicedAt: invoiceDate,
-            }
-          })
-          order.invoiceNo = invoiceResult.invoiceNo
-          order.invoicePdfPath = invoiceResult.invoiceUrl ?? null
-          order.invoiceDate = invoiceDate
-          order.invoicedAt = invoiceDate
-
-          await logAction({
-            userId: session.id,
-            userType: 'ADMIN',
-            action: 'AUTO_INVOICE_CREATED',
-            entity: 'ORDER',
-            entityId: order.id,
-            details: { orderNumber: previousOrder.orderNumber, invoiceNo: invoiceResult.invoiceNo, trigger: 'COMPLETED' },
-          }).catch(() => {})
-
-          if (previousOrder.email) {
-            sendInvoiceCreated({
-              email: previousOrder.email,
-              orderNumber: previousOrder.orderNumber,
-              parentName: previousOrder.parentName,
-              invoiceNo: invoiceResult.invoiceNo,
-              totalAmount: Number(previousOrder.totalAmount),
-              locale: (previousOrder.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined),
-            }).catch(err => console.error('Fatura bildirim maili gonderilemedi:', err))
-          }
-        } else {
-          console.error('[orders PUT] COMPLETED otomatik fatura basarisiz:', invoiceResult.errorMessage)
-        }
-      } catch (err) {
-        console.error('[orders PUT] COMPLETED otomatik fatura hatasi:', err)
+      const invoiceUpdate = await autoInvoiceOrderOnComplete(id, session.id)
+      if (invoiceUpdate) {
+        order.invoiceNo = invoiceUpdate.invoiceNo
+        order.invoicePdfPath = invoiceUpdate.invoicePdfPath
+        order.invoiceDate = invoiceUpdate.invoiceDate
+        order.invoicedAt = invoiceUpdate.invoicedAt
       }
     }
 

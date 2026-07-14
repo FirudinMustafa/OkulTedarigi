@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
+import { autoInvoiceOrderOnComplete } from '@/lib/auto-invoice'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -113,6 +114,12 @@ export async function POST(request: Request) {
           entityId: order.id,
           details: { orderNumber: order.orderNumber, action, newStatus: updateData.status, batchOperation: true }
         })
+
+        // COMPLETED gecisinde otomatik fatura (idempotent, best-effort — bkz. src/lib/auto-invoice.ts;
+        // tekli PUT route'uyla ayni davranis, toplu teslimat da fatura tetiklemeli).
+        if (action === 'COMPLETED' && !order.invoiceNo) {
+          await autoInvoiceOrderOnComplete(order.id, session.id)
+        }
       } catch (error) {
         results.push({
           orderId: order.id,
