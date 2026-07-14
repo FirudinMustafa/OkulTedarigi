@@ -145,10 +145,38 @@ export async function POST(
             })
           ])
           finalRequest = persistedRequest
+        } else {
+          // PayNKolay istegi atildi ama basarisiz sonuc dondu (exception firlatmadi) —
+          // order zaten CANCELLED/REFUNDED isaretlendi, refundId hic yazilmadi. Admin
+          // panelde "Iade Basarisiz" rozetiyle gorunur olmasi icin loglanir (invoiceMissing ile
+          // ayni desen: derived-state, refundId null kaldigi surece rozet gozukur).
+          console.error('[REFUND] PayNKolay basarisiz sonuc dondu:', refundResult)
+          await logAction({
+            userId: session.id,
+            userType: 'ADMIN',
+            action: 'REFUND_FAILED',
+            entity: 'CANCEL_REQUEST',
+            entityId: id,
+            details: {
+              orderNumber: result.order?.orderNumber,
+              message: refundResult.message || 'PayNKolay basarisiz sonuc dondu'
+            }
+          })
         }
       } catch (refundErr) {
         console.error('Iade isleminde hata (siparis zaten CANCELLED):', refundErr)
-        // Order zaten CANCELLED, refund manuel takip edilmeli
+        // Order zaten CANCELLED, refund manuel takip edilmeli — admin panelde rozetle gorunur olsun.
+        await logAction({
+          userId: session.id,
+          userType: 'ADMIN',
+          action: 'REFUND_FAILED',
+          entity: 'CANCEL_REQUEST',
+          entityId: id,
+          details: {
+            orderNumber: result.order?.orderNumber,
+            message: String(refundErr)
+          }
+        })
       }
     }
 

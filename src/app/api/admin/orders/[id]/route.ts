@@ -5,6 +5,7 @@ import { logAction } from '@/lib/logger'
 import { VALID_STATUS_TRANSITIONS } from '@/lib/constants'
 import { cancelShipment } from '@/lib/yurtici-kargo'
 import { autoInvoiceOrderOnComplete } from '@/lib/auto-invoice'
+import { adminOrderUpdateSchema, formatZodError } from '@/lib/validators'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -75,14 +76,18 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
 
-    // Izin verilen alanlari filtrele
-    const allowedFields = ['status', 'trackingNo', 'address', 'phone', 'email', 'orderNote']
-    const updateData: Record<string, unknown> = {}
+    const parsed = adminOrderUpdateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(parsed.error, await getApiLocale()) },
+        { status: 400 }
+      )
+    }
 
-    for (const key of Object.keys(body)) {
-      if (allowedFields.includes(key)) {
-        updateData[key] = body[key]
-      }
+    // Sadece body'de gonderilen (undefined olmayan) alanlar guncellenir
+    const updateData: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined) updateData[key] = value
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -227,6 +232,12 @@ export async function DELETE(
     })
     if (!order) {
       return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+    }
+
+    // Yasal saklama (VUK/TTK): gercek odeme veya fatura kaydi olan siparisler kalici silinemez —
+    // School/Class silme guard'iyla ayni ilke (bkz. admin/schools/[id]/route.ts DELETE).
+    if (order.paidAt || order.invoiceNo) {
+      return NextResponse.json({ error: t('orders.deleteBlockedRetention') }, { status: 409 })
     }
 
     // SHIPPED + CARGO + trackingNo: Yurtici kargosunu iptal et (best-effort; silmeyi bloklamaz)

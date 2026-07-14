@@ -7,6 +7,7 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
@@ -61,6 +62,16 @@ export async function GET(request: Request) {
     const orderWhere = (gte || lte) ? { createdAt: orderCreatedAt } : undefined
 
     const paymentCommissionRate = await getPaymentCommissionRate()
+
+    // Genel rapor okul->sinif->siparis ic ice yapida ve mali toplamlar icerir;
+    // kesmek yanlis ciro/komisyon gosterebilir, o yuzden tarih/donem filtresiyle daraltilir.
+    const reportOrderCount = await prisma.order.count({ where: orderWhere })
+    if (reportOrderCount > MAX_EXPORT_ROWS) {
+      return NextResponse.json(
+        { error: `${reportOrderCount} kayit cok fazla — lutfen tarih araligini daraltin (limit: ${MAX_EXPORT_ROWS}).` },
+        { status: 400 }
+      )
+    }
 
     const schools = await prisma.school.findMany({
       include: {

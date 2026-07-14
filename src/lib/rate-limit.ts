@@ -29,15 +29,17 @@ export async function checkRateLimit(
   const now = new Date()
   maybeTriggerCleanup()
 
-  // Mevcut kaydi bul veya olustur
-  let rateLimitLog = await prisma.rateLimitLog.findFirst({
+  const rateLimitLog = await prisma.rateLimitLog.findUnique({
     where: { identifier }
   })
 
-  // Eger engellenme suresi gecmisse, kaydi sifirla
+  // Engellenme suresi gecmisse kaydi sifirla — optimistic: sadece okunan blockedUntil hala
+  // gecerliyse sil (arada baska bir istek yeniden engellemis olabilir, o zaman silme).
   if (rateLimitLog?.blockedUntil && rateLimitLog.blockedUntil < now) {
-    await prisma.rateLimitLog.delete({ where: { id: rateLimitLog.id } })
-    rateLimitLog = null
+    await prisma.rateLimitLog.deleteMany({
+      where: { identifier, blockedUntil: rateLimitLog.blockedUntil }
+    })
+    return { allowed: true, remainingAttempts: maxAttempts }
   }
 
   // Hala engellenme suresi varsa
@@ -65,12 +67,21 @@ export async function checkRateLimit(
     }
   }
 
-  // Limit asildiysa engelle
+  // Limit asildiysa atomik olarak engelle — sadece okunan attempts/blockedUntil hala gecerliyse
+  // (WHERE kosulu kazanan tarafi belirler; kaybeden taraf tekrar okur, sonsuz donguye girmez).
   const blockedUntil = new Date(now.getTime() + blockDurationMinutes * 60 * 1000)
-  await prisma.rateLimitLog.update({
-    where: { id: rateLimitLog.id },
+  const claim = await prisma.rateLimitLog.updateMany({
+    where: { identifier, attempts: rateLimitLog.attempts, blockedUntil: null },
     data: { blockedUntil }
   })
+
+  if (claim.count === 0) {
+    const fresh = await prisma.rateLimitLog.findUnique({ where: { identifier } })
+    if (fresh?.blockedUntil && fresh.blockedUntil > now) {
+      return { allowed: false, remainingAttempts: 0, blockedUntil: fresh.blockedUntil }
+    }
+    return { allowed: true, remainingAttempts: Math.max(0, maxAttempts - (fresh?.attempts ?? 0)) }
+  }
 
   return {
     allowed: false,
@@ -80,20 +91,13 @@ export async function checkRateLimit(
 }
 
 export async function recordFailedAttempt(identifier: string): Promise<void> {
-  const existingLog = await prisma.rateLimitLog.findFirst({
-    where: { identifier }
+  // Atomik upsert (MySQL: INSERT ... ON DUPLICATE KEY UPDATE) — identifier artik unique,
+  // findFirst+update/create'deki TOCTOU yarisini ortadan kaldirir.
+  await prisma.rateLimitLog.upsert({
+    where: { identifier },
+    create: { identifier, attempts: 1 },
+    update: { attempts: { increment: 1 } }
   })
-
-  if (existingLog) {
-    await prisma.rateLimitLog.update({
-      where: { id: existingLog.id },
-      data: { attempts: existingLog.attempts + 1 }
-    })
-  } else {
-    await prisma.rateLimitLog.create({
-      data: { identifier, attempts: 1 }
-    })
-  }
 }
 
 export async function resetRateLimit(identifier: string): Promise<void> {

@@ -6,6 +6,7 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
@@ -22,16 +23,20 @@ export async function GET() {
       select: { name: true }
     })
 
-    const orders = await prisma.order.findMany({
-      where: {
-        class: { schoolId: session.schoolId }
-      },
-      include: {
-        class: { select: { name: true } },
-        package: { select: { name: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const ordersWhere = { class: { schoolId: session.schoolId } }
+    const [orders, totalCount] = await Promise.all([
+      prisma.order.findMany({
+        where: ordersWhere,
+        include: {
+          class: { select: { name: true } },
+          package: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: MAX_EXPORT_ROWS
+      }),
+      prisma.order.count({ where: ordersWhere })
+    ])
+    const isTruncated = totalCount > orders.length
 
     const statusLabels: Record<string, string> = { ...ORDER_STATUS_LABELS, REFUNDED: 'Iade' }
     const schoolName = school?.name || 'Okul'
@@ -75,7 +80,7 @@ export async function GET() {
 
     ws.mergeCells('A2:H2')
     const subtitleCell = ws.getCell('A2')
-    subtitleCell.value = `Toplam: ${orders.length} siparis  |  Olusturma: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })}`
+    subtitleCell.value = `Toplam: ${totalCount} siparis${isTruncated ? ` (ilk ${orders.length} gosteriliyor)` : ''}  |  Olusturma: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })}`
     subtitleCell.font = { size: 10, color: { argb: '6B7280' }, italic: true }
 
     ws.addRow([])
@@ -119,7 +124,7 @@ export async function GET() {
 
     // Toplam
     if (orders.length > 0) {
-      const tRow = ws.addRow(['', '', '', '', '', '', 'TOPLAM', `${orders.length} siparis`])
+      const tRow = ws.addRow(['', '', '', '', '', '', isTruncated ? 'TOPLAM (gosterilen)' : 'TOPLAM', `${orders.length} siparis`])
       tRow.eachCell((cell) => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'EEF2FF' } }
         cell.font = { bold: true, size: 11, color: { argb: primaryColor } }
@@ -149,7 +154,8 @@ export async function GET() {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': buildContentDisposition(filename),
         'Content-Length': String((buffer as ArrayBuffer).byteLength),
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        'X-Export-Truncated': String(isTruncated)
       }
     })
 

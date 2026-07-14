@@ -6,6 +6,7 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
@@ -15,6 +16,15 @@ export async function GET() {
     const session = await getMudurSession()
     if (!session || !session.schoolId) {
       return NextResponse.json({ error: t('common.unauthorized') }, { status: 401 })
+    }
+
+    // Tek okula sabit kapsam — asirya kacmasi beklenmez, yine de ucuz bir guvenlik agi.
+    const schoolOrderCount = await prisma.order.count({ where: { class: { schoolId: session.schoolId } } })
+    if (schoolOrderCount > MAX_EXPORT_ROWS) {
+      return NextResponse.json(
+        { error: `${schoolOrderCount} kayit cok fazla (limit: ${MAX_EXPORT_ROWS}) — lutfen destek ile iletisime gecin.` },
+        { status: 400 }
+      )
     }
 
     const school = await prisma.school.findUnique({

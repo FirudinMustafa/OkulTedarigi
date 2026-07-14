@@ -6,6 +6,7 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import ExcelJS from 'exceljs'
+import { MAX_EXPORT_ROWS, buildTruncationNotice } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
@@ -37,18 +38,28 @@ export async function GET(request: Request) {
       if (dateTo) (where.createdAt as Record<string, Date>).lte = new Date(dateTo)
     }
 
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        class: {
-          include: {
-            school: { select: { name: true } }
-          }
+    const [orders, totalCount, statusGroups, revenueAgg] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        include: {
+          class: {
+            include: {
+              school: { select: { name: true } }
+            }
+          },
+          package: { select: { name: true } }
         },
-        package: { select: { name: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+        orderBy: { createdAt: 'desc' },
+        take: MAX_EXPORT_ROWS
+      }),
+      prisma.order.count({ where }),
+      prisma.order.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      prisma.order.aggregate({
+        where: { ...where, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
+        _sum: { totalAmount: true }
+      })
+    ])
+    const isTruncated = totalCount > orders.length
 
     const statusLabels: Record<string, string> = { ...ORDER_STATUS_LABELS, REFUNDED: 'Iade' }
     const paymentLabels: Record<string, string> = {
@@ -107,16 +118,22 @@ export async function GET(request: Request) {
 
     wsOzet.addRow([])
 
-    // Ozet verileri
-    const totalRevenue = orders
-      .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
-      .reduce((acc, o) => acc + Number(o.totalAmount), 0)
-    const completedOrders = orders.filter(o => o.status === 'COMPLETED').length
-    const cancelledOrders = orders.filter(o => o.status === 'CANCELLED').length
-    const avgOrder = orders.length > 0 ? totalRevenue / orders.length : 0
+    if (isTruncated) {
+      wsOzet.mergeCells(`A${wsOzet.rowCount + 1}:D${wsOzet.rowCount + 1}`)
+      const noticeCell = wsOzet.getCell(`A${wsOzet.rowCount}`)
+      noticeCell.value = buildTruncationNotice(totalCount)
+      noticeCell.font = { size: 10, color: { argb: 'D97706' }, italic: true, bold: true }
+      wsOzet.addRow([])
+    }
+
+    // Ozet verileri (DB-taraflı, kesme (take) limitinden bağımsız doğru toplamlar)
+    const totalRevenue = Number(revenueAgg._sum.totalAmount || 0)
+    const completedOrders = statusGroups.find(g => g.status === 'COMPLETED')?._count._all || 0
+    const cancelledOrders = statusGroups.find(g => g.status === 'CANCELLED')?._count._all || 0
+    const avgOrder = totalCount > 0 ? totalRevenue / totalCount : 0
 
     const summaryData = [
-      ['Toplam Siparis', orders.length],
+      ['Toplam Siparis', totalCount],
       ['Tamamlanan', completedOrders],
       ['Iptal Edilen', cancelledOrders],
       ['Toplam Ciro', totalRevenue],
@@ -155,9 +172,9 @@ export async function GET(request: Request) {
     wsOzet.addRow([])
     wsOzet.addRow([])
 
-    // Durum dagilimi
+    // Durum dagilimi (DB-taraflı groupBy, take limitinden bağımsız)
     const ordersByStatus: Record<string, number> = {}
-    orders.forEach(o => { ordersByStatus[o.status] = (ordersByStatus[o.status] || 0) + 1 })
+    statusGroups.forEach(g => { ordersByStatus[g.status] = g._count._all })
 
     const statusHeader = wsOzet.addRow(['', 'Siparis Durumu', 'Adet', 'Oran (%)'])
     statusHeader.eachCell((cell, colNumber) => {
@@ -171,7 +188,7 @@ export async function GET(request: Request) {
     statusHeader.height = 28
 
     Object.entries(ordersByStatus).forEach(([s, count], idx) => {
-      const pct = orders.length > 0 ? ((count / orders.length) * 100).toFixed(1) : '0'
+      const pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0'
       const row = wsOzet.addRow(['', statusLabels[s] || s, count, `%${pct}`])
       const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
       for (let c = 2; c <= 4; c++) {
@@ -262,12 +279,16 @@ export async function GET(request: Request) {
       row.height = 22
     })
 
-    // Toplam satiri
+    // Toplam satiri (bu sayfada listelenen satirlarin toplami — take limiti uygulandiysa
+    // Ozet sayfasindaki Toplam Ciro ile farkli olabilir, o DB-genelidir)
     if (orders.length > 0) {
+      const sheetRevenue = orders
+        .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
+        .reduce((acc, o) => acc + Number(o.totalAmount), 0)
       const totalDiscounts = orders.reduce((acc, o) => acc + (o.discountAmount ? Number(o.discountAmount) : 0), 0)
       const tRow = wsDetay.addRow([
-        '', '', '', '', '', '', '', '', 'TOPLAM',
-        totalRevenue,
+        '', '', '', '', '', '', '', '', isTruncated ? 'TOPLAM (gosterilen)' : 'TOPLAM',
+        sheetRevenue,
         '', totalDiscounts || '',
         '', '', '', '', '', '', ''
       ])
@@ -304,7 +325,8 @@ export async function GET(request: Request) {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': buildContentDisposition(filename),
         'Content-Length': String((buffer as ArrayBuffer).byteLength),
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        'X-Export-Truncated': String(isTruncated)
       }
     })
 

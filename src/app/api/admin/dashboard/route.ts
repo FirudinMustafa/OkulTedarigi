@@ -5,15 +5,12 @@ import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { unstable_cache } from 'next/cache'
 
-export async function GET() {
-  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
-  try {
-    const session = await getAdminSession()
-    if (!session) {
-      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
-    }
-
+// Veri cekimi ~21 sorgu/cagri — kimlik dogrulamadan bagimsiz, kisa TTL'li cache
+// ile tekrarli dashboard yuklemelerinde DB'ye tekrar tekrar gidilmesi engellenir.
+const getDashboardData = unstable_cache(
+  async () => {
     // Get date ranges
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -86,11 +83,13 @@ export async function GET() {
       _count: { status: true }
     })
 
-    // Orders by school
+    // Orders by school (en aktif 200 sinif — sinirsiz groupBy tum siparis tablosunu tarayabilirdi)
     const ordersBySchool = await prisma.order.groupBy({
       by: ['classId'],
       _count: { id: true },
-      _sum: { totalAmount: true }
+      _sum: { totalAmount: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 200
     })
 
     // Get school names for the orders
@@ -171,7 +170,7 @@ export async function GET() {
       ? ((currentMonthRev - lastMonthRev) / lastMonthRev * 100).toFixed(1)
       : '0'
 
-    return NextResponse.json({
+    return {
       summary: {
         totalOrders,
         pendingOrders,
@@ -218,7 +217,22 @@ export async function GET() {
         undelivered: deliveryStats[1],
         completed: deliveryStats[2]
       }
-    })
+    }
+  },
+  ['admin-dashboard-stats'],
+  { revalidate: 30, tags: ['admin-dashboard'] }
+)
+
+export async function GET() {
+  const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
+  try {
+    const session = await getAdminSession()
+    if (!session) {
+      return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
+    }
+
+    const data = await getDashboardData()
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Dashboard stats error:', error)
     return NextResponse.json(

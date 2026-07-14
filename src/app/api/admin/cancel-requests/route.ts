@@ -35,6 +35,7 @@ export async function GET() {
       adminNote: request.adminNote,
       createdAt: request.createdAt.toISOString(),
       processedAt: request.processedAt?.toISOString() || null,
+      refundId: request.refundId,
       order: {
         id: request.order.id,
         orderNumber: request.order.orderNumber,
@@ -42,6 +43,7 @@ export async function GET() {
         parentName: request.order.parentName,
         parentPhone: request.order.phone,
         totalAmount: Number(request.order.totalAmount),
+        paidAt: request.order.paidAt?.toISOString() || null,
         class: {
           name: request.order.class.name,
           school: { name: request.order.class.school.name }

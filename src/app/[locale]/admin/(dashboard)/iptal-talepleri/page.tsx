@@ -26,6 +26,7 @@ interface CancelRequest {
   adminNote: string | null
   createdAt: string
   processedAt: string | null
+  refundId: string | null
   order: {
     id: string
     orderNumber: string
@@ -33,6 +34,7 @@ interface CancelRequest {
     parentName: string
     parentPhone: string
     totalAmount: number
+    paidAt: string | null
     class: {
       name: string
       school: { name: string }
@@ -249,9 +251,14 @@ export default function IptalTalepleriPage() {
                       {request.reason}
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[request.status] || ""}>
-                        {statusLabels[request.status] || request.status}
-                      </Badge>
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge className={statusColors[request.status] || ""}>
+                          {statusLabels[request.status] || request.status}
+                        </Badge>
+                        {request.status === "APPROVED" && request.order.paidAt && !request.refundId && (
+                          <Badge className="bg-red-100 text-red-800">{t('refundFailed')}</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {formatDateTime(request.createdAt)}

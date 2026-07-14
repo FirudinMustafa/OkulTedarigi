@@ -7,6 +7,7 @@ import { UNPAID_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 // Teslim Excel'i — tarih + saat araligiyla indirme ("Okul Teslim Raporu" yerine).
 // Sutunlar: Okul | Ad | Soyad | Sinif | Sube | Siparis Adedi | Teslim Tarihi (bos) | ✓
@@ -44,18 +45,31 @@ export async function GET(request: Request) {
     if (start) dateWhere.gte = start
     if (end) dateWhere.lte = end
 
+    const teslimWhere = {
+      // Odenmemis siparisleri haric tut
+      status: { notIn: UNPAID_STATUSES as OrderStatus[] },
+      ...(schoolId ? { class: { schoolId } } : {}),
+      ...(start || end ? { createdAt: dateWhere } : {}),
+    }
+
+    // Teslim listesi bir teslimat/operasyon belgesi — kismi (kesilmis) bir liste
+    // sahada eksik ogrenci gibi gorunup zarar verebilir; kesmek yerine daralt.
+    const teslimCount = await prisma.order.count({ where: teslimWhere })
+    if (teslimCount > MAX_EXPORT_ROWS) {
+      return NextResponse.json(
+        { error: `${teslimCount} kayit cok fazla — lutfen tarih araligini veya okulu daraltin (limit: ${MAX_EXPORT_ROWS}).` },
+        { status: 400 }
+      )
+    }
+
     const orders = await prisma.order.findMany({
-      where: {
-        // Odenmemis siparisleri haric tut
-        status: { notIn: UNPAID_STATUSES as OrderStatus[] },
-        ...(schoolId ? { class: { schoolId } } : {}),
-        ...(start || end ? { createdAt: dateWhere } : {}),
-      },
+      where: teslimWhere,
       include: {
         class: { include: { school: { select: { name: true } } } },
         students: { select: { firstName: true, lastName: true, section: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: MAX_EXPORT_ROWS,
     })
 
     const buffer = await buildTeslimExcel(orders, (await getApiLocale()) as 'tr' | 'en' | 'de' | 'ar')

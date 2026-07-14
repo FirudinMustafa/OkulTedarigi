@@ -7,10 +7,11 @@ import type { OrderStatus } from '@prisma/client'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
-export async function GET() {
+export async function GET(request: Request) {
   const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
     const session = await getAdminSession()
@@ -18,9 +19,27 @@ export async function GET() {
       return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
-    // Tum aktif okullari hesapla
+    const { searchParams } = new URL(request.url)
+    const schoolId = searchParams.get('schoolId')
+
+    // Hakedis/komisyon raporu — finansal mutabakat verisi; kismi (kesilmis) bir
+    // rapor yanlis mutabakata yol acabilir, o yuzden kesmek yerine okul filtresiyle daralt.
+    const commissionOrderCount = await prisma.order.count({
+      where: {
+        status: { in: COMMISSION_STATUSES as OrderStatus[] },
+        ...(schoolId ? { class: { schoolId } } : {})
+      }
+    })
+    if (commissionOrderCount > MAX_EXPORT_ROWS) {
+      return NextResponse.json(
+        { error: `${commissionOrderCount} kayit cok fazla — lutfen okul secerek daraltin (limit: ${MAX_EXPORT_ROWS}).` },
+        { status: 400 }
+      )
+    }
+
+    // Tum aktif okullari hesapla (veya secili okul)
     const schools = await prisma.school.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ...(schoolId ? { id: schoolId } : {}) },
       include: {
         classes: {
           include: {

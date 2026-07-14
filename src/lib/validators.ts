@@ -293,6 +293,18 @@ export const loginBodySchema = z.object({
   password: z.string().min(1).max(200),
 })
 
+// Admin siparis guncelleme (PUT /api/admin/orders/[id]) — elle allowlist yerine.
+// status gecisleri route icinde VALID_STATUS_TRANSITIONS ile ayrica dogrulanir, burada
+// sadece deger tipi/uzunlugu sinirlanir; XSS/oversized-field korumasi diger alanlarla ayni.
+export const adminOrderUpdateSchema = z.object({
+  status: z.string().trim().max(30).optional(),
+  trackingNo: z.string().trim().max(60).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
+  address: z.string().trim().max(1000).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
+  phone: phoneSchema.optional(),
+  email: emailSchema.optional(),
+  orderNote: z.string().trim().max(500).regex(NO_HTML_REGEX, NO_HTML_MSG).optional().nullable(),
+})
+
 // Cancel request body — kimlik dogrulama: accessToken VEYA phoneLast4
 //   accessToken: order POST response'undan gelir (siparis olusturan veli)
 //   phoneLast4: /siparis-takip uzerinden gelen veliler icin (telefon son 4 hane confirm)

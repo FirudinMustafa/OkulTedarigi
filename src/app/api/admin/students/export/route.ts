@@ -6,6 +6,7 @@ import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
 
 const safe = escapeCsvValue
 
@@ -19,6 +20,18 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const schoolId = searchParams.get('schoolId')
+
+    // Ogrenci/veli listesi okul->sinif ic ice yapida; kesmek yarim bir okul/sinif
+    // gorunumu uretebilir, o yuzden okul filtresi zorunlu kilinarak daraltilir.
+    const studentOrderCount = await prisma.order.count({
+      where: schoolId ? { class: { schoolId } } : {}
+    })
+    if (studentOrderCount > MAX_EXPORT_ROWS) {
+      return NextResponse.json(
+        { error: `${studentOrderCount} kayit cok fazla — lutfen okul secerek daraltin (limit: ${MAX_EXPORT_ROWS}).` },
+        { status: 400 }
+      )
+    }
 
     const schools = await prisma.school.findMany({
       where: schoolId ? { id: schoolId } : undefined,
