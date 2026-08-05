@@ -33,6 +33,7 @@ interface ClassData {
     name_ar?: string | null
     address?: string
     deliveryType: "CARGO" | "SCHOOL_DELIVERY"
+    showSchoolDeliveryNote?: boolean
   }
   package: {
     id: string
@@ -372,7 +373,8 @@ export default function PaketPage() {
             school: {
               id: parsed.schoolId,
               name: parsed.schoolName,
-              deliveryType: parsed.deliveryType
+              deliveryType: parsed.deliveryType,
+              showSchoolDeliveryNote: parsed.showSchoolDeliveryNote
             },
             package: parsed.package
           })
@@ -960,7 +962,7 @@ export default function PaketPage() {
               </div>
 
               {/* Okula Teslim Bilgisi */}
-              {!isCargoDelivery && (
+              {!isCargoDelivery && classData.school.showSchoolDeliveryNote !== false && (
                 <div className="bg-green-50 rounded-xl p-6 border border-green-100">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-700 flex-shrink-0">

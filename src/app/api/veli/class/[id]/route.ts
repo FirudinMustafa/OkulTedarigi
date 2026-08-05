@@ -43,6 +43,7 @@ export async function GET(
             name_ar: true,
             address: true,
             deliveryType: true,
+            showSchoolDeliveryNote: true,
             isActive: true
           }
         },
@@ -108,7 +109,8 @@ export async function GET(
         name_en: classData.school.name_en,
         name_de: classData.school.name_de,
         name_ar: classData.school.name_ar,
-        deliveryType: classData.school.deliveryType
+        deliveryType: classData.school.deliveryType,
+        showSchoolDeliveryNote: classData.school.showSchoolDeliveryNote
       },
       package: {
         id: classData.package.id,

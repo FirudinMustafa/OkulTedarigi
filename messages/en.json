@@ -297,6 +297,7 @@
       "fieldDeliveryType": "Delivery Type",
       "deliveryOptionSchool": "Delivery to School",
       "deliveryOptionCargo": "By Cargo",
+      "fieldShowDeliveryNote": "Show \"Delivery to School\" note to parents",
       "fieldAddress": "Address",
       "fieldPhone": "Phone",
       "fieldEmail": "Email",

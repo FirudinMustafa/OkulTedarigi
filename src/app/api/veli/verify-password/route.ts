@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       schoolName_de: school.name_de,
       schoolName_ar: school.name_ar,
       deliveryType: school.deliveryType,
+      showSchoolDeliveryNote: school.showSchoolDeliveryNote,
       classes: classesWithPackages.map(c => ({
         id: c.id,
         name: c.name,

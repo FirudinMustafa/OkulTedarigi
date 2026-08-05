@@ -71,7 +71,7 @@ export async function PUT(
     }
 
     // Izin verilen alanlari filtrele
-    const allowedFields = ['name', 'address', 'phone', 'email', 'deliveryType', 'password', 'directorName', 'directorEmail', 'directorPassword', 'isActive']
+    const allowedFields = ['name', 'address', 'phone', 'email', 'deliveryType', 'showSchoolDeliveryNote', 'password', 'directorName', 'directorEmail', 'directorPassword', 'isActive']
     const { directorPassword, ...rest } = parsed.data as Record<string, unknown>
     const updateData: Record<string, unknown> = {}
 

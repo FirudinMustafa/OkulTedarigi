@@ -17,6 +17,7 @@ model School {
   phone                        String?
   email                        String?
   deliveryType                 DeliveryType    @default(SCHOOL_DELIVERY)
+  showSchoolDeliveryNote       Boolean         @default(true) // Veli formunda "Okula Teslim" notu gosterilsin mi
   password                     String          @unique // Veli giris sifresi (okul bazli)
   directorName                 String?
   directorEmail                String // Birden fazla okul ayni mudur e-postasini paylasabilir (her okul ayri sifre)

@@ -297,6 +297,7 @@
       "fieldDeliveryType": "Lieferart",
       "deliveryOptionSchool": "Lieferung an Schule",
       "deliveryOptionCargo": "Per Versand",
+      "fieldShowDeliveryNote": "Hinweis \"Lieferung an Schule\" den Eltern anzeigen",
       "fieldAddress": "Adresse",
       "fieldPhone": "Telefon",
       "fieldEmail": "E-Mail",

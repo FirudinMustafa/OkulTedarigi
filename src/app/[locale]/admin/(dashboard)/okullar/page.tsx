@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Edit, Trash2, Search, School, AlertTriangle, Copy, RefreshCw, KeyRound, Mail } from "lucide-react"
 
 interface SchoolType {
@@ -29,6 +30,7 @@ interface SchoolType {
   phone: string | null
   email: string | null
   deliveryType: string
+  showSchoolDeliveryNote: boolean
   password: string
   directorName: string | null
   directorEmail: string
@@ -60,6 +62,7 @@ export default function OkullarPage() {
     phone: "",
     email: "",
     deliveryType: "SCHOOL_DELIVERY",
+    showSchoolDeliveryNote: true,
     directorName: "",
     directorEmail: "",
     directorPassword: "",
@@ -132,6 +135,7 @@ export default function OkullarPage() {
       phone: school.phone || "",
       email: school.email || "",
       deliveryType: school.deliveryType,
+      showSchoolDeliveryNote: school.showSchoolDeliveryNote,
       directorName: school.directorName || "",
       directorEmail: school.directorEmail,
       directorPassword: "",
@@ -229,6 +233,7 @@ export default function OkullarPage() {
       phone: "",
       email: "",
       deliveryType: "SCHOOL_DELIVERY",
+      showSchoolDeliveryNote: true,
       directorName: "",
       directorEmail: "",
       directorPassword: "",
@@ -435,6 +440,18 @@ export default function OkullarPage() {
                       <SelectItem value="CARGO">{t("deliveryOptionCargo")}</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formData.deliveryType === "SCHOOL_DELIVERY" && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <Checkbox
+                        id="showSchoolDeliveryNote"
+                        checked={formData.showSchoolDeliveryNote}
+                        onCheckedChange={(checked) => setFormData({ ...formData, showSchoolDeliveryNote: checked === true })}
+                      />
+                      <Label htmlFor="showSchoolDeliveryNote" className="text-sm font-normal cursor-pointer">
+                        {t("fieldShowDeliveryNote")}
+                      </Label>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">

@@ -297,6 +297,7 @@
       "fieldDeliveryType": "نوع التوصيل",
       "deliveryOptionSchool": "التوصيل إلى المدرسة",
       "deliveryOptionCargo": "عبر الشحن",
+      "fieldShowDeliveryNote": "إظهار ملاحظة \"التوصيل إلى المدرسة\" لولي الأمر",
       "fieldAddress": "العنوان",
       "fieldPhone": "الهاتف",
       "fieldEmail": "البريد الإلكتروني",

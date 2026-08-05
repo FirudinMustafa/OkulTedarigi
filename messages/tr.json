@@ -297,6 +297,7 @@
       "fieldDeliveryType": "Teslimat Tipi",
       "deliveryOptionSchool": "Okula Teslim",
       "deliveryOptionCargo": "Kargo ile",
+      "fieldShowDeliveryNote": "Veliye \"Okula Teslim\" notu göster",
       "fieldAddress": "Adres",
       "fieldPhone": "Telefon",
       "fieldEmail": "E-posta",

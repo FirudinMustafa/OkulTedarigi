@@ -58,6 +58,7 @@ interface SchoolData {
   schoolName_de?: string | null
   schoolName_ar?: string | null
   deliveryType: string
+  showSchoolDeliveryNote: boolean
   classes: ClassOption[]
 }
 
@@ -189,6 +190,7 @@ function SchoolPasswordFlow() {
         schoolId: data.schoolId,
         schoolName: data.schoolName,
         deliveryType: data.deliveryType,
+        showSchoolDeliveryNote: data.showSchoolDeliveryNote,
         classes: data.classes
       })
     } catch {
@@ -216,6 +218,7 @@ function SchoolPasswordFlow() {
       schoolId: schoolData.schoolId,
       schoolName: schoolData.schoolName,
       deliveryType: schoolData.deliveryType,
+      showSchoolDeliveryNote: schoolData.showSchoolDeliveryNote,
       package: cls.package
     }))
 
