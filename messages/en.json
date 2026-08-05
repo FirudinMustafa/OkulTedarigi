@@ -899,6 +899,8 @@
       "description": "Enter the class password you received from your school, view your package, and complete your payment. No membership required.",
       "label": "School Password",
       "placeholder": "e.g. ATATURK2024",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "checking": "Checking…",
       "continue": "Continue",
       "securityBadge": "256-bit SSL · 3D Secure secure payment"

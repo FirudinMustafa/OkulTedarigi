@@ -899,6 +899,8 @@
       "description": "Geben Sie das von Ihrer Schule erhaltene Klassenpasswort ein, sehen Sie Ihr Paket und schließen Sie Ihre Zahlung ab. Keine Mitgliedschaft erforderlich.",
       "label": "Schulpasswort",
       "placeholder": "z. B. ATATURK2024",
+      "showPassword": "Passwort anzeigen",
+      "hidePassword": "Passwort verbergen",
       "checking": "Wird geprüft…",
       "continue": "Weiter",
       "securityBadge": "256-Bit-SSL · 3D-Secure sichere Zahlung"

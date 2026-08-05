@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useRouter, Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
-import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle, CaretDown, CaretUp } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle, CaretDown, CaretUp, Eye, EyeSlash } from '@phosphor-icons/react'
 import { getLocalized } from '@/lib/i18n-content'
 
 // Sinif kartlari icin gorsel arka plan listesi (public/images/class-bg/)
@@ -148,6 +148,7 @@ function SchoolPasswordFlow() {
   const searchParams = useSearchParams()
   const sessionLost = searchParams.get('reason') === 'session-lost'
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [schoolData, setSchoolData] = useState<SchoolData | null>(null)
@@ -419,24 +420,35 @@ function SchoolPasswordFlow() {
               <label htmlFor="schoolPassword" className="block text-[13px] font-medium text-apple-ink mb-2">
                 {t('passwordEntry.label')}
               </label>
-              <input
-                id="schoolPassword"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value.toUpperCase())
-                  setErrorMessage('')
-                }}
-                placeholder={t('passwordEntry.placeholder')}
-                disabled={isValidating}
-                className={`w-full h-14 px-5 text-[17px] bg-white border rounded-2xl transition-all outline-none font-mono tracking-wider placeholder:text-apple-gray/60 placeholder:font-sans placeholder:tracking-normal ${
-                  errorMessage
-                    ? 'border-red-400 focus:border-red-500'
-                    : 'border-apple-border focus:border-apple-ink'
-                } disabled:opacity-60 disabled:cursor-not-allowed`}
-                autoComplete="off"
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  id="schoolPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value.toUpperCase())
+                    setErrorMessage('')
+                  }}
+                  placeholder={t('passwordEntry.placeholder')}
+                  disabled={isValidating}
+                  className={`w-full h-14 pl-5 pr-14 text-[17px] bg-white border rounded-2xl transition-all outline-none font-mono tracking-wider placeholder:text-apple-gray/60 placeholder:font-sans placeholder:tracking-normal ${
+                    errorMessage
+                      ? 'border-red-400 focus:border-red-500'
+                      : 'border-apple-border focus:border-apple-ink'
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}
+                  autoComplete="off"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-ink transition-colors"
+                  aria-label={showPassword ? t('passwordEntry.hidePassword') : t('passwordEntry.showPassword')}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeSlash weight="regular" className="w-5 h-5" /> : <Eye weight="regular" className="w-5 h-5" />}
+                </button>
+              </div>
               {errorMessage && (
                 <div className="mt-3 flex items-center gap-2 text-red-600">
                   <WarningCircle weight="fill" className="w-4 h-4 flex-shrink-0" />

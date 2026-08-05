@@ -899,6 +899,8 @@
       "description": "Okulundan aldığın sınıf şifresini gir, paketini gör, ödemeni tamamla. Üyelik gerekmiyor.",
       "label": "Okul Şifresi",
       "placeholder": "Örn: ATATURK2024",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
       "checking": "Kontrol ediliyor…",
       "continue": "Devam et",
       "securityBadge": "256-bit SSL · 3D Secure güvenli ödeme"
