@@ -51,6 +51,13 @@ yarn-error.log*
 # Database dumps (but allow prisma migrations)
 /*.sql
 !prisma/migrations/**/*.sql
+/backups/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Temp files
 nul

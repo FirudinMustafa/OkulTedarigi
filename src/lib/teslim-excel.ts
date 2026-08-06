@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs'
 import { escapeCsvValue } from './security'
+import { formatDateTime, formatPrice } from './utils'
 
 const safe = escapeCsvValue
 
@@ -15,14 +16,17 @@ export interface TeslimOrder {
   orderNumber: string
   studentName: string | null
   studentSection: string | null
-  class: { name: string; school: { name: string } }
+  totalAmount: number | string | { toString(): string } // Prisma Decimal de kabul edilir
+  createdAt: Date | string
+  class: { name: string; school: { name: string; password: string } }
   students: { firstName: string; lastName: string; section: string | null }[]
 }
 
 /**
  * Teslim Excel'i olusturur. Her satir = 1 ogrenci.
  * Sutunlar: Ogrencinin Okulu | Ogrenci Adi | Ogrenci Soyadi | Sinif | Sube |
- *           Siparis Adedi (= o siparisteki ogrenci sayisi) | Teslim Tarihi (BOS) | (✓ bos hucre)
+ *           Siparis Adedi (= o siparisteki ogrenci sayisi) | Siparis Tarihi/Saati |
+ *           Okul Sifresi | Satis Fiyati | Teslim Tarihi (BOS) | (✓ bos hucre)
  */
 export type DocLocale = 'tr' | 'en' | 'de' | 'ar'
 
@@ -41,6 +45,9 @@ export async function buildTeslimExcel(
       classNum: 'Sınıf',
       section: 'Şube',
       qty: 'Sipariş Adedi',
+      orderDate: 'Sipariş Tarihi/Saati',
+      schoolPassword: 'Okul Şifresi',
+      salePrice: 'Satış Fiyatı',
       deliveryDate: 'Teslim Tarihi',
       check: '✓',
     },
@@ -52,6 +59,9 @@ export async function buildTeslimExcel(
       classNum: 'Class',
       section: 'Section',
       qty: 'Order Quantity',
+      orderDate: 'Order Date/Time',
+      schoolPassword: 'School Password',
+      salePrice: 'Sale Price',
       deliveryDate: 'Delivery Date',
       check: '✓',
     },
@@ -63,6 +73,9 @@ export async function buildTeslimExcel(
       classNum: 'Klasse',
       section: 'Abteilung',
       qty: 'Bestellmenge',
+      orderDate: 'Bestelldatum/-zeit',
+      schoolPassword: 'Schulpasswort',
+      salePrice: 'Verkaufspreis',
       deliveryDate: 'Lieferdatum',
       check: '✓',
     },
@@ -74,6 +87,9 @@ export async function buildTeslimExcel(
       classNum: 'الصف',
       section: 'الشعبة',
       qty: 'كمية الطلب',
+      orderDate: 'تاريخ/وقت الطلب',
+      schoolPassword: 'كلمة مرور المدرسة',
+      salePrice: 'سعر البيع',
       deliveryDate: 'تاريخ التسليم',
       check: '✓',
     },
@@ -101,6 +117,9 @@ export async function buildTeslimExcel(
     { header: tr.classNum, key: 'classNum', width: 8 },
     { header: tr.section, key: 'section', width: 8 },
     { header: tr.qty, key: 'qty', width: 14 },
+    { header: tr.orderDate, key: 'orderDate', width: 20 },
+    { header: tr.schoolPassword, key: 'schoolPassword', width: 16 },
+    { header: tr.salePrice, key: 'salePrice', width: 14 },
     { header: tr.deliveryDate, key: 'deliveryDate', width: 18 },
     { header: tr.check, key: 'check', width: 6 },
   ]
@@ -136,6 +155,9 @@ export async function buildTeslimExcel(
         classNum,
         section: s.section,
         qty: studentCount,
+        orderDate: safe(formatDateTime(o.createdAt, locale)),
+        schoolPassword: safe(o.class.school.password),
+        salePrice: safe(formatPrice(String(o.totalAmount), locale)),
         deliveryDate: '',   // Teslim Tarihi — bilerek bos (hicbir yerden veri almaz)
         check: '',          // Elle isaretlemek icin bos cerceveli hucre
       }

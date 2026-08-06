@@ -27,7 +27,7 @@ interface ClassData {
   name_ar?: string | null
   school: {
     id: string
-    name: string
+    name?: string | null
     name_en?: string | null
     name_de?: string | null
     name_ar?: string | null
@@ -877,7 +877,9 @@ export default function PaketPage() {
                     <SchoolIcon />
                   </div>
                   <div>
-                    <p className="text-sm text-blue-700">{getLocalized(classData.school, 'name', locale)}</p>
+                    {classData.school.name && (
+                      <p className="text-sm text-blue-700">{getLocalized(classData.school, 'name', locale)}</p>
+                    )}
                     <p className="font-semibold text-blue-900">{t('classLabel', { className: getLocalized(classData, 'name', locale) })}</p>
                   </div>
                   <div className="ml-auto">
@@ -1485,10 +1487,12 @@ export default function PaketPage() {
                   <div className="p-6 space-y-4">
                     {/* Okul/Sınıf */}
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">{t('summary.school')}</span>
-                        <span className="font-medium text-gray-900">{getLocalized(classData.school, 'name', locale)}</span>
-                      </div>
+                      {classData.school.name && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">{t('summary.school')}</span>
+                          <span className="font-medium text-gray-900">{getLocalized(classData.school, 'name', locale)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-500">{t('summary.class')}</span>
                         <span className="font-medium text-gray-900">{getLocalized(classData, 'name', locale)}</span>

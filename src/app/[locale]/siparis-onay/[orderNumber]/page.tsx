@@ -14,7 +14,7 @@ interface OrderData {
   studentName: string
   totalAmount: number
   paymentMethod: string
-  schoolName: string
+  schoolName: string | null
   className: string
   packageName: string
   deliveryType: string
@@ -185,10 +185,12 @@ export default function SiparisOnayPage() {
                 <h3 className="text-sm font-medium text-gray-500 mb-1">{t('fields.studentName')}</h3>
                 <p className="text-gray-900 font-medium">{order.studentName}</p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">{t('fields.school')}</h3>
-                <p className="text-gray-900 font-medium">{order.schoolName}</p>
-              </div>
+              {order.schoolName && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">{t('fields.school')}</h3>
+                  <p className="text-gray-900 font-medium">{order.schoolName}</p>
+                </div>
+              )}
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">{t('fields.class')}</h3>
                 <p className="text-gray-900 font-medium">{order.className}</p>

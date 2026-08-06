@@ -80,6 +80,10 @@ export const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
   UNDELIVERED: ['SHIPPED'],
   DELIVERED: ['COMPLETED', 'UNDELIVERED'],
   COMPLETED: [],
-  CANCELLED: ['REFUNDED'],
+  // CANCELLED -> REFUNDED burada YOK: bu gecis genel PUT route'undan degil,
+  // sadece POST /api/admin/orders/[id]/refund uzerinden yapilmali (gercek
+  // PayNKolay iadesini tetikler). Aksi halde "sahte iade" (para donmeden
+  // status=REFUNDED) mumkun olur.
+  CANCELLED: [],
   REFUNDED: []
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { processRefund } from '@/lib/paynkolay'
+import { refundOrderPayment } from '@/lib/paynkolay'
 import { sendCancellationConfirmation, sendCancellationRejected } from '@/lib/email'
 import { CANCELLABLE_STATUSES } from '@/lib/constants'
 import { getApiLocale } from '@/lib/api-locale'
@@ -116,17 +116,7 @@ export async function POST(
     // Ayni gun cekim ise "cancel" (iptal), sonraki gunler "refund" (iade).
     if (status === 'APPROVED' && result.order?.paymentId) {
       try {
-        const paidAt = result.order.paidAt ? new Date(result.order.paidAt) : new Date()
-        const now = new Date()
-        const sameDay = paidAt.getFullYear() === now.getFullYear() &&
-          paidAt.getMonth() === now.getMonth() &&
-          paidAt.getDate() === now.getDate()
-        const refundResult = await processRefund({
-          referenceCode: result.order.paymentId,
-          amount: Number(result.order.totalAmount),
-          trxDate: paidAt,
-          type: sameDay ? 'cancel' : 'refund',
-        })
+        const refundResult = await refundOrderPayment(result.order)
 
         if (refundResult.success && refundResult.refundId) {
           const refundedAt = new Date()

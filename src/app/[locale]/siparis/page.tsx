@@ -53,7 +53,7 @@ interface ClassOption {
 
 interface SchoolData {
   schoolId: string
-  schoolName: string
+  schoolName?: string | null
   schoolName_en?: string | null
   schoolName_de?: string | null
   schoolName_ar?: string | null
@@ -189,7 +189,10 @@ function SchoolPasswordFlow() {
 
       setSchoolData({
         schoolId: data.schoolId,
-        schoolName: data.schoolName,
+        schoolName: data.schoolName ?? null,
+        schoolName_en: data.schoolName_en ?? null,
+        schoolName_de: data.schoolName_de ?? null,
+        schoolName_ar: data.schoolName_ar ?? null,
         deliveryType: data.deliveryType,
         showSchoolDeliveryNote: data.showSchoolDeliveryNote,
         classes: data.classes
@@ -239,7 +242,9 @@ function SchoolPasswordFlow() {
               <Buildings weight="regular" className="w-6 h-6 text-apple-ink" />
             </div>
             <div>
-              <p className="text-[15px] font-semibold text-apple-ink">{getLocalized(schoolData, 'schoolName', locale)}</p>
+              {schoolData.schoolName && (
+                <p className="text-[15px] font-semibold text-apple-ink">{getLocalized(schoolData, 'schoolName', locale)}</p>
+              )}
               <p className="text-[13px] text-apple-gray">
                 {schoolData.deliveryType === 'CARGO' ? t('delivery.cargo') : t('delivery.school')}
               </p>

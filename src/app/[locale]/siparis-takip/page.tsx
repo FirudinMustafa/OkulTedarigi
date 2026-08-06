@@ -34,7 +34,7 @@ interface OrderData {
   studentName: string
   totalAmount: number
   paymentMethod: string
-  schoolName: string
+  schoolName: string | null
   className: string
   packageName: string
   deliveryType: string
@@ -362,7 +362,7 @@ function SiparisTakipPage() {
               <div className="pt-6 border-t border-apple-border/60 grid sm:grid-cols-2 gap-5 text-[14px]">
                 <DetailRow label={t('detail.parent')} value={order.parentName} />
                 <DetailRow label={t('detail.student')} value={order.studentName} />
-                <DetailRow label={t('detail.schoolClass')} value={`${order.schoolName} · ${order.className}`} />
+                <DetailRow label={t('detail.schoolClass')} value={order.schoolName ? `${order.schoolName} · ${order.className}` : order.className} />
                 <DetailRow label={t('detail.package')} value={order.packageName} />
                 <DetailRow
                   label={t('detail.paymentMethod')}

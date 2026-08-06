@@ -48,7 +48,8 @@ export async function GET(request: Request) {
               select: {
                 name: true,
                 deliveryType: true,
-                isActive: true
+                isActive: true,
+                showNameToParent: true
               }
             }
           }
@@ -94,7 +95,8 @@ export async function GET(request: Request) {
       studentName: order.studentName,
       totalAmount: order.totalAmount,
       paymentMethod: order.paymentMethod,
-      schoolName: order.class.school.name,
+      // Okul adi sadece admin bu okul icin acikca izin verdiyse veliye dondurulur.
+      schoolName: order.class.school.showNameToParent ? order.class.school.name : null,
       schoolActive: order.class.school.isActive,
       className: order.class.name,
       packageName: order.package?.name || 'N/A',

@@ -31,6 +31,7 @@ interface SchoolType {
   email: string | null
   deliveryType: string
   showSchoolDeliveryNote: boolean
+  showNameToParent: boolean
   password: string
   directorName: string | null
   directorEmail: string
@@ -63,6 +64,7 @@ export default function OkullarPage() {
     email: "",
     deliveryType: "SCHOOL_DELIVERY",
     showSchoolDeliveryNote: true,
+    showNameToParent: true,
     directorName: "",
     directorEmail: "",
     directorPassword: "",
@@ -136,6 +138,7 @@ export default function OkullarPage() {
       email: school.email || "",
       deliveryType: school.deliveryType,
       showSchoolDeliveryNote: school.showSchoolDeliveryNote,
+      showNameToParent: school.showNameToParent,
       directorName: school.directorName || "",
       directorEmail: school.directorEmail,
       directorPassword: "",
@@ -234,6 +237,7 @@ export default function OkullarPage() {
       email: "",
       deliveryType: "SCHOOL_DELIVERY",
       showSchoolDeliveryNote: true,
+      showNameToParent: true,
       directorName: "",
       directorEmail: "",
       directorPassword: "",
@@ -453,6 +457,16 @@ export default function OkullarPage() {
                     </div>
                   )}
                 </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox
+                  id="showNameToParent"
+                  checked={formData.showNameToParent}
+                  onCheckedChange={(checked) => setFormData({ ...formData, showNameToParent: checked === true })}
+                />
+                <Label htmlFor="showNameToParent" className="text-sm font-normal cursor-pointer">
+                  {t("fieldShowNameToParent")}
+                </Label>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">{t("fieldAddress")}</Label>

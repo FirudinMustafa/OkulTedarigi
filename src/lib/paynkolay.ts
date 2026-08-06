@@ -220,6 +220,32 @@ export function computeRefundHash(input: { referenceCode: string; type: string; 
   )
 }
 
+// Odenmis bir siparis icin iade cagirir; "type" (cancel/refund) odeme gunu ile
+// bugunu karsilastirarak otomatik belirlenir. Refund tetikleyen TUM admin akislari
+// (iptal talebi onayi + dogrudan "Iade Et" butonu) bu fonksiyonu kullanmali —
+// aksi halde sadece status='REFUNDED' yazip gercek parayi hic iade etmeyen bir
+// "sahte iade" olusabilir (bkz. gecmis prod incident).
+export async function refundOrderPayment(order: {
+  paymentId: string | null
+  totalAmount: number | string | { toString(): string }
+  paidAt: Date | string | null
+}): Promise<RefundResult> {
+  if (!order.paymentId) {
+    return { success: false, message: 'Sipariste odeme referansi (paymentId) yok — iade edilecek gercek bir tahsilat bulunamadi.' }
+  }
+  const paidAt = order.paidAt ? new Date(order.paidAt) : new Date()
+  const now = new Date()
+  const sameDay = paidAt.getFullYear() === now.getFullYear() &&
+    paidAt.getMonth() === now.getMonth() &&
+    paidAt.getDate() === now.getDate()
+  return processRefund({
+    referenceCode: order.paymentId,
+    amount: Number(order.totalAmount),
+    trxDate: paidAt,
+    type: sameDay ? 'cancel' : 'refund',
+  })
+}
+
 export async function processRefund(input: RefundInput): Promise<RefundResult> {
   if (!REFUND_SX || !SECRET_KEY) {
     return { success: false, message: 'PayNKolay iade konfigurasyonu eksik (PAYNKOLAY_REFUND_SX/SECRET_KEY)' }

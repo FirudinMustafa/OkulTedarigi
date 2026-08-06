@@ -308,17 +308,19 @@ export default function SiparislerPage() {
     }
   }
 
-  // İade et (CANCELLED siparişi REFUNDED'a geçir)
+  // İade et (CANCELLED siparişi REFUNDED'a geçir).
+  // NOT: bu, PayNKolay'e GERÇEK iade çağrısı yapan /refund uç noktasını çağırır —
+  // eskiden burada doğrudan PUT {status:'REFUNDED'} yapılıyordu ve para hiç iade
+  // edilmeden "başarılı" mesajı gösteriliyordu.
   const refundOrder = async (order: OrderType) => {
     const tutar = Number(order.totalAmount).toFixed(2)
     if (!confirm(t('confirmRefund', { orderNumber: order.orderNumber, amount: tutar }))) return
     setOrderBusy(order.id, t('refunding'))
     try {
-      const res = await fetch(`/api/admin/orders/${order.id}`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/orders/${order.id}/refund`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ status: 'REFUNDED' })
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {

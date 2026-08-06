@@ -118,10 +118,13 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       schoolId: school.id,
-      schoolName: school.name,
-      schoolName_en: school.name_en,
-      schoolName_de: school.name_de,
-      schoolName_ar: school.name_ar,
+      // Okul adi sadece admin bu okul icin acikca izin verdiyse veliye dondurulur.
+      ...(school.showNameToParent ? {
+        schoolName: school.name,
+        schoolName_en: school.name_en,
+        schoolName_de: school.name_de,
+        schoolName_ar: school.name_ar,
+      } : {}),
       deliveryType: school.deliveryType,
       showSchoolDeliveryNote: school.showSchoolDeliveryNote,
       classes: classesWithPackages.map(c => ({

@@ -44,6 +44,7 @@ export async function GET(
             address: true,
             deliveryType: true,
             showSchoolDeliveryNote: true,
+            showNameToParent: true,
             isActive: true
           }
         },
@@ -105,10 +106,13 @@ export async function GET(
       name_ar: classData.name_ar,
       school: {
         id: classData.school.id,
-        name: classData.school.name,
-        name_en: classData.school.name_en,
-        name_de: classData.school.name_de,
-        name_ar: classData.school.name_ar,
+        // Okul adi sadece admin bu okul icin acikca izin verdiyse veliye dondurulur.
+        ...(classData.school.showNameToParent ? {
+          name: classData.school.name,
+          name_en: classData.school.name_en,
+          name_de: classData.school.name_de,
+          name_ar: classData.school.name_ar,
+        } : {}),
         deliveryType: classData.school.deliveryType,
         showSchoolDeliveryNote: classData.school.showSchoolDeliveryNote
       },

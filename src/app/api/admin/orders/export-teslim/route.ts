@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const orders = await prisma.order.findMany({
       where: { id: { in: orderIds } },
       include: {
-        class: { include: { school: { select: { name: true } } } },
+        class: { include: { school: { select: { name: true, password: true } } } },
         students: { select: { firstName: true, lastName: true, section: true } },
       },
       orderBy: { createdAt: 'desc' },
