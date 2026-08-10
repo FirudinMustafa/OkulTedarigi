@@ -8,7 +8,8 @@ import {
   CheckCircle
 } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
-import { COMMISSION_STATUSES } from "@/lib/constants"
+import { COMMISSION_STATUSES, UNPAID_STATUSES } from "@/lib/constants"
+import { OrderStatus } from "@prisma/client"
 
 interface Order {
   id: string
@@ -30,7 +31,8 @@ async function getDashboardStats(schoolId: string) {
     include: {
       classes: {
         include: {
-          orders: true,
+          // Odenmemis siparisleri gizle (admin ile ayni kural)
+          orders: { where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } } },
           package: true
         }
       },

@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/table"
 import { ShoppingCart, Download, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
-import { ORDER_STATUS_COLORS } from "@/lib/constants"
+import { ORDER_STATUS_COLORS, UNPAID_STATUSES } from "@/lib/constants"
+import { OrderStatus } from "@prisma/client"
 
 const statusColors = ORDER_STATUS_COLORS
 
@@ -25,8 +26,8 @@ async function getSchoolOrders(schoolId: string, page: number, limit: number) {
 
   if (!school) return { orders: [], deliveryType: 'SCHOOL_DELIVERY', total: 0 }
 
-  // Siparisleri okul bazinda filtrele (cross-tenant koruma)
-  const where = { class: { schoolId } }
+  // Siparisleri okul bazinda filtrele (cross-tenant koruma) + odenmemis siparisleri gizle (admin ile ayni kural)
+  const where = { class: { schoolId }, status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
 
   const [total, rawOrders] = await prisma.$transaction([
     prisma.order.count({ where }),

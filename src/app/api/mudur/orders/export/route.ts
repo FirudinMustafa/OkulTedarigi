@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getMudurSession } from '@/lib/auth'
-import { ORDER_STATUS_LABELS } from '@/lib/constants'
+import { ORDER_STATUS_LABELS, UNPAID_STATUSES } from '@/lib/constants'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
+import { OrderStatus } from '@prisma/client'
 
 const safe = escapeCsvValue
 
@@ -23,7 +24,7 @@ export async function GET() {
       select: { name: true }
     })
 
-    const ordersWhere = { class: { schoolId: session.schoolId } }
+    const ordersWhere = { class: { schoolId: session.schoolId }, status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
     const [orders, totalCount] = await Promise.all([
       prisma.order.findMany({
         where: ordersWhere,
