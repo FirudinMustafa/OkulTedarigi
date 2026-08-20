@@ -22,7 +22,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Search, Eye, FileText, Truck, X, ArrowRight,
-  CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox
+  CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox,
+  ChevronLeft, ChevronRight
 } from "lucide-react"
 import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
 import { ORDER_STATUS_COLORS } from "@/lib/constants"
@@ -154,6 +155,10 @@ export default function SiparislerPage() {
   const [tabCounts, setTabCounts] = useState<Record<TabId, number>>({
     gelen: 0, hazirlaniyor: 0, dagitimda: 0, teslim_edilemeyen: 0, tamamlandi: 0, iptal: 0, tumu: 0
   })
+  // Sunucu tarafi sayfalama — API bir istekte en fazla 100 kayit dondurur,
+  // bir statude 100'den fazla siparis varsa geri kalani ikinci/ucuncu sayfada
+  const [page, setPage] = useState(1)
+  const [pageInfo, setPageInfo] = useState({ total: 0, totalPages: 1 })
 
   // Filtreler
   const [activeTab, setActiveTab] = useState<TabId>('gelen')
@@ -217,7 +222,7 @@ export default function SiparislerPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const qs = new URLSearchParams({ limit: '100' })
+      const qs = new URLSearchParams({ limit: '100', page: String(page) })
       const status = activeTabStatus()
       if (status) qs.set('status', status)
       if (listStart) qs.set('start', listStart)
@@ -225,6 +230,10 @@ export default function SiparislerPage() {
       const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
       const data = await res.json()
       setOrders(data.orders || [])
+      setPageInfo({
+        total: data.pagination?.total ?? 0,
+        totalPages: data.pagination?.totalPages ?? 1,
+      })
     } catch (error) {
       console.error("Siparisler yuklenemedi:", error)
     } finally {
@@ -258,8 +267,8 @@ export default function SiparislerPage() {
     }
   }
 
-  // Sekme veya tarih filtresi degisince yeniden yukle
-  useEffect(() => { fetchOrders() }, [activeTab, listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Sekme, tarih filtresi veya sayfa degisince yeniden yukle
+  useEffect(() => { fetchOrders() }, [activeTab, listStart, listEnd, page]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { fetchTabCounts() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -829,7 +838,7 @@ export default function SiparislerPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSelectedOrders(new Set()) }}
+                onClick={() => { setActiveTab(tab.id); setSelectedOrders(new Set()); setPage(1) }}
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   isActive
                     ? 'border-blue-600 text-blue-600'
@@ -874,7 +883,7 @@ export default function SiparislerPage() {
               <input
                 type="datetime-local"
                 value={listStart}
-                onChange={(e) => setListStart(e.target.value)}
+                onChange={(e) => { setListStart(e.target.value); setPage(1) }}
                 title={t('startDate')}
                 className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
@@ -882,14 +891,14 @@ export default function SiparislerPage() {
               <input
                 type="datetime-local"
                 value={listEnd}
-                onChange={(e) => setListEnd(e.target.value)}
+                onChange={(e) => { setListEnd(e.target.value); setPage(1) }}
                 title={t('endDate')}
                 className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
               {(listStart || listEnd) && (
                 <Button
                   size="icon" variant="ghost" className="h-8 w-8 text-gray-500"
-                  onClick={() => { setListStart(""); setListEnd("") }}
+                  onClick={() => { setListStart(""); setListEnd(""); setPage(1) }}
                   title={t('clearDateFilter')}
                 >
                   <X className="h-4 w-4" />
@@ -1067,6 +1076,32 @@ export default function SiparislerPage() {
                 })}
               </TableBody>
             </Table>
+          )}
+
+          {pageInfo.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-500">
+                {t('pageIndicator', { page, totalPages: pageInfo.totalPages })}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm" variant="outline"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  {t('prevPage')}
+                </Button>
+                <Button
+                  size="sm" variant="outline"
+                  disabled={page >= pageInfo.totalPages}
+                  onClick={() => setPage(p => Math.min(pageInfo.totalPages, p + 1))}
+                >
+                  {t('nextPage')}
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
