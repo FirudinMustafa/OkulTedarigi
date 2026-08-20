@@ -437,6 +437,8 @@
       "endDate": "Enddatum",
       "clearDateFilter": "Datumsfilter löschen",
       "selectedCount": "{count} Bestellungen ausgewählt",
+      "selectAllMatching": "Alle {count} Ergebnisse in diesem Reiter auswählen",
+      "selectingAll": "Wird ausgewählt...",
       "noneEligibleShort": "Keine der ausgewählten Bestellungen ist geeignet",
       "printBarcodes": "Barcodes drucken",
       "downloadSelected": "Ausgewählte herunterladen",

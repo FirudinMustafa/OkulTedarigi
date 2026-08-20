@@ -437,6 +437,8 @@
       "endDate": "تاريخ النهاية",
       "clearDateFilter": "مسح فلتر التاريخ",
       "selectedCount": "تم تحديد {count} طلب",
+      "selectAllMatching": "تحديد جميع النتائج البالغة {count} في هذه العلامة",
+      "selectingAll": "جارٍ التحديد...",
       "noneEligibleShort": "لا يوجد أي من الطلبات المحددة مؤهل",
       "printBarcodes": "طباعة الباركودات",
       "downloadSelected": "تنزيل المحدد",

@@ -437,6 +437,8 @@
       "endDate": "End date",
       "clearDateFilter": "Clear date filter",
       "selectedCount": "{count} orders selected",
+      "selectAllMatching": "Select all {count} results in this tab",
+      "selectingAll": "Selecting...",
       "noneEligibleShort": "None of the selected orders are eligible",
       "printBarcodes": "Print Barcodes",
       "downloadSelected": "Download Selected",

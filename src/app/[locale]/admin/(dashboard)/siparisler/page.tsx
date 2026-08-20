@@ -159,6 +159,12 @@ export default function SiparislerPage() {
   // bir statude 100'den fazla siparis varsa geri kalani ikinci/ucuncu sayfada
   const [page, setPage] = useState(1)
   const [pageInfo, setPageInfo] = useState({ total: 0, totalPages: 1 })
+  // Gorulmus/secilmis her siparisin tam kaydini id'ye gore biriktirir (kucul-
+  // mez). Secim sayfa sinirini astiginda (bkz. selectAllMatching) bulk islem-
+  // lerin (eligibility, barkod, vs.) baska sayfadaki siparisleri de "tanimasi"
+  // icin gerekli — `orders` sadece o an ekrandaki tek sayfayi tutar.
+  const [orderCache, setOrderCache] = useState<Map<string, OrderType>>(new Map())
+  const [selectingAll, setSelectingAll] = useState(false)
 
   // Filtreler
   const [activeTab, setActiveTab] = useState<TabId>('gelen')
@@ -219,6 +225,14 @@ export default function SiparislerPage() {
   // odenmemisleri (NEW/PAYMENT_PENDING) gizler, geri kalan hepsini dondurur.
   const activeTabStatus = () => TABS.find(t => t.id === activeTab)?.statuses.join(',') || ''
 
+  const mergeIntoCache = (list: OrderType[]) => {
+    setOrderCache(prev => {
+      const next = new Map(prev)
+      for (const o of list) next.set(o.id, o)
+      return next
+    })
+  }
+
   const fetchOrders = async () => {
     setLoading(true)
     try {
@@ -230,6 +244,7 @@ export default function SiparislerPage() {
       const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
       const data = await res.json()
       setOrders(data.orders || [])
+      mergeIntoCache(data.orders || [])
       setPageInfo({
         total: data.pagination?.total ?? 0,
         totalPages: data.pagination?.totalPages ?? 1,
@@ -238,6 +253,33 @@ export default function SiparislerPage() {
       console.error("Siparisler yuklenemedi:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Aktif sekmenin/tarih filtresinin tum sonuclarini (tum sayfalari) cekip
+  // orderCache'e yazar ve hepsini secili yapar — "Bu sekmedeki tum N sonucu
+  // sec" linki icin.
+  const selectAllMatching = async () => {
+    setSelectingAll(true)
+    try {
+      const status = activeTabStatus()
+      const allIds: string[] = []
+      for (let p = 1; p <= pageInfo.totalPages; p++) {
+        const qs = new URLSearchParams({ limit: '100', page: String(p) })
+        if (status) qs.set('status', status)
+        if (listStart) qs.set('start', listStart)
+        if (listEnd) qs.set('end', listEnd)
+        const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
+        const data = await res.json()
+        const pageOrders: OrderType[] = data.orders || []
+        mergeIntoCache(pageOrders)
+        allIds.push(...pageOrders.map(o => o.id))
+      }
+      setSelectedOrders(new Set(allIds))
+    } catch (error) {
+      console.error("Tum sonuclar secilemedi:", error)
+    } finally {
+      setSelectingAll(false)
     }
   }
 
@@ -436,12 +478,15 @@ export default function SiparislerPage() {
     setBulkLoading(true)
     setBulkResult(null)
 
-    // Sadece UYGUN (durum + teslimat tipi) siparisleri gonder
-    const eligible = orders.filter(o =>
-      selectedOrders.has(o.id) &&
-      action.eligibleStatuses.includes(o.status) &&
-      (!action.deliveryType || o.deliveryType === action.deliveryType)
-    )
+    // Sadece UYGUN (durum + teslimat tipi) siparisleri gonder — orderCache'den
+    // coz (sadece `orders` degil, secim baska sayfaya yayilmis olabilir)
+    const eligible = Array.from(selectedOrders)
+      .map(id => orderCache.get(id))
+      .filter((o): o is OrderType =>
+        !!o &&
+        action.eligibleStatuses.includes(o.status) &&
+        (!action.deliveryType || o.deliveryType === action.deliveryType)
+      )
     const ids = eligible.map(o => o.id)
     const skipped = selectedOrders.size - ids.length
 
@@ -550,8 +595,9 @@ export default function SiparislerPage() {
   }
 
   const printSelectedBarcodes = async () => {
-    const labels = orders
-      .filter(o => selectedOrders.has(o.id) && o.deliveryType === 'CARGO' && o.trackingNo)
+    const labels = Array.from(selectedOrders)
+      .map(id => orderCache.get(id))
+      .filter((o): o is OrderType => !!o && o.deliveryType === 'CARGO' && !!o.trackingNo)
       .map(toLabelOrder)
     if (labels.length === 0) {
       alert(t('noCargoSelected'))
@@ -603,13 +649,15 @@ export default function SiparislerPage() {
     })
   }, [orders, activeTab, searchTerm, filterDelivery])
 
-  // Toplu islem icin kac siparis uygun? (durum + teslimat tipi)
+  // Toplu islem icin kac siparis uygun? (durum + teslimat tipi) — secim baska
+  // sayfaya yayilmis olabilecegi icin orderCache'den coz, sadece `orders`'tan degil
   const bulkEligibility = useMemo(() => {
     const result: Record<BulkActionKey, number> = {
       confirm: 0, ship: 0, school_dispatch: 0, complete: 0, undeliver: 0, redispatch: 0
     }
-    for (const o of orders) {
-      if (!selectedOrders.has(o.id)) continue
+    for (const id of selectedOrders) {
+      const o = orderCache.get(id)
+      if (!o) continue
       for (const key of Object.keys(BULK_ACTIONS) as BulkActionKey[]) {
         const def = BULK_ACTIONS[key]
         if (def.eligibleStatuses.includes(o.status) && (!def.deliveryType || o.deliveryType === def.deliveryType)) {
@@ -618,7 +666,7 @@ export default function SiparislerPage() {
       }
     }
     return result
-  }, [orders, selectedOrders])
+  }, [orderCache, selectedOrders])
 
   // Secili siparisleri Teslim Excel'i olarak indir (POST -> blob)
   const downloadSelectedTeslim = async () => {
@@ -652,10 +700,18 @@ export default function SiparislerPage() {
     }
   }
 
-  // Secim
+  // Secim — sadece o an ekrandaki sayfayi ekler/cikarir, baska sayfadan
+  // gelen secimleri (bkz. selectAllMatching) korur
   const toggleSelectAll = () => {
-    if (selectedOrders.size === filteredOrders.length) setSelectedOrders(new Set())
-    else setSelectedOrders(new Set(filteredOrders.map(o => o.id)))
+    const allSelected = filteredOrders.length > 0 && filteredOrders.every(o => selectedOrders.has(o.id))
+    setSelectedOrders(prev => {
+      const next = new Set(prev)
+      for (const o of filteredOrders) {
+        if (allSelected) next.delete(o.id)
+        else next.add(o.id)
+      }
+      return next
+    })
   }
   const toggleSelectOrder = (orderId: string) => {
     const s = new Set(selectedOrders)
@@ -913,6 +969,21 @@ export default function SiparislerPage() {
               <span className="text-sm font-medium text-blue-900">
                 {t('selectedCount', { count: selectedOrders.size })}
               </span>
+
+              {filteredOrders.every(o => selectedOrders.has(o.id)) && pageInfo.total > filteredOrders.length && (
+                <>
+                  <span className="text-xs text-blue-700/70">•</span>
+                  <button
+                    type="button"
+                    disabled={selectingAll}
+                    onClick={selectAllMatching}
+                    className="text-xs text-blue-700 underline hover:text-blue-900 disabled:opacity-60"
+                  >
+                    {selectingAll ? t('selectingAll') : t('selectAllMatching', { count: pageInfo.total })}
+                  </button>
+                </>
+              )}
+
               <span className="text-xs text-blue-700/70">•</span>
 
               {(Object.keys(BULK_ACTIONS) as BulkActionKey[]).map(key => {
@@ -994,7 +1065,7 @@ export default function SiparislerPage() {
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
-                      checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
+                      checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrders.has(o.id))}
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>

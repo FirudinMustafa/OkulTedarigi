@@ -437,6 +437,8 @@
       "endDate": "Bitiş tarihi",
       "clearDateFilter": "Tarih filtresini temizle",
       "selectedCount": "{count} sipariş seçildi",
+      "selectAllMatching": "Bu sekmedeki tüm {count} sonucu seç",
+      "selectingAll": "Seçiliyor...",
       "noneEligibleShort": "Seçilen siparişlerden hiçbiri uygun değil",
       "printBarcodes": "Barkodları Yazdır",
       "downloadSelected": "Seçilenleri İndir",
