@@ -30,7 +30,9 @@ export async function GET(request: Request) {
 
     const where: Prisma.OrderWhereInput = {}
     if (status) {
-      where.status = status as Prisma.EnumOrderStatusFilter
+      // Virgulle ayrilmis birden fazla statu destekler (orn. "CANCELLED,REFUNDED")
+      const statuses = status.split(',').map(s => s.trim()).filter(Boolean) as OrderStatus[]
+      where.status = statuses.length > 1 ? { in: statuses } : statuses[0]
     } else {
       // Status filtresi verilmediyse odenmemis (NEW/PAYMENT_PENDING) siparisleri gizle —
       // odenmemis hicbir siparis admin panele dusmemeli.

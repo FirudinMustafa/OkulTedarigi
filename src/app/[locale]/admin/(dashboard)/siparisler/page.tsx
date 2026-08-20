@@ -208,9 +208,18 @@ export default function SiparislerPage() {
   // ============================================================
   // Veri yukleme
   // ============================================================
+  // Aktif sekmenin statu filtresini API'nin destekledigi query degerine cevirir
+  // (virgulle ayrilmis liste; bkz. src/app/api/admin/orders/route.ts). Bos ise
+  // ('tumu' sekmesi) hic status gonderilmez — API varsayilan olarak sadece
+  // odenmemisleri (NEW/PAYMENT_PENDING) gizler, geri kalan hepsini dondurur.
+  const activeTabStatus = () => TABS.find(t => t.id === activeTab)?.statuses.join(',') || ''
+
   const fetchOrders = async () => {
+    setLoading(true)
     try {
       const qs = new URLSearchParams({ limit: '100' })
+      const status = activeTabStatus()
+      if (status) qs.set('status', status)
       if (listStart) qs.set('start', listStart)
       if (listEnd) qs.set('end', listEnd)
       const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
@@ -223,13 +232,14 @@ export default function SiparislerPage() {
     }
   }
 
-  // Sekme sayaclarini, o an ekrana yuklu (en fazla 100 kayitlik) `orders`
-  // dizisinden degil, her sekme icin ayri bir "limit=1" istegiyle donen
-  // gercek DB toplamindan (pagination.total) hesapla. Aksi halde 100'den
-  // fazla siparis oldugunda sayaçlar 100'de kilitli kalir (bkz. sidebar rozeti).
+  // Sekme sayaclarini, ekrana yuklu (aktif sekmeye gore sunucuda filtrelenmis
+  // ve en fazla 100 kayitla sinirli) `orders` dizisinden degil, her sekme icin
+  // ayri bir "limit=1" istegiyle donen gercek DB toplamindan (pagination.total)
+  // hesapla. Aksi halde 100'den fazla siparis oldugunda sayaçlar 100'de kilitli
+  // kalir (bkz. sidebar rozeti).
   const fetchTabCounts = async () => {
     try {
-      const fetchTotal = async (status?: string) => {
+      const fetchTotal = async (status: string) => {
         const qs = new URLSearchParams({ limit: '1' })
         if (status) qs.set('status', status)
         if (listStart) qs.set('start', listStart)
@@ -240,9 +250,7 @@ export default function SiparislerPage() {
       }
 
       const entries = await Promise.all(TABS.map(async (tab) => {
-        if (tab.statuses.length === 0) return [tab.id, await fetchTotal()] as const
-        const totals = await Promise.all(tab.statuses.map(fetchTotal))
-        return [tab.id, totals.reduce((sum, n) => sum + n, 0)] as const
+        return [tab.id, await fetchTotal(tab.statuses.join(','))] as const
       }))
       setTabCounts(Object.fromEntries(entries) as Record<TabId, number>)
     } catch (error) {
@@ -250,8 +258,9 @@ export default function SiparislerPage() {
     }
   }
 
-  // Tarih filtresi degisince yeniden yukle
-  useEffect(() => { fetchOrders(); fetchTabCounts() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Sekme veya tarih filtresi degisince yeniden yukle
+  useEffect(() => { fetchOrders() }, [activeTab, listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchTabCounts() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/api/admin/schools', { credentials: 'include' })
