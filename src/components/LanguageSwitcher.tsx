@@ -23,7 +23,7 @@ export function LanguageSwitcher({
   className?: string
   align?: 'start' | 'end'
   placement?: 'down' | 'up'
-  variant?: 'dropdown' | 'inline'
+  variant?: 'dropdown' | 'inline' | 'compact'
 }) {
   const t = useTranslations('languageSwitcher')
   const locale = useLocale() as AppLocale
@@ -78,6 +78,11 @@ export function LanguageSwitcher({
     )
   }
 
+  // Compact varyant — telefon header'ı gibi dar alanlarda, tam pill yerine
+  // sadece aktif dilin bayragini gosteren minimalist bir tetikleyici buton.
+  // Ayni acilir listeyi (asagida) paylasir.
+  const isCompact = variant === 'compact'
+
   return (
     <div ref={ref} className={cn('relative', className)}>
       <button
@@ -87,12 +92,22 @@ export function LanguageSwitcher({
         aria-label={t('label')}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white/80 px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-secondary disabled:opacity-60"
+        className={
+          isCompact
+            ? 'inline-flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-xl text-lg leading-none shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)] transition hover:bg-secondary/60 disabled:opacity-60'
+            : 'inline-flex items-center gap-1.5 rounded-lg border border-border bg-white/80 px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-secondary disabled:opacity-60'
+        }
       >
-        <Globe className="h-4 w-4 shrink-0" />
-        <span className="hidden sm:inline">{t(locale)}</span>
-        <span className="sm:hidden">{locale.toUpperCase()}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+        {isCompact ? (
+          <span aria-hidden="true">{FLAGS[locale]}</span>
+        ) : (
+          <>
+            <Globe className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">{t(locale)}</span>
+            <span className="sm:hidden">{locale.toUpperCase()}</span>
+            <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+          </>
+        )}
       </button>
 
       {open && (

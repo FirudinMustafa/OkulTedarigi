@@ -87,19 +87,22 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Mobile toggle — kendi küçük pill'inde */}
-          <button
-            type="button"
-            aria-label={mobileMenuOpen ? t('menuClose') : t('menuOpen')}
-            onClick={() => setMobileMenuOpen((v) => !v)}
-            className="pointer-events-auto sm:hidden flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl text-apple-ink hover:text-apple-blue transition-colors shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
-          >
-            {mobileMenuOpen ? (
-              <X weight="regular" className="w-5 h-5" />
-            ) : (
-              <List weight="regular" className="w-5 h-5" />
-            )}
-          </button>
+          {/* Mobil kontroller — bayrakli dil secici + menu toggle, yan yana */}
+          <div className="pointer-events-auto sm:hidden flex items-center gap-2">
+            <LanguageSwitcher variant="compact" align="end" />
+            <button
+              type="button"
+              aria-label={mobileMenuOpen ? t('menuClose') : t('menuOpen')}
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl text-apple-ink hover:text-apple-blue transition-colors shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
+            >
+              {mobileMenuOpen ? (
+                <X weight="regular" className="w-5 h-5" />
+              ) : (
+                <List weight="regular" className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu — floating card */}
@@ -131,8 +134,7 @@ export default function Header() {
                   </Link>
                 )
               )}
-              <div className="pt-3 space-y-3">
-                <LanguageSwitcher variant="inline" />
+              <div className="pt-3">
                 <Link
                   href="/siparis"
                   onClick={() => setMobileMenuOpen(false)}

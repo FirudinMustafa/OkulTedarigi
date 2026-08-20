@@ -323,9 +323,10 @@ async function findAssociateByIdentity(identityNo: string): Promise<AssociateRes
 async function createProduct(item: InvoiceData['items'][number]): Promise<number> {
   const product = await kolayBiCall<ProductResponse>('POST', '/products', {
     name: item.name.slice(0, 200),
-    code: undefined,
+    // Muhasebeci talebi: her zaman "335" kodu, KDV %0
+    code: '335',
     product_type: 'good',
-    vat_rate: 20,
+    vat_rate: 0,
     price: item.unitPrice.toFixed(2),
     price_currency: 'try',
     sale_price_vat_included: true,
@@ -357,7 +358,7 @@ async function createInvoiceReal(data: InvoiceData): Promise<InvoiceResponse> {
       product_id: productIds[idx],
       quantity: String(item.quantity),
       unit_price: item.unitPrice.toFixed(2),
-      vat_rate: 20,
+      vat_rate: 0,
     })),
   }
 

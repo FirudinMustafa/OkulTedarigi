@@ -151,6 +151,9 @@ export default function SiparislerPage() {
   const locale = useLocale()
   const [orders, setOrders] = useState<OrderType[]>([])
   const [loading, setLoading] = useState(true)
+  const [tabCounts, setTabCounts] = useState<Record<TabId, number>>({
+    gelen: 0, hazirlaniyor: 0, dagitimda: 0, teslim_edilemeyen: 0, tamamlandi: 0, iptal: 0, tumu: 0
+  })
 
   // Filtreler
   const [activeTab, setActiveTab] = useState<TabId>('gelen')
@@ -220,8 +223,35 @@ export default function SiparislerPage() {
     }
   }
 
+  // Sekme sayaclarini, o an ekrana yuklu (en fazla 100 kayitlik) `orders`
+  // dizisinden degil, her sekme icin ayri bir "limit=1" istegiyle donen
+  // gercek DB toplamindan (pagination.total) hesapla. Aksi halde 100'den
+  // fazla siparis oldugunda sayaçlar 100'de kilitli kalir (bkz. sidebar rozeti).
+  const fetchTabCounts = async () => {
+    try {
+      const fetchTotal = async (status?: string) => {
+        const qs = new URLSearchParams({ limit: '1' })
+        if (status) qs.set('status', status)
+        if (listStart) qs.set('start', listStart)
+        if (listEnd) qs.set('end', listEnd)
+        const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
+        const data = await res.json()
+        return data?.pagination?.total ?? 0
+      }
+
+      const entries = await Promise.all(TABS.map(async (tab) => {
+        if (tab.statuses.length === 0) return [tab.id, await fetchTotal()] as const
+        const totals = await Promise.all(tab.statuses.map(fetchTotal))
+        return [tab.id, totals.reduce((sum, n) => sum + n, 0)] as const
+      }))
+      setTabCounts(Object.fromEntries(entries) as Record<TabId, number>)
+    } catch (error) {
+      console.error("Sekme sayilari yuklenemedi:", error)
+    }
+  }
+
   // Tarih filtresi degisince yeniden yukle
-  useEffect(() => { fetchOrders() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchOrders(); fetchTabCounts() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/api/admin/schools', { credentials: 'include' })
@@ -278,7 +308,7 @@ export default function SiparislerPage() {
         const msg = data.results?.[0]?.error || data.error || t('actionFailed')
         alert(msg)
       }
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
     } catch (error) {
       console.error('Aksiyon hatasi:', error)
       alert(t('genericError'))
@@ -302,7 +332,7 @@ export default function SiparislerPage() {
         const data = await res.json().catch(() => ({}))
         alert(data.error || t('cancelFailed'))
       }
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
     } finally {
       clearOrderBusy(order.id)
     }
@@ -328,7 +358,7 @@ export default function SiparislerPage() {
       } else {
         alert(t('refundSuccess', { amount: tutar }))
       }
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
     } finally {
       clearOrderBusy(order.id)
     }
@@ -349,7 +379,7 @@ export default function SiparislerPage() {
       if (!res.ok || (data.summary && data.summary.success === 0)) {
         alert(data.results?.[0]?.error || data.error || t('actionFailed'))
       }
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
     } finally {
       clearOrderBusy(order.id)
     }
@@ -369,7 +399,7 @@ export default function SiparislerPage() {
       } else {
         alert(t('cancelShipmentSuccess'))
       }
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
     } finally {
       clearOrderBusy(order.id)
     }
@@ -440,7 +470,7 @@ export default function SiparislerPage() {
         failed,
       })
 
-      await fetchOrders()
+      await Promise.all([fetchOrders(), fetchTabCounts()])
       setSelectedOrders(new Set())
     } catch (error) {
       console.error("Toplu islem hatasi:", error)
@@ -461,6 +491,7 @@ export default function SiparislerPage() {
       if (data.success) {
         alert(t('syncResult', { total: data.summary.total, updated: data.summary.updated }))
         fetchOrders()
+        fetchTabCounts()
       }
     } catch (error) { console.error('Kargo sync hatasi:', error) }
     finally { setSyncLoading(false) }
@@ -533,20 +564,8 @@ export default function SiparislerPage() {
   }
 
   // ============================================================
-  // Filtreleme + sekme bazli sayim
+  // Filtreleme (sekme sayaclari `tabCounts` state'inde, fetchTabCounts ile yukleniyor)
   // ============================================================
-  const tabCounts = useMemo(() => {
-    const counts: Record<TabId, number> = { gelen: 0, hazirlaniyor: 0, dagitimda: 0, teslim_edilemeyen: 0, tamamlandi: 0, iptal: 0, tumu: 0 }
-    counts.tumu = orders.length
-    for (const o of orders) {
-      for (const tab of TABS) {
-        if (tab.id === 'tumu') continue
-        if (tab.statuses.includes(o.status)) counts[tab.id]++
-      }
-    }
-    return counts
-  }, [orders])
-
   const filteredOrders = useMemo(() => {
     const tab = TABS.find(t => t.id === activeTab)!
     const term = normalizeSearch(searchTerm)
