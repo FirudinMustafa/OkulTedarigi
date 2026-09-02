@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES } from '@/lib/constants'
+import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES, UNPAID_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -30,7 +30,9 @@ const getDashboardData = unstable_cache(
       cancelRequests,
       todayOrders
     ] = await Promise.all([
-      prisma.order.count(),
+      prisma.order.count({
+        where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
+      }),
       prisma.order.count({
         where: { status: { in: ['PAID', 'CONFIRMED', 'SHIPPED', 'UNDELIVERED'] } }
       }),
