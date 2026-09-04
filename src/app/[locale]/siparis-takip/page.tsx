@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import { Link } from "@/i18n/navigation"
@@ -92,6 +92,7 @@ function SiparisTakipPage() {
   const [cancelLoading, setCancelLoading] = useState(false)
   const [cancelSuccess, setCancelSuccess] = useState(false)
   const [cancelError, setCancelError] = useState("")
+  const resultRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const urlOrderNumber = searchParams.get("orderNumber")
@@ -100,6 +101,12 @@ function SiparisTakipPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (order) {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [order])
 
   const searchOrder = async (searchNumber: string) => {
     setError("")
@@ -276,7 +283,7 @@ function SiparisTakipPage() {
 
           {/* Siparis detayi */}
           {order && statusInfo && (
-            <div className="w-full mt-6 bg-white rounded-[28px] border border-apple-border/60 shadow-[0_12px_32px_-20px_rgba(0,0,0,0.15)] p-8 animate-fade-in">
+            <div ref={resultRef} className="w-full mt-6 bg-white rounded-[28px] border border-apple-border/60 shadow-[0_12px_32px_-20px_rgba(0,0,0,0.15)] p-8 animate-fade-in">
               <div className="flex items-start justify-between gap-4 mb-8">
                 <div>
                   <p className="text-[12px] text-apple-gray uppercase tracking-wide">{t('detail.orderNo')}</p>

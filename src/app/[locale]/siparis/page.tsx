@@ -321,7 +321,7 @@ function SchoolPasswordFlow() {
                         <button
                           type="button"
                           onClick={() => setExpandedIdx(isExpanded ? null : idx)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-full border border-apple-border/80 text-apple-ink text-[13px] font-medium hover:bg-apple-panel transition-colors"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 h-12 px-4 rounded-full border border-apple-border/80 text-apple-ink text-[14px] font-medium hover:bg-apple-panel transition-colors"
                         >
                           {isExpanded ? (
                             <>
@@ -338,7 +338,7 @@ function SchoolPasswordFlow() {
                         type="button"
                         onClick={() => handleClassSelect(cls)}
                         disabled={!cls.package}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-12 px-4 rounded-full bg-[#10b981] hover:bg-[#059669] text-white text-[14px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {t('selectPackage.choosePackage')}
                         <ArrowRight weight="bold" className="w-3.5 h-3.5" />

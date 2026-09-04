@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import type { OrderStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { REVENUE_STATUSES, COMMISSION_STATUSES, ACTIVE_SCHOOL_WHERE } from '@/lib/constants'
+import { REVENUE_STATUSES, COMMISSION_STATUSES, ACTIVE_SCHOOL_WHERE, UNPAID_STATUSES } from '@/lib/constants'
 import { getPaymentCommissionRate } from '@/lib/settings'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -80,7 +81,7 @@ export async function GET(request: Request) {
 
     const [orders, schoolCount, classCount] = await Promise.all([
       prisma.order.findMany({
-        where: dateWhere,
+        where: { ...dateWhere, status: { notIn: UNPAID_STATUSES as OrderStatus[] } },
         include: {
           class: {
             include: {
