@@ -110,22 +110,23 @@ function generateBarcode(trackingNo: string): string {
     width: 2,
     height: 50,
     displayValue: true,
-    fontSize: 12,
+    fontSize: 15,
     font: 'monospace',
     textMargin: 4,
     margin: 6,
-    background: '#ffffff'
+    background: '#ffffff',
+    lineColor: '#000000'
   })
   return canvas.toDataURL('image/png')
 }
 
-// --- Etiket cizimi (100\u00d780mm YATAY/manzara sayfaya sigacak sekilde optimize) ---
-// Sayfa: 100mm en \u00d7 80mm boy. Iki sutunlu kompakt yerlesim:
+// --- Etiket cizimi (100\u00d7100mm kare etikete sigacak sekilde optimize) ---
+// Sayfa: 100mm en \u00d7 100mm boy. Iki sutunlu kompakt yerlesim:
 //   ust: baslik + barkod (tam genislik), alt: sol=ALICI, sag=SIPARIS BILGILERI.
 function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
   const tr = LABEL_T[locale] ?? LABEL_T.tr
   const pageW = doc.internal.pageSize.getWidth()   // 100
-  const pageH = doc.internal.pageSize.getHeight()   // 80
+  const pageH = doc.internal.pageSize.getHeight()   // 100
   const m = 4
   const contentW = pageW - m * 2
 
@@ -147,10 +148,10 @@ function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
   doc.text(tr.headerSub, pageW / 2, y + 7.3, { align: 'center' })
   y += 9
 
-  // --- Barkod (tam genislik, kompakt) ---
-  const barTop = y + 1.5
-  const barH = 16
-  const barW = 64
+  // --- Barkod (tam genislik) ---
+  const barTop = y + 2
+  const barH = 20
+  const barW = 70
   try {
     const barcodeImg = generateBarcode(order.trackingNo)
     doc.addImage(barcodeImg, 'PNG', (pageW - barW) / 2, barTop, barW, barH)
@@ -159,63 +160,63 @@ function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
     doc.setTextColor(150)
     doc.text(tr.barcodeError, pageW / 2, barTop + barH / 2, { align: 'center' })
   }
-  let secStart = barTop + barH + 1.5
+  let secStart = barTop + barH + 2
 
   doc.setDrawColor(210)
   doc.setLineWidth(0.3)
   doc.line(m, secStart, pageW - m, secStart)
-  secStart += 2
+  secStart += 3
 
   // --- Iki sutun ---
-  const colGap = 3
+  const colGap = 4
   const colW = (contentW - colGap) / 2
   const leftX = m
   const rightX = m + colW + colGap
 
   // SOL: ALICI
   let ly = secStart
-  doc.setFillColor(241, 245, 249)
-  doc.rect(leftX, ly, colW, 5, 'F')
+  doc.setFillColor(255, 255, 255)
+  doc.rect(leftX, ly, colW, 6, 'F')
   doc.setFontSize(7)
   doc.setFont('Roboto', 'bold')
   doc.setTextColor(71, 85, 105)
-  doc.text(tr.recipient, leftX + 2, ly + 3.5)
-  ly += 7.5
+  doc.text(tr.recipient, leftX + 2, ly + 4)
+  ly += 8
 
   doc.setTextColor(0)
-  doc.setFontSize(9)
+  doc.setFontSize(10)
   doc.setFont('Roboto', 'bold')
   const nameLine = (doc.splitTextToSize(order.parentName, colW - 3) as string[]).slice(0, 1)
   doc.text(nameLine, leftX + 2, ly)
-  ly += 4.5
+  ly += 5.5
 
-  doc.setFontSize(8)
+  doc.setFontSize(9)
   doc.setFont('Roboto', 'normal')
   doc.text(order.phone, leftX + 2, ly)
-  ly += 4.8
+  ly += 5.5
 
-  doc.setFontSize(7)
+  doc.setFontSize(8)
   const address = order.deliveryAddress || '-'
   const allLines = doc.splitTextToSize(address, colW - 3) as string[]
-  const addressLines = allLines.length <= 3
+  const addressLines = allLines.length <= 5
     ? allLines
-    : [...allLines.slice(0, 2), allLines[2].slice(0, Math.max(0, allLines[2].length - 3)) + '...']
+    : [...allLines.slice(0, 4), allLines[4].slice(0, Math.max(0, allLines[4].length - 3)) + '...']
   doc.text(addressLines, leftX + 2, ly)
 
   // SAG: SIPARIS BILGILERI
   let ry = secStart
-  doc.setFillColor(241, 245, 249)
-  doc.rect(rightX, ry, colW, 5, 'F')
+  doc.setFillColor(255, 255, 255)
+  doc.rect(rightX, ry, colW, 6, 'F')
   doc.setFontSize(7)
   doc.setFont('Roboto', 'bold')
   doc.setTextColor(71, 85, 105)
-  doc.text(tr.orderInfo, rightX + 2, ry + 3.5)
-  ry += 7.5
+  doc.text(tr.orderInfo, rightX + 2, ry + 4)
+  ry += 8
 
   doc.setTextColor(0)
-  doc.setFontSize(7.5)
-  const valX = rightX + 15
-  const valW = colW - 15 - 2
+  const valFontSize = 8.5
+  const valX = rightX + 16
+  const valW = colW - 16 - 2
 
   const infoLines: Array<[string, string]> = [
     [tr.orderNo, order.orderNumber],
@@ -226,11 +227,28 @@ function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
   ]
   for (const [label, value] of infoLines) {
     doc.setFont('Roboto', 'bold')
+    doc.setFontSize(7)
     doc.text(label, rightX + 2, ry)
     doc.setFont('Roboto', 'normal')
-    const valLine = (doc.splitTextToSize(String(value), valW) as string[]).slice(0, 1)
+
+    // Sigana kadar font kucult (siparis no / okul adi gibi uzun degerler icin);
+    // hala sigmiyorsa sonu "..." ile kes (sessizce veri kaybetmemek icin).
+    let fs = valFontSize
+    doc.setFontSize(fs)
+    const text = String(value)
+    while (fs > 5.5 && doc.getTextWidth(text) > valW) {
+      fs -= 0.5
+      doc.setFontSize(fs)
+    }
+    let valLine = text
+    if (doc.getTextWidth(valLine) > valW) {
+      while (valLine.length > 1 && doc.getTextWidth(valLine + '...') > valW) {
+        valLine = valLine.slice(0, -1)
+      }
+      valLine += '...'
+    }
     doc.text(valLine, valX, ry)
-    ry += 4.7
+    ry += 5.6
   }
 
   // --- Alt bilgi ---
@@ -238,8 +256,9 @@ function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
     ? new Date(order.shippedAt).toLocaleDateString('tr-TR')
     : new Date().toLocaleDateString('tr-TR')
 
-  doc.setFontSize(6.5)
-  doc.setTextColor(100)
+  doc.setFontSize(8)
+  doc.setFont('Roboto', 'normal')
+  doc.setTextColor(0)
   doc.text(`${tr.shipped} ${shipDate}`, m + 2, pageH - m - 2)
   doc.text('www.okultedarigim.com', pageW - m - 2, pageH - m - 2, { align: 'right' })
 }
@@ -249,15 +268,15 @@ async function createLabelDoc(orders: LabelOrder[], locale: DocLocale = 'tr'): P
   const fonts = await loadFonts()
 
   const doc = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
-    format: [100, 80]
+    format: [100, 100]
   })
 
   registerFonts(doc, fonts)
 
   orders.forEach((order, i) => {
-    if (i > 0) doc.addPage([100, 80], 'landscape')
+    if (i > 0) doc.addPage([100, 100], 'portrait')
     drawLabel(doc, order, locale)
   })
 
@@ -277,7 +296,7 @@ export async function previewBulkLabels(orders: LabelOrder[], locale: DocLocale 
 }
 
 // --- HTML birebir-olcu baski (termal etiket yazicisi icin onerilir) ---
-// PDF yerine @page size 100mm 80mm + margin 0 tanimli HTML uretip gizli iframe ile
+// PDF yerine @page size 100mm 100mm + margin 0 tanimli HTML uretip gizli iframe ile
 // bastirir. Boylece tarayici/yazici "sayfaya sigdir" olcek kaymasi en aza iner.
 function esc(v: unknown): string {
   return String(v ?? '')
@@ -333,33 +352,33 @@ function buildLabelHtml(orders: LabelOrder[], locale: DocLocale = 'tr'): string 
   return `<!DOCTYPE html><html lang="${esc(locale)}"><head><meta charset="utf-8" />
 <title>${esc(tr.pageTitle)}</title>
 <style>
-  @page { size: 100mm 80mm; margin: 0; }
+  @page { size: 100mm 100mm; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; }
-  .label { width: 100mm; height: 80mm; overflow: hidden; page-break-after: always; break-after: page;
+  .label { width: 100mm; height: 100mm; overflow: hidden; page-break-after: always; break-after: page;
            font-family: Arial, Helvetica, sans-serif; color: #000; }
   .label:last-child { page-break-after: auto; break-after: auto; }
-  .frame { margin: 4mm; height: 72mm; border: 0.4mm solid #1e293b; position: relative; }
+  .frame { margin: 4mm; height: 92mm; border: 0.4mm solid #1e293b; position: relative; }
   .header { background: #1e293b; color: #fff; height: 9mm; display: flex; flex-direction: column;
             align-items: center; justify-content: center; }
   .h-title { font-size: 11pt; font-weight: 700; line-height: 1; }
   .h-sub { font-size: 6.5pt; line-height: 1; margin-top: 0.4mm; }
-  .barcode { text-align: center; margin-top: 1.5mm; height: 16mm; }
-  .barcode img { height: 16mm; width: 64mm; object-fit: contain; }
+  .barcode { text-align: center; margin-top: 2mm; height: 20mm; }
+  .barcode img { height: 20mm; width: 70mm; object-fit: contain; }
   .noBarcode { font-size: 9pt; color: #999; padding-top: 6mm; }
-  .sep { border: none; border-top: 0.3mm solid #d2d2d2; margin: 1.5mm 2mm 0; }
-  .cols { display: flex; padding-top: 2mm; }
+  .sep { border: none; border-top: 0.3mm solid #d2d2d2; margin: 2mm 2mm 0; }
+  .cols { display: flex; padding-top: 3mm; }
   .col { width: 50%; padding: 0 2mm; }
-  .sec { background: #f1f5f9; color: #475569; font-size: 7pt; font-weight: 700; padding: 1mm 2mm; }
-  .name { font-size: 9pt; font-weight: 700; margin-top: 1.5mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .phone { font-size: 8pt; margin-top: 1mm; }
-  .addr { font-size: 7pt; margin-top: 1mm; line-height: 1.25; display: -webkit-box;
-          -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .row { font-size: 7.5pt; margin-top: 1.3mm; display: flex; }
-  .lbl { font-weight: 700; flex: 0 0 15mm; }
+  .sec { background: #fff; color: #475569; font-size: 7pt; font-weight: 700; padding: 1mm 2mm; }
+  .name { font-size: 10pt; font-weight: 700; margin-top: 2mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phone { font-size: 9pt; margin-top: 1.5mm; }
+  .addr { font-size: 8pt; margin-top: 1.5mm; line-height: 1.3; display: -webkit-box;
+          -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .row { font-size: 8.5pt; margin-top: 1.6mm; display: flex; }
+  .lbl { font-weight: 700; flex: 0 0 16mm; }
   .val { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .footer { position: absolute; left: 2mm; right: 2mm; bottom: 1.5mm; display: flex;
-            justify-content: space-between; font-size: 6.5pt; color: #646464; }
+            justify-content: space-between; font-size: 8pt; color: #000; }
 </style></head><body>${labels}</body></html>`
 }
 
