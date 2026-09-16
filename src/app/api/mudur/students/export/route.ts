@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getMudurSession } from '@/lib/auth'
-import { ORDER_STATUS_LABELS } from '@/lib/constants'
+import { ORDER_STATUS_LABELS, UNPAID_STATUSES } from '@/lib/constants'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
+import type { OrderStatus } from '@prisma/client'
 
 const safe = escapeCsvValue
 
@@ -33,6 +34,10 @@ export async function GET() {
         classes: {
           include: {
             orders: {
+              where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } },
+              include: {
+                students: { select: { firstName: true, lastName: true, section: true } }
+              },
               orderBy: { createdAt: 'desc' }
             },
             package: true
@@ -105,31 +110,39 @@ export async function GET() {
     let rowIdx = 0
     for (const cls of school.classes) {
       for (const o of cls.orders) {
-        rowIdx++
-        const row = wsOgrenci.addRow([
-          rowIdx,
-          safe(cls.name),
-          safe(o.studentSection || '-'),
-          safe(o.studentName),
-          safe(o.parentName),
-          safe(o.phone),
-          safe(o.email || '-'),
-          safe(cls.package?.name || '-'),
-          safe(statusLabels[o.status] || o.status),
-          safe(o.orderNumber),
-          new Date(o.createdAt).toLocaleDateString('tr-TR')
-        ])
+        // Kardesli siparislerde her ogrenci kendi satirini alir; eski tek-ogrenci
+        // siparisleri icin studentName/studentSection'a fallback yapilir.
+        const studentRows = o.students.length > 0
+          ? o.students.map(s => ({ name: `${s.firstName} ${s.lastName}`.trim(), section: s.section || o.studentSection || '-' }))
+          : [{ name: o.studentName, section: o.studentSection || '-' }]
 
-        const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowIdx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
-        row.eachCell((cell) => {
-          cell.fill = stripeFill
-          cell.border = borderStyle
-          cell.alignment = { vertical: 'middle' }
-        })
-        row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
-        row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
-        row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
-        row.height = 22
+        for (const s of studentRows) {
+          rowIdx++
+          const row = wsOgrenci.addRow([
+            rowIdx,
+            safe(cls.name),
+            safe(s.section),
+            safe(s.name),
+            safe(o.parentName),
+            safe(o.phone),
+            safe(o.email || '-'),
+            safe(cls.package?.name || '-'),
+            safe(statusLabels[o.status] || o.status),
+            safe(o.orderNumber),
+            new Date(o.createdAt).toLocaleDateString('tr-TR')
+          ])
+
+          const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowIdx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
+          row.eachCell((cell) => {
+            cell.fill = stripeFill
+            cell.border = borderStyle
+            cell.alignment = { vertical: 'middle' }
+          })
+          row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
+          row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
+          row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
+          row.height = 22
+        }
       }
     }
 
@@ -168,11 +181,12 @@ export async function GET() {
     sinifHeaderRow.height = 28
 
     school.classes.forEach((cls, idx) => {
+      const studentCount = cls.orders.reduce((sum, o) => sum + Math.max(o.students.length, 1), 0)
       const row = wsSinif.addRow([
         idx + 1,
         safe(cls.name),
         safe(cls.package?.name || 'Paket yok'),
-        cls.orders.length,
+        studentCount,
         '-'
       ])
       const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
