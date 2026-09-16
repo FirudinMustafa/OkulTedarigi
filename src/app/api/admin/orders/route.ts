@@ -21,9 +21,9 @@ export async function GET(request: Request) {
     const startStr = searchParams.get('start') || undefined
     const endStr = searchParams.get('end') || undefined
 
-    // Pagination: limit max 100, default 50
+    // Pagination: limit max 200, default 50
     const rawLimit = parseInt(searchParams.get('limit') || '50', 10)
-    const limit = Math.min(Math.max(isNaN(rawLimit) ? 50 : rawLimit, 1), 100)
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 50 : rawLimit, 1), 200)
     const rawPage = parseInt(searchParams.get('page') || '1', 10)
     const page = Math.max(isNaN(rawPage) ? 1 : rawPage, 1)
     const skip = (page - 1) * limit

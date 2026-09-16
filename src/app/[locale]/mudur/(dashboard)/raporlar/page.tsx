@@ -2,6 +2,8 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import { redirect } from '@/i18n/navigation'
 import { getMudurSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BarChart3, TrendingUp, Users, Package, ShoppingCart
@@ -26,7 +28,7 @@ async function getSchoolReports(schoolId: string, year?: string) {
     include: {
       classes: {
         include: {
-          orders: true,
+          orders: { where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } } },
           package: true
         }
       }

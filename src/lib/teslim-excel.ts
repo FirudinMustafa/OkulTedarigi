@@ -25,7 +25,7 @@ export interface TeslimOrder {
 /**
  * Teslim Excel'i olusturur. Her satir = 1 ogrenci.
  * Sutunlar: Ogrencinin Okulu | Ogrenci Adi | Ogrenci Soyadi | Sinif | Sube |
- *           Siparis Adedi (= o siparisteki ogrenci sayisi) | Siparis Tarihi/Saati |
+ *           Siparis Adedi (= bu satirin temsil ettigi siparis birimi, her zaman 1) | Siparis Tarihi/Saati |
  *           Okul Sifresi | Satis Fiyati | Teslim Tarihi (BOS) | (✓ bos hucre)
  */
 export type DocLocale = 'tr' | 'en' | 'de' | 'ar'
@@ -144,8 +144,6 @@ export async function buildTeslimExcel(
           return [{ firstName, lastName, section: o.studentSection || '' }]
         })()
 
-    const studentCount = studentRows.length
-
     for (const s of studentRows) {
       const row = ws.getRow(rowIndex++)
       row.values = {
@@ -154,7 +152,7 @@ export async function buildTeslimExcel(
         lastName: safe(s.lastName),
         classNum,
         section: s.section,
-        qty: studentCount,
+        qty: 1,
         orderDate: safe(formatDateTime(o.createdAt, locale)),
         schoolPassword: safe(o.class.school.password),
         salePrice: safe(formatPrice(String(o.totalAmount), locale)),

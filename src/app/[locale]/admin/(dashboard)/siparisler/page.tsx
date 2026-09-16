@@ -155,8 +155,8 @@ export default function SiparislerPage() {
   const [tabCounts, setTabCounts] = useState<Record<TabId, number>>({
     gelen: 0, hazirlaniyor: 0, dagitimda: 0, teslim_edilemeyen: 0, tamamlandi: 0, iptal: 0, tumu: 0
   })
-  // Sunucu tarafi sayfalama — API bir istekte en fazla 100 kayit dondurur,
-  // bir statude 100'den fazla siparis varsa geri kalani ikinci/ucuncu sayfada
+  // Sunucu tarafi sayfalama — API bir istekte en fazla 200 kayit dondurur,
+  // bir statude 200'den fazla siparis varsa geri kalani ikinci/ucuncu sayfada
   const [page, setPage] = useState(1)
   const [pageInfo, setPageInfo] = useState({ total: 0, totalPages: 1 })
   // Gorulmus/secilmis her siparisin tam kaydini id'ye gore biriktirir (kucul-
@@ -236,7 +236,7 @@ export default function SiparislerPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const qs = new URLSearchParams({ limit: '100', page: String(page) })
+      const qs = new URLSearchParams({ limit: '200', page: String(page) })
       const status = activeTabStatus()
       if (status) qs.set('status', status)
       if (listStart) qs.set('start', listStart)
@@ -265,7 +265,7 @@ export default function SiparislerPage() {
       const status = activeTabStatus()
       const allIds: string[] = []
       for (let p = 1; p <= pageInfo.totalPages; p++) {
-        const qs = new URLSearchParams({ limit: '100', page: String(p) })
+        const qs = new URLSearchParams({ limit: '200', page: String(p) })
         if (status) qs.set('status', status)
         if (listStart) qs.set('start', listStart)
         if (listEnd) qs.set('end', listEnd)
@@ -284,9 +284,9 @@ export default function SiparislerPage() {
   }
 
   // Sekme sayaclarini, ekrana yuklu (aktif sekmeye gore sunucuda filtrelenmis
-  // ve en fazla 100 kayitla sinirli) `orders` dizisinden degil, her sekme icin
+  // ve en fazla 200 kayitla sinirli) `orders` dizisinden degil, her sekme icin
   // ayri bir "limit=1" istegiyle donen gercek DB toplamindan (pagination.total)
-  // hesapla. Aksi halde 100'den fazla siparis oldugunda sayaçlar 100'de kilitli
+  // hesapla. Aksi halde 200'den fazla siparis oldugunda sayaçlar 200'de kilitli
   // kalir (bkz. sidebar rozeti).
   const fetchTabCounts = async () => {
     try {
