@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, Edit, Trash2, Search, School, AlertTriangle, Copy, RefreshCw, KeyRound, Mail } from "lucide-react"
+import { Plus, Edit, Trash2, Search, School, AlertTriangle, Copy, RefreshCw, Mail, Eye, EyeOff } from "lucide-react"
 
 interface SchoolType {
   id: string
@@ -54,6 +54,7 @@ export default function OkullarPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [showTranslations, setShowTranslations] = useState(false)
+  const [showDirectorPassword, setShowDirectorPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     name_en: "",
@@ -128,6 +129,7 @@ export default function OkullarPage() {
     setEditingSchool(school)
     setFormError(null)
     setShowTranslations(Boolean(school.name_en || school.name_de || school.name_ar))
+    setShowDirectorPassword(false)
     setFormData({
       name: school.name,
       name_en: school.name_en || "",
@@ -227,6 +229,7 @@ export default function OkullarPage() {
     setEditingSchool(null)
     setFormError(null)
     setShowTranslations(false)
+    setShowDirectorPassword(false)
     setFormData({
       name: "",
       name_en: "",
@@ -536,18 +539,24 @@ export default function OkullarPage() {
                   <Label htmlFor="directorPassword">
                     {editingSchool ? t("fieldNewPassword") : t("fieldPassword")}
                   </Label>
-                  <div className="flex items-center gap-2">
+                  <div className="relative">
                     <Input
                       id="directorPassword"
-                      type="password"
+                      type={showDirectorPassword ? "text" : "password"}
                       value={formData.directorPassword}
                       onChange={(e) => setFormData({ ...formData, directorPassword: e.target.value })}
                       required={!editingSchool}
                       placeholder={editingSchool ? t("passwordPlaceholderEdit") : t("directorPasswordPlaceholder")}
+                      className="pr-10"
                     />
-                    {editingSchool && (
-                      <KeyRound className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    )}
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowDirectorPassword(v => !v)}
+                      tabIndex={-1}
+                    >
+                      {showDirectorPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
               </div>
