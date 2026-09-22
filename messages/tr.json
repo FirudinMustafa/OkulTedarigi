@@ -433,6 +433,8 @@
       "allDelivery": "Tüm teslimat",
       "cargo": "Kargo",
       "schoolDelivery": "Okula Teslim",
+      "sortNewest": "En yeni",
+      "sortOldest": "En eski",
       "startDate": "Başlangıç tarihi",
       "endDate": "Bitiş tarihi",
       "clearDateFilter": "Tarih filtresini temizle",

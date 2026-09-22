@@ -25,7 +25,7 @@ import {
   CheckCircle, CheckCheck, RefreshCw, RotateCcw, Loader2, Printer, Download, Inbox,
   ChevronLeft, ChevronRight
 } from "lucide-react"
-import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
+import { formatDateTime, formatPrice } from "@/lib/utils"
 import { ORDER_STATUS_COLORS } from "@/lib/constants"
 import {
   previewShippingLabel, printBulkLabels,
@@ -168,8 +168,13 @@ export default function SiparislerPage() {
 
   // Filtreler
   const [activeTab, setActiveTab] = useState<TabId>('gelen')
+  // searchTerm: kullanicinin yazdigi an; debouncedSearch: sunucuya gonderilen
+  // (arama sunucu tarafinda TUM sayfalar uzerinde calisir — bkz. asagidaki debounce efekti)
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [filterDelivery, setFilterDelivery] = useState<"" | "CARGO" | "SCHOOL_DELIVERY">("")
+  const [filterSchoolId, setFilterSchoolId] = useState<string>("")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   // Liste tarih filtresi (sunucu tarafi)
   const [listStart, setListStart] = useState<string>("")
   const [listEnd, setListEnd] = useState<string>("")
@@ -177,8 +182,8 @@ export default function SiparislerPage() {
   // Secili siparisleri indirme (teslim excel)
   const [downloadingSelected, setDownloadingSelected] = useState(false)
 
-  // Teslim Listesi raporu filtreleri
-  const [reportSchools, setReportSchools] = useState<Array<{ id: string; name: string }>>([])
+  // Okul listesi — hem asagidaki liste filtresi hem de Teslim Listesi raporu icin ortak kullanilir
+  const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([])
   const [reportSchoolId, setReportSchoolId] = useState<string>("")
   const [reportStart, setReportStart] = useState<string>("")
   const [reportEnd, setReportEnd] = useState<string>("")
@@ -236,11 +241,13 @@ export default function SiparislerPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const qs = new URLSearchParams({ limit: '200', page: String(page) })
+      const qs = new URLSearchParams({ limit: '200', page: String(page), sort: sortOrder })
       const status = activeTabStatus()
       if (status) qs.set('status', status)
       if (listStart) qs.set('start', listStart)
       if (listEnd) qs.set('end', listEnd)
+      if (debouncedSearch) qs.set('search', debouncedSearch)
+      if (filterSchoolId) qs.set('schoolId', filterSchoolId)
       const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
       const data = await res.json()
       setOrders(data.orders || [])
@@ -265,10 +272,12 @@ export default function SiparislerPage() {
       const status = activeTabStatus()
       const allIds: string[] = []
       for (let p = 1; p <= pageInfo.totalPages; p++) {
-        const qs = new URLSearchParams({ limit: '200', page: String(p) })
+        const qs = new URLSearchParams({ limit: '200', page: String(p), sort: sortOrder })
         if (status) qs.set('status', status)
         if (listStart) qs.set('start', listStart)
         if (listEnd) qs.set('end', listEnd)
+        if (debouncedSearch) qs.set('search', debouncedSearch)
+        if (filterSchoolId) qs.set('schoolId', filterSchoolId)
         const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
         const data = await res.json()
         const pageOrders: OrderType[] = data.orders || []
@@ -295,6 +304,8 @@ export default function SiparislerPage() {
         if (status) qs.set('status', status)
         if (listStart) qs.set('start', listStart)
         if (listEnd) qs.set('end', listEnd)
+        if (debouncedSearch) qs.set('search', debouncedSearch)
+        if (filterSchoolId) qs.set('schoolId', filterSchoolId)
         const res = await fetch(`/api/admin/orders?${qs.toString()}`, { credentials: 'include' })
         const data = await res.json()
         return data?.pagination?.total ?? 0
@@ -309,16 +320,26 @@ export default function SiparislerPage() {
     }
   }
 
-  // Sekme, tarih filtresi veya sayfa degisince yeniden yukle
-  useEffect(() => { fetchOrders() }, [activeTab, listStart, listEnd, page]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchTabCounts() }, [listStart, listEnd]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Arama kutusuna yazarken her tuşta değil, ~350ms yazma durunca sunucuya
+  // istek at — ve sonuçlar tüm sayfalar üzerinde arasın diye sayfayı 1'e resetle
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(handle)
+  }, [searchTerm])
+
+  // Sekme, tarih/okul filtresi, arama, sıralama veya sayfa degisince yeniden yukle
+  useEffect(() => { fetchOrders() }, [activeTab, listStart, listEnd, page, debouncedSearch, filterSchoolId, sortOrder]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchTabCounts() }, [listStart, listEnd, debouncedSearch, filterSchoolId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/api/admin/schools', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.schools) {
-          setReportSchools(d.schools.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })))
+          setSchools(d.schools.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })))
         }
       })
       .catch(() => {})
@@ -630,24 +651,17 @@ export default function SiparislerPage() {
   // ============================================================
   // Filtreleme (sekme sayaclari `tabCounts` state'inde, fetchTabCounts ile yukleniyor)
   // ============================================================
+  // Arama, okul ve tarih filtresi artik sunucu tarafinda (fetchOrders) TUM
+  // sayfalar uzerinde uygulaniyor — burada sadece o an ekranda yuklu sayfa
+  // icinde ucuz/aninda cevap veren tab ve teslimat tipi filtresi kaliyor.
   const filteredOrders = useMemo(() => {
     const tab = TABS.find(t => t.id === activeTab)!
-    const term = normalizeSearch(searchTerm)
     return orders.filter(o => {
       if (tab.statuses.length > 0 && !tab.statuses.includes(o.status)) return false
       if (filterDelivery && o.deliveryType !== filterDelivery) return false
-      if (term) {
-        const hit =
-          normalizeSearch(o.orderNumber).includes(term) ||
-          normalizeSearch(o.studentName).includes(term) ||
-          normalizeSearch(o.parentName).includes(term) ||
-          normalizeSearch(o.class.school.name).includes(term) ||
-          (o.trackingNo ? normalizeSearch(o.trackingNo).includes(term) : false)
-        if (!hit) return false
-      }
       return true
     })
-  }, [orders, activeTab, searchTerm, filterDelivery])
+  }, [orders, activeTab, filterDelivery])
 
   // Toplu islem icin kac siparis uygun? (durum + teslimat tipi) — secim baska
   // sayfaya yayilmis olabilecegi icin orderCache'den coz, sadece `orders`'tan degil
@@ -842,7 +856,7 @@ export default function SiparislerPage() {
                 <SelectTrigger><SelectValue placeholder={t('allSchools')} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">{t('allSchools')}</SelectItem>
-                  {reportSchools.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {schools.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -916,8 +930,8 @@ export default function SiparislerPage() {
       {/* Sipariş Tablosu */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[260px]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+            <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder={t('searchPlaceholder')}
@@ -926,22 +940,38 @@ export default function SiparislerPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={filterDelivery || "__all__"} onValueChange={(v) => setFilterDelivery((v === "__all__" ? "" : v) as "" | "CARGO" | "SCHOOL_DELIVERY")}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder={t('deliveryFilter')} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t('allDelivery')}</SelectItem>
-                <SelectItem value="CARGO">{t('cargo')}</SelectItem>
-                <SelectItem value="SCHOOL_DELIVERY">{t('schoolDelivery')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+              <Select value={filterSchoolId || "__all__"} onValueChange={(v) => { setFilterSchoolId(v === "__all__" ? "" : v); setPage(1) }}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={t('allSchools')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">{t('allSchools')}</SelectItem>
+                  {schools.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterDelivery || "__all__"} onValueChange={(v) => setFilterDelivery((v === "__all__" ? "" : v) as "" | "CARGO" | "SCHOOL_DELIVERY")}>
+                <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder={t('deliveryFilter')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">{t('allDelivery')}</SelectItem>
+                  <SelectItem value="CARGO">{t('cargo')}</SelectItem>
+                  <SelectItem value="SCHOOL_DELIVERY">{t('schoolDelivery')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortOrder} onValueChange={(v) => { setSortOrder(v as "asc" | "desc"); setPage(1) }}>
+                <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">{t('sortNewest')}</SelectItem>
+                  <SelectItem value="asc">{t('sortOldest')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {/* Tarih araligi filtresi (sunucu tarafi) */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <input
                 type="datetime-local"
                 value={listStart}
                 onChange={(e) => { setListStart(e.target.value); setPage(1) }}
                 title={t('startDate')}
-                className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-9 min-w-0 flex-1 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
               <span className="text-gray-400 text-sm">–</span>
               <input
@@ -949,11 +979,11 @@ export default function SiparislerPage() {
                 value={listEnd}
                 onChange={(e) => { setListEnd(e.target.value); setPage(1) }}
                 title={t('endDate')}
-                className="h-9 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-9 min-w-0 flex-1 px-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
               {(listStart || listEnd) && (
                 <Button
-                  size="icon" variant="ghost" className="h-8 w-8 text-gray-500"
+                  size="icon" variant="ghost" className="h-8 w-8 text-gray-500 shrink-0"
                   onClick={() => { setListStart(""); setListEnd(""); setPage(1) }}
                   title={t('clearDateFilter')}
                 >
@@ -1150,7 +1180,7 @@ export default function SiparislerPage() {
           )}
 
           {pageInfo.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-100">
               <span className="text-sm text-gray-500">
                 {t('pageIndicator', { page, totalPages: pageInfo.totalPages })}
               </span>

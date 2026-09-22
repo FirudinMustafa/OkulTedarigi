@@ -433,6 +433,8 @@
       "allDelivery": "Alle Lieferarten",
       "cargo": "Versand",
       "schoolDelivery": "Lieferung an Schule",
+      "sortNewest": "Neueste",
+      "sortOldest": "Älteste",
       "startDate": "Startdatum",
       "endDate": "Enddatum",
       "clearDateFilter": "Datumsfilter löschen",

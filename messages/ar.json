@@ -433,6 +433,8 @@
       "allDelivery": "جميع أنواع التسليم",
       "cargo": "شحن",
       "schoolDelivery": "تسليم إلى المدرسة",
+      "sortNewest": "الأحدث",
+      "sortOldest": "الأقدم",
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
       "clearDateFilter": "مسح فلتر التاريخ",

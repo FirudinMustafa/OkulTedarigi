@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')?.trim()
     const startStr = searchParams.get('start') || undefined
     const endStr = searchParams.get('end') || undefined
+    const sortOrder = searchParams.get('sort') === 'asc' ? 'asc' : 'desc'
 
     // Pagination: limit max 200, default 50
     const rawLimit = parseInt(searchParams.get('limit') || '50', 10)
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
     const [orders, totalCount] = await prisma.$transaction([
       prisma.order.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: sortOrder },
         skip,
         take: limit,
         include: {
