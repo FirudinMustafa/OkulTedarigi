@@ -492,7 +492,7 @@ export default function PaketlerPage() {
                 {/* Paket adi cevirileri */}
                 <div className="space-y-2">
                   <Label className="text-xs text-gray-600">{t("fieldName")}</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Input
                       placeholder={tf("en")}
                       value={formData.name_en}
@@ -515,7 +515,7 @@ export default function PaketlerPage() {
                 {/* Aciklama cevirileri */}
                 <div className="space-y-2">
                   <Label className="text-xs text-gray-600">{t("fieldDescription")}</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Textarea
                       placeholder={tf("en")}
                       rows={2}
@@ -541,7 +541,7 @@ export default function PaketlerPage() {
                 {/* Not cevirileri */}
                 <div className="space-y-2">
                   <Label className="text-xs text-gray-600">{t("packageNote")}</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Textarea
                       placeholder={tf("en")}
                       rows={2}
@@ -593,12 +593,12 @@ export default function PaketlerPage() {
                 <div className="space-y-3">
                   {items.map((item, index) => (
                     <div key={index} className="space-y-2 border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Input
                           placeholder={t("itemName")}
                           value={item.name}
                           onChange={(e) => updateItem(index, "name", e.target.value)}
-                          className="flex-1"
+                          className="flex-1 min-w-[140px]"
                         />
                         <Input
                           placeholder={t("itemQuantity")}
@@ -629,7 +629,7 @@ export default function PaketlerPage() {
                         )}
                       </div>
                       {/* Urun adi cevirileri (EN/DE/AR) - opsiyonel */}
-                      <div className="grid grid-cols-3 gap-2 pl-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pl-1">
                         <Input
                           placeholder={`${tf("en")} ${tf("optional")}`}
                           value={item.name_en}
