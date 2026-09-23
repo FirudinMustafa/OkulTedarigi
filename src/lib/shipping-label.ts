@@ -223,7 +223,6 @@ function drawLabel(doc: jsPDF, order: LabelOrder, locale: DocLocale = 'tr') {
     [tr.school, order.class.school.name],
     [tr.class, order.class.name],
     [tr.package, order.package?.name || '-'],
-    [tr.amount, `${Number(order.totalAmount).toFixed(2)} TL`]
   ]
   for (const [label, value] of infoLines) {
     doc.setFont('Roboto', 'bold')
@@ -320,7 +319,6 @@ function buildLabelHtml(orders: LabelOrder[], locale: DocLocale = 'tr'): string 
       [tr.school, o.class.school.name],
       [tr.class, o.class.name],
       [tr.package, o.package?.name || '-'],
-      [tr.amount, `${Number(o.totalAmount).toFixed(2)} TL`],
     ]
     const infoRows = rows.map(([l, v]) =>
       `<div class="row"><span class="lbl">${esc(l)}</span><span class="val">${esc(v)}</span></div>`
