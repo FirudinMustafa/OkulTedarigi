@@ -4,7 +4,7 @@
  * ShipmentData/ShipmentResult/TrackingInfo arayuzlerini ve
  * createShipment/getTrackingInfo/cancelShipment fonksiyonlarini ihrac eder.
  *
- * Ödeme tipi: AÖ (Alici Oder). Bu, wsUserName'deki "A" onekiyle (1149A...) belirlenir;
+ * Ödeme tipi: GÖ (Gonderici Oder). Bu, wsUserName'deki "G" onekiyle (1149G...) belirlenir;
  * SOAP govdesinde ayri bir alan gonderilmez.
  *
  * Endpoint (prod):
@@ -72,7 +72,7 @@ const QUERY_URL = (process.env.YURTICI_QUERY_URL || DISPATCH_URL).replace(/\/$/,
 
 const SOAP_NS = 'http://yurticikargo.com.tr/ShippingOrderDispatcherServices'
 
-// Koli agirligi: ogrenci basina kg (AÖ'de alici desi/kg'ye gore oder). Env ile ayarlanabilir.
+// Koli agirligi: ogrenci basina kg (GÖ'de gonderici desi/kg'ye gore oder). Env ile ayarlanabilir.
 const KG_PER_STUDENT = Number(process.env.YURTICI_KG_PER_STUDENT || '2') || 2
 
 // Yurtici hata kodlari
@@ -227,7 +227,7 @@ export async function createShipment(data: ShipmentData): Promise<ShipmentResult
   // ÖNEMLİ: tt* (Tahsilatlı Teslimat / kapıda tahsilat) alanlari HIC gonderilmez.
   // Canli testte bunlari 0 olarak gondermek bile errCode 82505/82507 ("TT_INVOICE_AMOUNT
   // / TT_DOCUMENT_ID parametresi hatali yada eksik") hatasi veriyor. Urun bedeli online
-  // tahsil edildigi icin kapida tahsilat YOK; AÖ (kargo ucretini alici oder) hesap
+  // tahsil edildigi icin kapida tahsilat YOK; GÖ (kargo ucretini gonderici/okul oder) hesap
   // tanimindan gelir, govdede ayri alan gerekmez. dcSelectedCredit/dcCreditRule=0 sorunsuz.
   const vo: Record<string, string | number> = {
     cargoKey: data.orderNumber,
