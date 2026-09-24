@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { createInvoice } from '@/lib/kolaybi'
 import { sendInvoiceCreated } from '@/lib/email'
 import { logAction } from '@/lib/logger'
+import { buildInvoiceItems } from '@/lib/invoice-items'
 
 /**
  * Siparis COMPLETED durumuna gectiginde otomatik e-fatura kesimi (idempotent, best-effort).
@@ -43,13 +44,7 @@ export async function autoInvoiceOrderOnComplete(
     if (!order || order.invoiceNo) return null
 
     const studentCount = Math.max(1, order.students.length)
-    const snapshotItems = order.items.length > 0 ? order.items : (order.class.package?.items ?? [])
-    const invoiceItems = snapshotItems.map(item => ({
-      name: item.name,
-      quantity: item.quantity * studentCount,
-      unitPrice: Number(item.price),
-      totalPrice: Number(item.price) * item.quantity * studentCount,
-    }))
+    const invoiceItems = buildInvoiceItems(order, studentCount)
 
     const invoiceResult = await createInvoice({
       orderNumber: order.orderNumber,

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
+import { buildInvoiceItems } from '@/lib/invoice-items'
 import { sendInvoiceCreated } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -82,15 +83,7 @@ export async function POST(
     // listesi yerine snapshot kullanilir. Eski (snapshot'siz) siparisler icin paket listesine
     // fallback yapilir. Adetler ogrenci sayisiyla carpilir (totalAmount = birim x ogrenci).
     const studentCount = Math.max(1, order.students.length)
-    const snapshotItems = order.items.length > 0
-      ? order.items
-      : (order.class.package?.items ?? [])
-    const invoiceItems = snapshotItems.map(item => ({
-      name: item.name,
-      quantity: item.quantity * studentCount,
-      unitPrice: Number(item.price),
-      totalPrice: Number(item.price) * item.quantity * studentCount,
-    }))
+    const invoiceItems = buildInvoiceItems(order, studentCount)
 
     const invoiceResult = await createInvoice({
       orderNumber: order.orderNumber,
