@@ -486,6 +486,28 @@ export default function SiparislerPage() {
     }
   }
 
+  // Fatura tekrar kesmeyi dene (COMPLETED ama otomatik kesim basarisiz olmus siparisler icin).
+  // Backend'de zaten var olan POST /orders/[id]/invoice ucuna bu sayfadan hic baglanti yoktu —
+  // "Kesilemedi" rozeti gorunuyordu ama admin'in mudahale edecegi bir buton hic olusturulmamisti.
+  const retryInvoice = async (order: OrderType) => {
+    if (!confirm(t('confirmRetryInvoice', { orderNumber: order.orderNumber }))) return
+    setOrderBusy(order.id, t('retryingInvoice'))
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/invoice`, {
+        method: 'POST', credentials: 'include'
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error || t('retryInvoiceFailed'))
+      } else {
+        alert(t('retryInvoiceSuccess', { invoiceNo: data.invoiceNo || '' }))
+      }
+      await Promise.all([fetchOrders(), fetchTabCounts()])
+    } finally {
+      clearOrderBusy(order.id)
+    }
+  }
+
   // NOT: "Siparisi Sil" ve "Tum Verileri Sifirla" butonlari panelden kaldirildi
   // (yanlislikla veri kaybi riski). Ilgili API route'lari (DELETE /api/admin/orders/[id],
   // POST /api/admin/system/reset) dosyada duruyor ama UI'dan cagrilmiyor.
@@ -752,9 +774,19 @@ export default function SiparislerPage() {
     const showLabel = !!order.trackingNo
     const showUndeliver = order.status === 'SHIPPED'
     const showCancelShipment = order.status === 'SHIPPED' && order.deliveryType === 'CARGO' && !!order.trackingNo
+    const showRetryInvoice = order.status === 'COMPLETED' && !order.invoiceNo
 
     return (
       <div className="flex items-center gap-1">
+        {showRetryInvoice && (
+          <Button
+            size="sm" variant="outline" className="h-7 text-xs text-red-700 border-red-200 hover:bg-red-50"
+            onClick={() => retryInvoice(order)}
+            title={t('retryInvoiceTitle')}
+          >
+            <FileText className="h-3 w-3 mr-1" />{t('retryInvoice')}
+          </Button>
+        )}
         {showLabel && (
           <Button
             size="icon" variant="outline" className="h-7 w-7"
@@ -1320,7 +1352,16 @@ export default function SiparislerPage() {
                   {selectedOrder.invoiceNo ? (
                     <p><span className="text-gray-500">{t('invoiceLabel')}</span> <span className="font-mono">{selectedOrder.invoiceNo}</span></p>
                   ) : selectedOrder.status === "COMPLETED" ? (
-                    <p><span className="text-gray-500">{t('invoiceLabel')}</span> <Badge className="bg-red-100 text-red-800">{t('invoiceMissing')}</Badge></p>
+                    <p className="flex items-center gap-2">
+                      <span className="text-gray-500">{t('invoiceLabel')}</span>
+                      <Badge className="bg-red-100 text-red-800">{t('invoiceMissing')}</Badge>
+                      <Button
+                        size="sm" variant="outline" className="h-6 text-xs text-red-700 border-red-200 hover:bg-red-50"
+                        onClick={() => retryInvoice(selectedOrder)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" />{t('retryInvoice')}
+                      </Button>
+                    </p>
                   ) : null}
                 </div>
               </div>
