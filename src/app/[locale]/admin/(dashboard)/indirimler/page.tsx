@@ -26,12 +26,19 @@ interface Discount {
   usedCount: number
   isActive: boolean
   createdAt: string
+  schools?: { schoolId: string }[]
+}
+
+interface SchoolOption {
+  id: string
+  name: string
 }
 
 export default function IndirimlerPage() {
   const t = useTranslations('admin.discounts')
   const tf = useTranslations('admin.i18nFields')
   const [discounts, setDiscounts] = useState<Discount[]>([])
+  const [schools, setSchools] = useState<SchoolOption[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -48,12 +55,35 @@ export default function IndirimlerPage() {
     maxDiscount: "",
     validFrom: "",
     validUntil: "",
-    usageLimit: ""
+    usageLimit: "",
+    schoolIds: [] as string[]
   })
 
   useEffect(() => {
     loadDiscounts()
+    loadSchools()
   }, [])
+
+  const loadSchools = async () => {
+    try {
+      const res = await fetch("/api/admin/schools", { credentials: 'include' })
+      const data = await res.json()
+      if (res.ok) {
+        setSchools((data.schools || []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })))
+      }
+    } catch (error) {
+      console.error("Okullar yuklenemedi:", error)
+    }
+  }
+
+  const toggleSchool = (schoolId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      schoolIds: prev.schoolIds.includes(schoolId)
+        ? prev.schoolIds.filter(id => id !== schoolId)
+        : [...prev.schoolIds, schoolId]
+    }))
+  }
 
   const loadDiscounts = async () => {
     try {
@@ -82,7 +112,8 @@ export default function IndirimlerPage() {
       maxDiscount: "",
       validFrom: "",
       validUntil: "",
-      usageLimit: ""
+      usageLimit: "",
+      schoolIds: []
     })
     setEditingId(null)
     setShowForm(false)
@@ -101,7 +132,8 @@ export default function IndirimlerPage() {
       maxDiscount: d.maxDiscount ? String(d.maxDiscount) : "",
       validFrom: new Date(d.validFrom).toISOString().slice(0, 16),
       validUntil: new Date(d.validUntil).toISOString().slice(0, 16),
-      usageLimit: d.usageLimit ? String(d.usageLimit) : ""
+      usageLimit: d.usageLimit ? String(d.usageLimit) : "",
+      schoolIds: (d.schools || []).map(s => s.schoolId)
     })
     setEditingId(d.id)
     setShowForm(true)
@@ -122,7 +154,8 @@ export default function IndirimlerPage() {
       maxDiscount: formData.maxDiscount ? Number(formData.maxDiscount) : null,
       validFrom: formData.validFrom,
       validUntil: formData.validUntil,
-      usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null
+      usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
+      schoolIds: formData.schoolIds
     }
 
     try {
@@ -358,6 +391,25 @@ export default function IndirimlerPage() {
                 </div>
               </div>
 
+              {/* Okul bazli kisitlama (opsiyonel, bos = tum okullar) */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium">{t('schoolsLabel')}</p>
+                <p className="text-xs text-gray-500 mb-3">{t('schoolsHint')}</p>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-gray-100 rounded-md p-3">
+                  {schools.map((school) => (
+                    <label key={school.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={formData.schoolIds.includes(school.id)}
+                        onChange={() => toggleSchool(school.id)}
+                        className="h-4 w-4"
+                      />
+                      {school.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <Button type="submit">
                   {editingId ? t('update') : t('create')}
@@ -412,6 +464,11 @@ export default function IndirimlerPage() {
                           {t('usageCount', { used: d.usedCount, limit: d.usageLimit ? `/${d.usageLimit}` : "" })}
                         </span>
                         {d.minAmount && <span>{t('minLabel', { value: Number(d.minAmount) })}</span>}
+                        <span>
+                          {d.schools && d.schools.length > 0
+                            ? t('schoolsRestricted', { count: d.schools.length })
+                            : t('allSchools')}
+                        </span>
                       </div>
                     </div>
                   </div>

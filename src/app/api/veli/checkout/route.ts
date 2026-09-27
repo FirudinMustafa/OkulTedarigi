@@ -127,12 +127,16 @@ export async function POST(request: Request) {
     // Indirim SADECE fiyati belirlemek icin uygulanir; usedCount artisi callback'te (odeme onayinda).
     if (discountCode) {
       const normalizedCode = String(discountCode).toUpperCase().trim()
-      const discount = await prisma.discount.findUnique({ where: { code: normalizedCode } })
+      const discount = await prisma.discount.findUnique({
+        where: { code: normalizedCode },
+        include: { schools: { select: { schoolId: true } } }
+      })
       if (discount && discount.isActive) {
         const now = new Date()
         const limitOk = !discount.usageLimit || discount.usedCount < discount.usageLimit
         const minOk = !discount.minAmount || finalAmount >= Number(discount.minAmount)
-        if (now >= discount.validFrom && now <= discount.validUntil && limitOk && minOk) {
+        const schoolOk = discount.schools.length === 0 || discount.schools.some(s => s.schoolId === classData.schoolId)
+        if (now >= discount.validFrom && now <= discount.validUntil && limitOk && minOk && schoolOk) {
           if (discount.type === 'PERCENTAGE') {
             discountAmount = finalAmount * Number(discount.value) / 100
             if (discount.maxDiscount && discountAmount > Number(discount.maxDiscount)) {

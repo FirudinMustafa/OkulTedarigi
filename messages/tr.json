@@ -651,7 +651,11 @@
       "genericError": "Bir hata oluştu",
       "confirmDelete": "Bu indirim kodunu silmek istediğinize emin misiniz?",
       "deleteFailed": "Silinemedi",
-      "updateFailed": "Güncellenemedi"
+      "updateFailed": "Güncellenemedi",
+      "schoolsLabel": "Uygulanacak Okullar",
+      "schoolsHint": "Hiçbiri seçilmezse indirim tüm okullarda geçerli olur",
+      "schoolsRestricted": "{count} okulda geçerli",
+      "allSchools": "Tüm okullarda geçerli"
     },
     "cancelRequests": {
       "title": "İptal Talepleri",
@@ -1675,6 +1679,7 @@
       "discountExpired": "Bu indirim kodunun geçerlilik süresi dolmuş",
       "discountLimitReached": "Bu indirim kodu kullanım limitine ulaşmış",
       "discountMinAmount": "Bu indirim kodu en az {amount} TL sipariş tutarı gerektirir",
+      "discountNotForSchool": "Bu indirim kodu okulunuz için geçerli değil",
       "orderNumberRequired": "Sipariş numarası gerekli",
       "invalidPassword": "Geçersiz şifre. Lütfen okulunuzdan aldığınız şifrenizi kontrol edin.",
       "noActiveClassPackage": "Bu okul için henüz aktif bir sınıf ve paket tanımlanmamış.",

@@ -31,6 +31,7 @@ model School {
   updatedAt                    DateTime        @updatedAt
   classes                      Class[]
   schoolPayments               SchoolPayment[]
+  discountSchools               DiscountSchool[]
 
   @@index([directorEmail])
   @@index([password])
@@ -323,9 +324,24 @@ model Discount {
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  schools     DiscountSchool[]
 
   @@index([code])
   @@map("discounts")
+}
+
+// Bos ise indirim tum okullarda gecerli; dolu ise sadece bu okullarda kabul edilir
+model DiscountSchool {
+  id         String   @id @default(cuid())
+  discountId String
+  schoolId   String
+  createdAt  DateTime @default(now())
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([discountId, schoolId])
+  @@index([schoolId])
+  @@map("discount_schools")
 }
 
 enum DeliveryType {

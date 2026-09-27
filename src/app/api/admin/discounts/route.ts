@@ -16,7 +16,8 @@ export async function GET() {
     }
 
     const discounts = await prisma.discount.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: { schools: { select: { schoolId: true } } }
     })
 
     return NextResponse.json({ discounts })
@@ -53,6 +54,10 @@ export async function POST(request: Request) {
       de: typeof rawBody.description_de === 'string' ? rawBody.description_de : null,
       ar: typeof rawBody.description_ar === 'string' ? rawBody.description_ar : null,
     })
+    // Bos/eksik = tum okullarda gecerli (kisitlama yok)
+    const schoolIds = Array.isArray(rawBody.schoolIds)
+      ? rawBody.schoolIds.filter((id): id is string => typeof id === 'string')
+      : []
 
     const existing = await prisma.discount.findUnique({
       where: { code }
@@ -76,8 +81,12 @@ export async function POST(request: Request) {
         maxDiscount: maxDiscount ?? null,
         validFrom,
         validUntil,
-        usageLimit: usageLimit ?? null
-      }
+        usageLimit: usageLimit ?? null,
+        schools: schoolIds.length > 0
+          ? { create: schoolIds.map(schoolId => ({ schoolId })) }
+          : undefined
+      },
+      include: { schools: { select: { schoolId: true } } }
     })
 
     await logAction({

@@ -651,7 +651,11 @@
       "genericError": "حدث خطأ",
       "confirmDelete": "هل أنت متأكد أنك تريد حذف رمز الخصم هذا؟",
       "deleteFailed": "تعذّر الحذف",
-      "updateFailed": "تعذّر التحديث"
+      "updateFailed": "تعذّر التحديث",
+      "schoolsLabel": "المدارس المطبقة",
+      "schoolsHint": "إذا لم يتم تحديد أي مدرسة، يسري الخصم على جميع المدارس",
+      "schoolsRestricted": "صالح في {count} مدرسة",
+      "allSchools": "صالح في جميع المدارس"
     },
     "cancelRequests": {
       "title": "طلبات الإلغاء",
@@ -1675,6 +1679,7 @@
       "discountExpired": "انتهت صلاحية رمز الخصم هذا",
       "discountLimitReached": "وصل رمز الخصم هذا إلى حدّ الاستخدام",
       "discountMinAmount": "يتطلب رمز الخصم هذا حدًا أدنى لمبلغ الطلب قدره {amount} ليرة تركية",
+      "discountNotForSchool": "رمز الخصم هذا غير صالح لمدرستك",
       "orderNumberRequired": "رقم الطلب مطلوب",
       "invalidPassword": "كلمة مرور غير صحيحة. يرجى التحقق من كلمة المرور التي حصلت عليها من مدرستك.",
       "noActiveClassPackage": "لم يتم بعد تعريف صف وحزمة نشطين لهذه المدرسة.",

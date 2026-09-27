@@ -284,6 +284,7 @@ export type VeliCheckoutBody = z.infer<typeof veliCheckoutBodySchema>
 export const veliDiscountBodySchema = z.object({
   code: discountCodeSchema,
   totalAmount: z.coerce.number().positive('Sepet tutari pozitif olmalidir'),
+  schoolId: z.string().trim().min(1),
 })
 
 // Veli verify-password body

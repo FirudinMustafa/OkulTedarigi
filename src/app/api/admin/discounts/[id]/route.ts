@@ -75,14 +75,35 @@ export async function PUT(
       Object.assign(updateData, descriptionTranslations)
     }
 
-    if (Object.keys(updateData).length === 0) {
+    // schoolIds gonderildiyse okul kisitlamasini tam senkronize et (bos = tum okullar)
+    const hasSchoolIds = Array.isArray(rawBody.schoolIds)
+    const schoolIds = hasSchoolIds
+      ? (rawBody.schoolIds as unknown[]).filter((v): v is string => typeof v === 'string')
+      : []
+
+    if (Object.keys(updateData).length === 0 && !hasSchoolIds) {
       return NextResponse.json({ error: t('adminMisc.noFieldsToUpdate') }, { status: 400 })
     }
 
-    const discount = await prisma.discount.update({
-      where: { id },
-      data: updateData
-    })
+    if (hasSchoolIds) {
+      await prisma.discountSchool.deleteMany({ where: { discountId: id } })
+      if (schoolIds.length > 0) {
+        await prisma.discountSchool.createMany({
+          data: schoolIds.map(schoolId => ({ discountId: id, schoolId }))
+        })
+      }
+    }
+
+    const discount = Object.keys(updateData).length > 0
+      ? await prisma.discount.update({
+          where: { id },
+          data: updateData,
+          include: { schools: { select: { schoolId: true } } }
+        })
+      : await prisma.discount.findUniqueOrThrow({
+          where: { id },
+          include: { schools: { select: { schoolId: true } } }
+        })
 
     await logAction({
       userId: session.id,

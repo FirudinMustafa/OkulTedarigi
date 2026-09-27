@@ -651,7 +651,11 @@
       "genericError": "An error occurred",
       "confirmDelete": "Are you sure you want to delete this discount code?",
       "deleteFailed": "Could not delete",
-      "updateFailed": "Could not update"
+      "updateFailed": "Could not update",
+      "schoolsLabel": "Applicable Schools",
+      "schoolsHint": "If none are selected, the discount applies to all schools",
+      "schoolsRestricted": "Valid at {count} school(s)",
+      "allSchools": "Valid at all schools"
     },
     "cancelRequests": {
       "title": "Cancellation Requests",
@@ -1675,6 +1679,7 @@
       "discountExpired": "This discount code has expired",
       "discountLimitReached": "This discount code has reached its usage limit",
       "discountMinAmount": "This discount code requires a minimum order amount of {amount} TL",
+      "discountNotForSchool": "This discount code is not valid for your school",
       "orderNumberRequired": "Order number is required",
       "invalidPassword": "Invalid password. Please check the password you received from your school.",
       "noActiveClassPackage": "No active class and package has been defined for this school yet.",

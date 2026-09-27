@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    const { code, totalAmount } = parsed.data
+    const { code, totalAmount, schoolId } = parsed.data
     const amount = Number(totalAmount)
 
     // Discount code enumeration koruması: IP başına 20 deneme / 5 dk
@@ -35,7 +35,8 @@ export async function POST(request: Request) {
     }
 
     const discount = await prisma.discount.findUnique({
-      where: { code }
+      where: { code },
+      include: { schools: { select: { schoolId: true } } }
     })
 
     if (!discount) {
@@ -73,6 +74,15 @@ export async function POST(request: Request) {
     if (discount.minAmount && amount < Number(discount.minAmount)) {
       return NextResponse.json(
         { error: t('veli.discountMinAmount', { amount: Number(discount.minAmount).toFixed(2) }) },
+        { status: 400 }
+      )
+    }
+
+    // Bos schools = tum okullarda gecerli; doluysa sadece listelenen okullarda kabul edilir
+    if (discount.schools.length > 0 && !discount.schools.some(s => s.schoolId === schoolId)) {
+      await recordFailedAttempt(rlIdentifier)
+      return NextResponse.json(
+        { error: t('veli.discountNotForSchool') },
         { status: 400 }
       )
     }

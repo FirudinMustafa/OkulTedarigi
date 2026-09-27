@@ -165,6 +165,7 @@ export default function PaketPage() {
   } | null>(null)
   const [discountError, setDiscountError] = useState("")
   const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountAvailable, setDiscountAvailable] = useState(false)
 
   // Form state - Yasal Onaylar
   const [acceptMesafeliSatis, setAcceptMesafeliSatis] = useState(false)
@@ -239,6 +240,16 @@ export default function PaketPage() {
   useEffect(() => {
     loadClassData()
   }, [classId])
+
+  // Bu okulda gecerli en az bir indirim kodu yoksa indirim kutusu hic gosterilmez
+  useEffect(() => {
+    const schoolId = classData?.school.id
+    if (!schoolId) return
+    fetch(`/api/veli/discount-availability?schoolId=${encodeURIComponent(schoolId)}`)
+      .then(res => res.json())
+      .then(data => setDiscountAvailable(Boolean(data.available)))
+      .catch(() => setDiscountAvailable(false))
+  }, [classData?.school.id])
 
   // F5 koruması: form state'i localStorage'a kaydet (debounced)
   // Sayfa yenilense de veri kaybolmaz. Kart bilgileri, sifre vb. asla kaydedilmez.
@@ -405,7 +416,8 @@ export default function PaketPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: discountCode.trim(),
-          totalAmount: baseTotal
+          totalAmount: baseTotal,
+          schoolId: classData?.school.id
         })
       })
 
@@ -1569,9 +1581,11 @@ export default function PaketPage() {
                       </div>
                     )}
 
+                    {(discountAvailable || discountApplied) && (
+                    <>
                     <hr className="border-gray-100" />
 
-                    {/* Indirim Kodu */}
+                    {/* Indirim Kodu - sadece bu okulda gecerli bir kod varsa gosterilir */}
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">{t('discount.title')}</p>
                       {discountApplied ? (
@@ -1619,6 +1633,8 @@ export default function PaketPage() {
                         <p className="text-xs text-red-600 mt-1">{discountError}</p>
                       )}
                     </div>
+                    </>
+                    )}
 
                     <hr className="border-gray-100" />
 

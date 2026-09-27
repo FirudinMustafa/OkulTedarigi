@@ -651,7 +651,11 @@
       "genericError": "Ein Fehler ist aufgetreten",
       "confirmDelete": "Sind Sie sicher, dass Sie diesen Rabattcode löschen möchten?",
       "deleteFailed": "Löschen nicht möglich",
-      "updateFailed": "Aktualisierung nicht möglich"
+      "updateFailed": "Aktualisierung nicht möglich",
+      "schoolsLabel": "Anwendbare Schulen",
+      "schoolsHint": "Wenn keine ausgewählt ist, gilt der Rabatt für alle Schulen",
+      "schoolsRestricted": "Gültig an {count} Schule(n)",
+      "allSchools": "Gültig an allen Schulen"
     },
     "cancelRequests": {
       "title": "Stornierungsanträge",
@@ -1675,6 +1679,7 @@
       "discountExpired": "Dieser Rabattcode ist abgelaufen",
       "discountLimitReached": "Dieser Rabattcode hat sein Nutzungslimit erreicht",
       "discountMinAmount": "Dieser Rabattcode erfordert einen Mindestbestellwert von {amount} TL",
+      "discountNotForSchool": "Dieser Rabattcode ist für Ihre Schule nicht gültig",
       "orderNumberRequired": "Bestellnummer erforderlich",
       "invalidPassword": "Ungültiges Passwort. Bitte überprüfen Sie das Passwort, das Sie von Ihrer Schule erhalten haben.",
       "noActiveClassPackage": "Für diese Schule wurde noch keine aktive Klasse und kein Paket definiert.",
