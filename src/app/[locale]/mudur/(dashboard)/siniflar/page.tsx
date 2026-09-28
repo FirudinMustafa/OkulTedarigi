@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Users, Package, ShoppingCart } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
-import { COMMISSION_STATUSES } from "@/lib/constants"
+import { COMMISSION_STATUSES, UNPAID_STATUSES } from "@/lib/constants"
+import type { OrderStatus } from "@prisma/client"
 
 interface ClassOrder {
   status: string
@@ -34,6 +35,9 @@ async function getSchoolClasses(schoolId: string) {
             select: { name: true }
           },
           orders: {
+            where: {
+              status: { notIn: UNPAID_STATUSES as OrderStatus[] }
+            },
             select: {
               status: true
             }
