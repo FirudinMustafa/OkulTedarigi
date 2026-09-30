@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Link, useRouter } from "@/i18n/navigation"
-import { useTranslations } from "next-intl"
+import { Link } from "@/i18n/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import Image from "next/image"
 import { ArrowLeft, ArrowRight, Eye, EyeSlash, LockSimple, WarningCircle } from "@phosphor-icons/react"
 
 export default function MudurLoginPage() {
-  const router = useRouter()
+  const locale = useLocale()
   const t = useTranslations('mudur.login')
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -34,8 +34,11 @@ export default function MudurLoginPage() {
         return
       }
 
-      router.push("/mudur")
-      router.refresh()
+      // Tam sayfa gezinme: giris oncesi yapilan prefetch'ler router cache'inde
+      // "login'e yonlendir" cevabi olarak kalir; client-side push ile sidebar bu bayat
+      // yonlendirmeyi kullanip kullaniciyi tekrar login'e atar.
+      window.location.assign(`/${locale}/mudur`)
+      return
     } catch {
       setError(t('genericError'))
     } finally {
