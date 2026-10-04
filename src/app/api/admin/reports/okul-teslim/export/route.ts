@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { buildContentDisposition } from '@/lib/security'
-import { buildTeslimExcel } from '@/lib/teslim-excel'
+import { buildTeslimExcel, type DocLocale } from '@/lib/teslim-excel'
+import { getTeslimPackageColumns } from '@/lib/teslim-packages'
 import { UNPAID_STATUSES } from '@/lib/constants'
 import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
@@ -72,7 +73,10 @@ export async function GET(request: Request) {
       take: MAX_EXPORT_ROWS,
     })
 
-    const buffer = await buildTeslimExcel(orders, (await getApiLocale()) as 'tr' | 'en' | 'de' | 'ar')
+    const locale = (await getApiLocale()) as DocLocale
+    // Okul secildiyse o okula tanimli paketler sutun olarak eklenir
+    const packageColumns = schoolId ? await getTeslimPackageColumns(schoolId, orders, locale) : []
+    const buffer = await buildTeslimExcel(orders, locale, packageColumns)
 
     // Filename: datetime-local'daki ':' Windows'ta gecersiz; '-' ile degistir
     const safeForFilename = (s: string) => s.replace(/[:T]/g, '-')

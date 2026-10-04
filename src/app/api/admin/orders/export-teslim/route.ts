@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { buildContentDisposition } from '@/lib/security'
-import { buildTeslimExcel } from '@/lib/teslim-excel'
+import { buildTeslimExcel, type DocLocale } from '@/lib/teslim-excel'
+import { getTeslimPackageColumns } from '@/lib/teslim-packages'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -34,7 +35,12 @@ export async function POST(request: Request) {
       orderBy: { createdAt: 'desc' },
     })
 
-    const buffer = await buildTeslimExcel(orders, (await getApiLocale()) as 'tr' | 'en' | 'de' | 'ar')
+    const locale = (await getApiLocale()) as DocLocale
+    // Secilenler tek okula aitse o okulun tum paketleri; degilse siparislerde gecen paketler
+    const schoolIds = new Set(orders.map(o => o.class.schoolId))
+    const singleSchoolId = schoolIds.size === 1 ? [...schoolIds][0] : null
+    const packageColumns = await getTeslimPackageColumns(singleSchoolId, orders, locale)
+    const buffer = await buildTeslimExcel(orders, locale, packageColumns)
     const filename = `teslim_listesi_secili_${new Date().toISOString().slice(0, 10)}.xlsx`
 
     return new NextResponse(new Uint8Array(buffer), {

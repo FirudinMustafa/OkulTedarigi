@@ -11,6 +11,8 @@ function extractClassNumber(name: string): string {
   return m ? m[0] : ''
 }
 
+const pkgKey = (id: string) => `pkg_${id}`
+
 // Teslim Excel'i icin gereken minimal siparis sekli
 export interface TeslimOrder {
   orderNumber: string
@@ -18,8 +20,15 @@ export interface TeslimOrder {
   studentSection: string | null
   totalAmount: number | string | { toString(): string } // Prisma Decimal de kabul edilir
   createdAt: Date | string
+  packageId: string
   class: { name: string; school: { name: string; password: string } }
   students: { firstName: string; lastName: string; section: string | null }[]
+}
+
+// Okul secildiginde eklenen paket sutunu (her paket = 1 sutun)
+export interface TeslimPackageColumn {
+  id: string
+  name: string
 }
 
 /**
@@ -27,13 +36,16 @@ export interface TeslimOrder {
  * Sutunlar: Ogrencinin Okulu | Ogrenci Adi | Ogrenci Soyadi | Sinif | Sube |
  *           Siparis Adedi (= bu satirin temsil ettigi siparis birimi, her zaman 1) | Siparis Tarihi/Saati |
  *           Okul Sifresi | Satis Fiyati (= siparis toplami / o siparisteki ogrenci sayisi, kisi basi pay) |
+ *           [Paket sutunlari — packageColumns verildiyse; ogrencinin paketine 1] |
  *           Teslim Tarihi (BOS) | (✓ bos hucre)
+ * Paket sutunu varsa en alta paket adetlerini toplayan TOPLAM satiri eklenir.
  */
 export type DocLocale = 'tr' | 'en' | 'de' | 'ar'
 
 export async function buildTeslimExcel(
   orders: TeslimOrder[],
   locale: DocLocale = 'tr',
+  packageColumns: TeslimPackageColumn[] = [],
 ): Promise<ArrayBuffer> {
   // --- Ceviriler (per-function) ---
   // Excel/xlsx unicode destekledigi icin Arapca (ar) gercek Arapca basliklarla saglanir.
@@ -51,6 +63,7 @@ export async function buildTeslimExcel(
       salePrice: 'Satış Fiyatı',
       deliveryDate: 'Teslim Tarihi',
       check: '✓',
+      total: 'TOPLAM',
     },
     en: {
       sheetName: 'Delivery List',
@@ -65,6 +78,7 @@ export async function buildTeslimExcel(
       salePrice: 'Sale Price',
       deliveryDate: 'Delivery Date',
       check: '✓',
+      total: 'TOTAL',
     },
     de: {
       sheetName: 'Lieferliste',
@@ -79,6 +93,7 @@ export async function buildTeslimExcel(
       salePrice: 'Verkaufspreis',
       deliveryDate: 'Lieferdatum',
       check: '✓',
+      total: 'GESAMT',
     },
     ar: {
       sheetName: 'قائمة التسليم',
@@ -93,6 +108,7 @@ export async function buildTeslimExcel(
       salePrice: 'سعر البيع',
       deliveryDate: 'تاريخ التسليم',
       check: '✓',
+      total: 'المجموع',
     },
   }
   const tr = T[locale] ?? T.tr
@@ -121,6 +137,7 @@ export async function buildTeslimExcel(
     { header: tr.orderDate, key: 'orderDate', width: 20 },
     { header: tr.schoolPassword, key: 'schoolPassword', width: 16 },
     { header: tr.salePrice, key: 'salePrice', width: 14 },
+    ...packageColumns.map(p => ({ header: p.name, key: pkgKey(p.id), width: Math.max(14, p.name.length + 2) })),
     { header: tr.deliveryDate, key: 'deliveryDate', width: 18 },
     { header: tr.check, key: 'check', width: 6 },
   ]
@@ -131,6 +148,9 @@ export async function buildTeslimExcel(
   headerRow.alignment = { vertical: 'middle', horizontal: 'center' }
   headerRow.height = 22
   headerRow.eachCell(cell => { cell.border = borderStyle })
+
+  const pkgTotals = new Map<string, number>()
+  const knownPkg = new Set(packageColumns.map(p => p.id))
 
   let rowIndex = 2
   for (const o of orders) {
@@ -164,11 +184,35 @@ export async function buildTeslimExcel(
         deliveryDate: '',   // Teslim Tarihi — bilerek bos (hicbir yerden veri almaz)
         check: '',          // Elle isaretlemek icin bos cerceveli hucre
       }
+      // Ogrencinin paket sutununa 1
+      if (knownPkg.has(o.packageId)) {
+        row.getCell(pkgKey(o.packageId)).value = 1
+        pkgTotals.set(o.packageId, (pkgTotals.get(o.packageId) ?? 0) + 1)
+      }
       row.eachCell(cell => { cell.border = borderStyle })
-      // Bos sutunlarin da kenarligi gorunsun (deliveryDate + check)
+      // Bos sutunlarin da kenarligi gorunsun (paketler + deliveryDate + check)
+      for (const p of packageColumns) {
+        const c = row.getCell(pkgKey(p.id))
+        c.border = borderStyle
+        c.alignment = { horizontal: 'center' }
+      }
       row.getCell('deliveryDate').border = borderStyle
       row.getCell('check').border = borderStyle
     }
+  }
+
+  // Paket sutunu varsa: her paketten kac adet teslim edilecegi
+  if (packageColumns.length > 0) {
+    const totalRow = ws.getRow(rowIndex)
+    totalRow.getCell('schoolName').value = tr.total
+    for (const p of packageColumns) {
+      const c = totalRow.getCell(pkgKey(p.id))
+      c.value = pkgTotals.get(p.id) ?? 0
+      c.alignment = { horizontal: 'center' }
+    }
+    totalRow.font = { bold: true }
+    totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'ECFDF5' } }
+    totalRow.eachCell({ includeEmpty: true }, cell => { cell.border = borderStyle })
   }
 
   ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
