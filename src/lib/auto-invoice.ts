@@ -3,6 +3,7 @@ import { createInvoice } from '@/lib/kolaybi'
 import { sendInvoiceCreated } from '@/lib/email'
 import { logAction } from '@/lib/logger'
 import { buildInvoiceItems } from '@/lib/invoice-items'
+import { claimInvoiceSlot, releaseInvoiceSlot } from '@/lib/invoice-slot'
 
 /**
  * Siparis COMPLETED durumuna gectiginde otomatik e-fatura kesimi (idempotent, best-effort).
@@ -43,6 +44,9 @@ export async function autoInvoiceOrderOnComplete(
     })
     if (!order || order.invoiceNo) return null
 
+    // Slot: tekli/toplu fatura ile ayni anda calisirsa ikinci kez KolayBi'ye gidilmez
+    if (!(await claimInvoiceSlot(orderId))) return null
+
     const studentCount = Math.max(1, order.students.length)
     const invoiceItems = buildInvoiceItems(order, studentCount)
 
@@ -63,6 +67,7 @@ export async function autoInvoiceOrderOnComplete(
 
     if (!invoiceResult.success || !invoiceResult.invoiceNo) {
       console.error('[auto-invoice] COMPLETED otomatik fatura basarisiz:', order.orderNumber, invoiceResult.errorMessage)
+      await releaseInvoiceSlot(orderId)
       return null
     }
 

@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     }
 
     const completedOrders = allOrders.filter(o => o.status === 'COMPLETED').length
-    const cancelledOrders = allOrders.filter(o => o.status === 'CANCELLED').length
+    const cancelledOrders = allOrders.filter(o => o.status === 'CANCELLED' || o.status === 'REFUNDED').length
 
     const summaryData = [
       ['Toplam Siparis', allOrders.length],

@@ -98,6 +98,10 @@ export async function POST(request: Request) {
       await recordFailedAttempt(rlIdentifier)
       return NextResponse.json({ error: t('veli.classOrSchoolInactive') }, { status: 403 })
     }
+    // Pasife cekilen paket satilamaz (admin "Pasife Cek" = yeni siparis alinmaz)
+    if (!classData.package.isActive) {
+      return NextResponse.json({ error: t('veli.packageInactive') }, { status: 403 })
+    }
 
     // Fiyat hesabi (SUNUCUDA dogrulanir; client'tan gelen tutara guvenilmez)
     let unitPrice: number
@@ -131,25 +135,32 @@ export async function POST(request: Request) {
         where: { code: normalizedCode },
         include: { schools: { select: { schoolId: true } } }
       })
-      if (discount && discount.isActive) {
-        const now = new Date()
-        const limitOk = !discount.usageLimit || discount.usedCount < discount.usageLimit
-        const minOk = !discount.minAmount || finalAmount >= Number(discount.minAmount)
-        const schoolOk = discount.schools.length === 0 || discount.schools.some(s => s.schoolId === classData.schoolId)
-        if (now >= discount.validFrom && now <= discount.validUntil && limitOk && minOk && schoolOk) {
-          if (discount.type === 'PERCENTAGE') {
-            discountAmount = finalAmount * Number(discount.value) / 100
-            if (discount.maxDiscount && discountAmount > Number(discount.maxDiscount)) {
-              discountAmount = Number(discount.maxDiscount)
-            }
-          } else {
-            discountAmount = Number(discount.value)
+      // Veli indirimli tutari gormus olabilir: kod artik gecersizse sessizce tam fiyat
+      // cekmek yerine reddet, veli bilgilendirilsin.
+      const now = new Date()
+      let discountError: string | null = null
+      if (!discount) discountError = t('veli.invalidDiscount')
+      else if (!discount.isActive) discountError = t('veli.discountInactive')
+      else if (now < discount.validFrom || now > discount.validUntil) discountError = t('veli.discountExpired')
+      else if (discount.usageLimit && discount.usedCount >= discount.usageLimit) discountError = t('veli.discountLimitReached')
+      else if (discount.minAmount && finalAmount < Number(discount.minAmount)) discountError = t('veli.discountMinAmount', { amount: Number(discount.minAmount).toFixed(2) })
+      else if (discount.schools.length > 0 && !discount.schools.some(s => s.schoolId === classData.schoolId)) discountError = t('veli.discountNotForSchool')
+      if (discountError) {
+        return NextResponse.json({ error: discountError, discountInvalid: true }, { status: 400 })
+      }
+      if (discount) {
+        if (discount.type === 'PERCENTAGE') {
+          discountAmount = finalAmount * Number(discount.value) / 100
+          if (discount.maxDiscount && discountAmount > Number(discount.maxDiscount)) {
+            discountAmount = Number(discount.maxDiscount)
           }
-          if (discountAmount > finalAmount) discountAmount = finalAmount
-          discountAmount = Math.round(discountAmount * 100) / 100
-          finalAmount = Math.round((finalAmount - discountAmount) * 100) / 100
-          validDiscountCode = discount.code
+        } else {
+          discountAmount = Number(discount.value)
         }
+        if (discountAmount > finalAmount) discountAmount = finalAmount
+        discountAmount = Math.round(discountAmount * 100) / 100
+        finalAmount = Math.round((finalAmount - discountAmount) * 100) / 100
+        validDiscountCode = discount.code
       }
     }
 
@@ -184,6 +195,8 @@ export async function POST(request: Request) {
             totalAmount: finalAmount,
             discountCode: validDiscountCode,
             discountAmount: discountAmount,
+            // Hakedis siparis aninda sabitlenir: ogrenci basina sinif komisyonu
+            commissionAmount: Math.round(Number(classData.commissionAmount) * studentCount * 100) / 100,
             status: 'PAYMENT_PENDING',
             paymentMethod: 'CREDIT_CARD',
             locale: reqLocale,
@@ -239,6 +252,7 @@ export async function POST(request: Request) {
       success: true,
       orderNumber: order.orderNumber,
       orderId: order.id,
+      finalAmount,
       accessToken: generateOrderAccessToken(order.id),
       actionUrl,
       fields,

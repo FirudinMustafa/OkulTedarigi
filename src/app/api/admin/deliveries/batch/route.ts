@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const orders = await prisma.order.findMany({
       where: { id: { in: orderIds } },
-      include: { class: { include: { school: true } } }
+      include: { class: { include: { school: true } }, cancelRequest: { select: { status: true } } }
     })
 
     const results: BatchResult[] = []
@@ -63,11 +63,12 @@ export async function POST(request: Request) {
           updateData.status = 'CONFIRMED'
           updateData.confirmedAt = new Date()
         } else if (action === 'SCHOOL_DISPATCH') {
-          canUpdate = deliveryType === 'SCHOOL_DELIVERY' && order.status === 'CONFIRMED'
+          canUpdate = deliveryType === 'SCHOOL_DELIVERY' && (order.status === 'CONFIRMED' || order.status === 'INVOICED')
           updateData.status = 'SHIPPED'
           updateData.shippedAt = new Date()
         } else if (action === 'COMPLETED') {
-          canUpdate = order.status === 'SHIPPED'
+          // DELIVERED: eski kargo senkronundan takili kalmis siparisler de tamamlanabilsin
+          canUpdate = order.status === 'SHIPPED' || order.status === 'DELIVERED'
           updateData.status = 'COMPLETED'
           updateData.deliveredAt = new Date()
         } else if (action === 'UNDELIVERED') {
@@ -77,6 +78,17 @@ export async function POST(request: Request) {
           canUpdate = order.status === 'UNDELIVERED'
           updateData.status = 'SHIPPED'
           updateData.shippedAt = new Date()
+        }
+
+        // Bekleyen iptal talebi varken siparis onaylanamaz/dagitima cikarilamaz
+        if (canUpdate && (action === 'CONFIRM' || action === 'SCHOOL_DISPATCH') && order.cancelRequest?.status === 'PENDING') {
+          results.push({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            success: false,
+            error: t('orders.pendingCancelRequest')
+          })
+          continue
         }
 
         if (!canUpdate) {

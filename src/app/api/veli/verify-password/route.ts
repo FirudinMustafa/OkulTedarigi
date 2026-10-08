@@ -71,6 +71,7 @@ export async function POST(request: Request) {
                 note_ar: true,
                 price: true,
                 isCustomizable: true,
+                isActive: true,
                 items: {
                   select: {
                     id: true,
@@ -103,7 +104,8 @@ export async function POST(request: Request) {
     }
 
     // Aktif siniflar ve paketleri kontrol et
-    const classesWithPackages = school.classes.filter(c => c.package !== null)
+    // Pasife cekilmis paketin sinifi veliye gosterilmez (yeni siparis alinmaz)
+    const classesWithPackages = school.classes.filter(c => c.package !== null && c.package.isActive)
 
     if (classesWithPackages.length === 0) {
       return NextResponse.json(

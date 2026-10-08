@@ -142,13 +142,29 @@ export interface CallbackVerdict {
   errorMessage?: string
 }
 
+/**
+ * Tutar alanini hem "1234.56" hem "1234,56" (TR) bicimiyle okur.
+ * Okunamazsa NaN doner (alan yoksa undefined) — cagiran taraf karar verir.
+ */
+export function parseGatewayAmount(raw: string | undefined): number | undefined {
+  if (raw == null || raw.trim() === '') return undefined
+  let s = raw.trim()
+  if (s.includes(',') && s.includes('.')) {
+    // Son ayirici ondalik kabul edilir: "1.234,56" -> 1234.56 ; "1,234.56" -> 1234.56
+    s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '')
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.')
+  }
+  return Number(s)
+}
+
 /** Nkolay'in callback'e POST ettigi alanlari degerlendirir. Mock'ta her zaman dogrulanmis sayilir. */
 export function evaluateCallback(body: Record<string, string>): CallbackVerdict {
   const clientRefCode = body.CLIENT_REFERENCE_CODE || body.clientRefCode || body.CLIENT_REF_CODE
   const responseCode = body.RESPONSE_CODE || body.responseCode
   const authCode = body.AUTH_CODE || body.authCode
   const paynkolayReference = body.REFERENCE_CODE || body.referenceCode
-  const authorizationAmount = body.AUTHORIZATION_AMOUNT ? Number(body.AUTHORIZATION_AMOUNT) : undefined
+  const authorizationAmount = parseGatewayAmount(body.AUTHORIZATION_AMOUNT)
   const installment = body.INSTALLMENT ? Number(body.INSTALLMENT) : undefined
 
   const verified = verifyResponseHash(body)

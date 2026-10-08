@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
+import { claimInvoiceSlot, releaseInvoiceSlot } from '@/lib/invoice-slot'
 import { buildInvoiceItems } from '@/lib/invoice-items'
 import { sendInvoiceCreated } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
@@ -64,14 +65,9 @@ export async function POST(
     // PAID/CONFIRMED'de status INVOICED'a alinir (eski davranis, sonrasinda SHIPPED'e gecebilir).
     // SHIPPED/COMPLETED'de status DEGISTIRILMEZ — zaten ilerlemis/tamamlanmis bir siparisi
     // geriye (INVOICED'a) almamak icin sadece invoiceNo:null guard'iyla slot rezerve edilir.
-    const shouldAdvanceStatus = ['PAID', 'CONFIRMED'].includes(order.status)
-    const claimResult = await prisma.order.updateMany({
-      where: { id, status: order.status, invoiceNo: null },
-      data: shouldAdvanceStatus
-        ? { status: 'INVOICED', invoicedAt: new Date() }
-        : { invoicedAt: new Date() }
-    })
-    if (claimResult.count === 0) {
+    // Siparis durumu DEGISTIRILMEZ (INVOICED'a almak siparisi 4-asamali akisin disina
+    // dusuruyordu); slot invoiceNo+invoicedAt uzerinden ayrilir (lib/invoice-slot).
+    if (!(await claimInvoiceSlot(id))) {
       return NextResponse.json(
         { error: t('orders.invoiceInProgress') },
         { status: 409 }
@@ -102,10 +98,7 @@ export async function POST(
 
     // Fatura sonucu basarisizsa status'u geri al (rollback)
     if (!invoiceResult.success) {
-      await prisma.order.update({
-        where: { id },
-        data: { status: order.status, invoicedAt: null }
-      })
+      await releaseInvoiceSlot(id)
       return NextResponse.json(
         { error: invoiceResult.errorMessage || t('orders.invoiceCreateFailed') },
         { status: 500 }

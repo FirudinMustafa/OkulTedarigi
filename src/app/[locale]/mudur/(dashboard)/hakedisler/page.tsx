@@ -2,23 +2,13 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import { redirect } from '@/i18n/navigation'
 import { getMudurSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { COMMISSION_STATUSES } from '@/lib/constants'
-import type { OrderStatus } from '@prisma/client'
+import { getSchoolPayoutSummary } from '@/lib/commission'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table"
 import { DollarSign, CheckCircle, Clock } from "lucide-react"
 import { formatDateTime, formatPrice } from "@/lib/utils"
-
-interface Order {
-  status: string
-}
-
-interface ClassItem {
-  commissionAmount: { toString(): string }
-  orders: Order[]
-}
 
 interface Payment {
   id: string
@@ -31,47 +21,23 @@ interface Payment {
 }
 
 async function getSchoolPayments(schoolId: string) {
-  const school = await prisma.school.findUnique({
-    where: { id: schoolId },
-    include: {
-      schoolPayments: {
-        where: { status: 'PAID' },
-        orderBy: { paidAt: 'desc' }
-      },
-      classes: {
-        include: {
-          orders: {
-            where: {
-              status: {
-                in: COMMISSION_STATUSES as unknown as OrderStatus[]
-              }
-            }
-          }
-        }
-      }
-    }
-  })
+  const [payments, summary] = await Promise.all([
+    prisma.schoolPayment.findMany({
+      where: { schoolId, status: 'PAID' },
+      orderBy: { paidAt: 'desc' }
+    }),
+    // Admin hakedisler + mudur dashboard ile AYNI hesap (lib/commission)
+    getSchoolPayoutSummary(schoolId)
+  ])
 
-  if (!school) return null
-
-  let totalCommission = 0
-  school.classes.forEach((classItem: ClassItem) => {
-    totalCommission += Number(classItem.commissionAmount) * classItem.orders.length
-  })
-
-  const paidAmount = school.schoolPayments.reduce(
-    (acc: number, p) => acc + Number(p.amount),
-    0
-  )
-
-  const pendingAmount = Math.max(totalCommission - paidAmount, 0)
+  if (!summary) return null
 
   return {
-    school,
-    payments: school.schoolPayments as unknown as Payment[],
-    totalCommission,
-    paidAmount,
-    pendingAmount
+    payments: payments as unknown as Payment[],
+    totalCommission: summary.commission,
+    paidAmount: summary.paid,
+    pendingAmount: summary.notYetPaid,
+    overpaid: summary.overpaid
   }
 }
 
@@ -139,6 +105,11 @@ export default async function MudurHakedislerPage() {
             <div className="text-2xl font-bold text-yellow-600">
               {formatPrice(data.pendingAmount, locale)} TL
             </div>
+            {data.overpaid > 0 && (
+              <p className="text-xs text-red-600 mt-1">
+                {t('overpaidNote', { amount: `${formatPrice(data.overpaid, locale)} TL` })}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -167,7 +138,7 @@ export default async function MudurHakedislerPage() {
                 {data.payments.map((payment: Payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
-                      {formatDateTime(payment.paidAt ?? payment.paymentDate)}
+                      {formatDateTime(payment.paidAt ?? payment.paymentDate, locale)}
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatPrice(payment.amount.toString(), locale)} TL

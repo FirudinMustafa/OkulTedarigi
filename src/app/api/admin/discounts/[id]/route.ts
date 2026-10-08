@@ -85,25 +85,28 @@ export async function PUT(
       return NextResponse.json({ error: t('adminMisc.noFieldsToUpdate') }, { status: 400 })
     }
 
-    if (hasSchoolIds) {
-      await prisma.discountSchool.deleteMany({ where: { discountId: id } })
-      if (schoolIds.length > 0) {
-        await prisma.discountSchool.createMany({
-          data: schoolIds.map(schoolId => ({ discountId: id, schoolId }))
-        })
+    // Okul kisitlamasi + indirim guncellemesi TEK transaction: createMany hata verirse
+    // (or. arada silinmis okul) kisitlama silinmis kalip kod TUM okullarda gecerli olmasin.
+    const discount = await prisma.$transaction(async (tx) => {
+      if (hasSchoolIds) {
+        await tx.discountSchool.deleteMany({ where: { discountId: id } })
+        if (schoolIds.length > 0) {
+          await tx.discountSchool.createMany({
+            data: schoolIds.map(schoolId => ({ discountId: id, schoolId }))
+          })
+        }
       }
-    }
-
-    const discount = Object.keys(updateData).length > 0
-      ? await prisma.discount.update({
-          where: { id },
-          data: updateData,
-          include: { schools: { select: { schoolId: true } } }
-        })
-      : await prisma.discount.findUniqueOrThrow({
-          where: { id },
-          include: { schools: { select: { schoolId: true } } }
-        })
+      return Object.keys(updateData).length > 0
+        ? tx.discount.update({
+            where: { id },
+            data: updateData,
+            include: { schools: { select: { schoolId: true } } }
+          })
+        : tx.discount.findUniqueOrThrow({
+            where: { id },
+            include: { schools: { select: { schoolId: true } } }
+          })
+    })
 
     await logAction({
       userId: session.id,
@@ -116,6 +119,10 @@ export async function PUT(
 
     return NextResponse.json({ discount })
   } catch (error) {
+    // Kod baska bir indirimle cakisiyor (unique)
+    if ((error as { code?: string })?.code === 'P2002') {
+      return NextResponse.json({ error: t('adminMisc.discountExists') }, { status: 409 })
+    }
     console.error('Indirim guncellenemedi:', error)
     return NextResponse.json(
       { error: t('adminMisc.discountUpdateFailed') },

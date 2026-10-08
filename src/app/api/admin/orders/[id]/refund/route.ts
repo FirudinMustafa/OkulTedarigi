@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { refundOrderPayment } from '@/lib/paynkolay'
+import { refundCancelledOrder } from '@/lib/refund'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
 /**
  * CANCELLED bir siparisi REFUNDED'a gecirir. Gercek bir odeme varsa (paidAt+paymentId)
- * PayNKolay'e GERCEK iade cagrisi yapar — bu, admin panelindeki "Iade Et" butonunun
- * tek dogru cagiri noktasi olmali. Onceden bu buton dogrudan PUT {status:'REFUNDED'}
- * yapiyordu ve gercek parayi hic iade etmiyordu (sahte basari mesaji gosteriyordu).
+ * PayNKolay'e GERCEK iade cagrisi yapar — admin panelindeki "Iade Et" butonunun tek
+ * cagri noktasi. Iptal talebi onayinda iade basarisiz olduysa tekrar deneme de buradan
+ * yapilir (siparis CANCELLED kalmistir).
+ *
+ * Iade + durum degisikligi lib/refund icinde siparis satiri kilitlenerek yapilir:
+ * ayni anda iki istek gelirse ikincisi PayNKolay'e gitmeden reddedilir (cift iade yok).
  */
 export async function POST(
   request: Request,
@@ -24,48 +26,30 @@ export async function POST(
     }
 
     const { id } = await params
-    const order = await prisma.order.findUnique({ where: { id } })
-    if (!order) {
-      return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
-    }
-    if (order.status !== 'CANCELLED') {
-      return NextResponse.json(
-        { error: t('orders.transitionInvalid', { from: order.status, to: 'REFUNDED' }) },
-        { status: 400 }
-      )
-    }
+    const outcome = await refundCancelledOrder(id, session.id)
 
-    let refundId: string | undefined
-    // Gercekten tahsil edilmemis (paidAt yok) bir sipariste iade edilecek para yoktur —
-    // dogrudan REFUNDED'a gecirilir. Odenmisse GERCEK PayNKolay iadesi zorunludur.
-    if (order.paidAt) {
-      const refundResult = await refundOrderPayment(order)
-      if (!refundResult.success) {
-        await logAction({
-          userId: session.id,
-          userType: 'ADMIN',
-          action: 'REFUND_FAILED',
-          entity: 'ORDER',
-          entityId: order.id,
-          details: { orderNumber: order.orderNumber, message: refundResult.message }
-        })
+    if (!outcome.ok) {
+      if (outcome.reason === 'notFound') {
+        return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+      }
+      if (outcome.reason === 'invalidState') {
         return NextResponse.json(
-          { error: refundResult.message || t('orders.refundFailed') },
-          { status: 502 }
+          { error: t('orders.transitionInvalid', { from: outcome.status ?? '?', to: 'REFUNDED' }) },
+          { status: 400 }
         )
       }
-      refundId = refundResult.refundId
-    }
-
-    const now = new Date()
-    const lockResult = await prisma.order.updateMany({
-      where: { id, status: 'CANCELLED' },
-      data: { status: 'REFUNDED', refundedAt: now }
-    })
-    if (lockResult.count === 0) {
-      // Refund PayNKolay'de basariyla yapildi ama siparis bu arada baska yerden degisti —
-      // parayi geri almiyoruz (zaten iade edildi), sadece durum guncellemesini atlıyoruz.
-      return NextResponse.json({ error: t('orders.statusChangedByAnother') }, { status: 409 })
+      await logAction({
+        userId: session.id,
+        userType: 'ADMIN',
+        action: 'REFUND_FAILED',
+        entity: 'ORDER',
+        entityId: id,
+        details: { message: outcome.message }
+      })
+      return NextResponse.json(
+        { error: outcome.message || t('orders.refundFailed') },
+        { status: 502 }
+      )
     }
 
     await logAction({
@@ -73,11 +57,11 @@ export async function POST(
       userType: 'ADMIN',
       action: 'REFUND',
       entity: 'ORDER',
-      entityId: order.id,
-      details: { orderNumber: order.orderNumber, amount: Number(order.totalAmount), refundId: refundId || null }
+      entityId: id,
+      details: { amount: outcome.amount, refundId: outcome.refundId }
     })
 
-    return NextResponse.json({ success: true, refundId: refundId || null })
+    return NextResponse.json({ success: true, refundId: outcome.refundId })
   } catch (error) {
     console.error('Siparis iade edilemedi:', error)
     return NextResponse.json({ error: t('orders.refundFailed') }, { status: 500 })

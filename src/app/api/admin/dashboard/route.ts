@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { ACTIVE_SCHOOL_WHERE, REVENUE_STATUSES, UNPAID_STATUSES } from '@/lib/constants'
-import type { OrderStatus } from '@prisma/client'
+import { Prisma, type OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { unstable_cache } from 'next/cache'
@@ -15,9 +15,13 @@ const getDashboardData = unstable_cache(
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - 7)
+    // Odenmemis (terk edilmis checkout) siparisler hicbir sayima girmez
+    const paidOnly = { status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
+    const revenueIn = Prisma.join(REVENUE_STATUSES)
+    const unpaidIn = Prisma.join(UNPAID_STATUSES)
 
     // Basic counts
     const [
@@ -44,9 +48,7 @@ const getDashboardData = unstable_cache(
       prisma.package.count({ where: { isActive: true } }),
       prisma.cancelRequest.count({ where: { status: 'PENDING' } }),
       prisma.order.count({
-        where: {
-          createdAt: { gte: new Date(now.setHours(0, 0, 0, 0)) }
-        }
+        where: { ...paidOnly, createdAt: { gte: startOfToday } }
       })
     ])
 
@@ -66,7 +68,8 @@ const getDashboardData = unstable_cache(
       prisma.order.aggregate({
         where: {
           status: { in: REVENUE_STATUSES as OrderStatus[] },
-          createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
+          // lt ayin 1'i: gecen ayin SON GUNU de dahil (lte son-gun-00:00 o gunu disarida birakiyordu)
+          createdAt: { gte: startOfLastMonth, lt: startOfMonth }
         },
         _sum: { totalAmount: true }
       }),
@@ -82,70 +85,60 @@ const getDashboardData = unstable_cache(
     // Order status distribution
     const ordersByStatus = await prisma.order.groupBy({
       by: ['status'],
+      where: paidOnly,
       _count: { status: true }
     })
 
-    // Orders by school (en aktif 200 sinif — sinirsiz groupBy tum siparis tablosunu tarayabilirdi)
-    const ordersBySchool = await prisma.order.groupBy({
-      by: ['classId'],
-      _count: { id: true },
-      _sum: { totalAmount: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 200
-    })
-
-    // Get school names for the orders
-    const classIds = ordersBySchool.map(o => o.classId)
-    const classes = await prisma.class.findMany({
-      where: { id: { in: classIds } },
-      include: { school: { select: { name: true } } }
-    })
-
-    const schoolOrderMap = new Map<string, { orders: number; revenue: number }>()
-    ordersBySchool.forEach(order => {
-      const classInfo = classes.find(c => c.id === order.classId)
-      if (classInfo) {
-        const schoolName = classInfo.school.name
-        const existing = schoolOrderMap.get(schoolName) || { orders: 0, revenue: 0 }
-        schoolOrderMap.set(schoolName, {
-          orders: existing.orders + order._count.id,
-          revenue: existing.revenue + Number(order._sum.totalAmount || 0)
-        })
-      }
-    })
-
-    const schoolStats = Array.from(schoolOrderMap.entries()).map(([name, data]) => ({
-      name,
-      orders: data.orders,
-      revenue: data.revenue
+    // Okul bazli: okul ID'sine gore (ayni adli iki okul birlesmesin), siparis sayisina gore
+    // sirali. Sayi = odenmis siparisler; ciro = yalniz REVENUE_STATUSES.
+    const schoolRows = await prisma.$queryRaw<Array<{ id: string; name: string; orders: bigint; revenue: number | string | null }>>`
+      SELECT s.id AS id, s.name AS name,
+        COUNT(*) AS orders,
+        COALESCE(SUM(CASE WHEN o.status IN (${revenueIn}) THEN o.totalAmount ELSE 0 END), 0) AS revenue
+      FROM orders o
+      JOIN classes c ON c.id = o.classId
+      JOIN schools s ON s.id = c.schoolId
+      WHERE o.status NOT IN (${unpaidIn})
+      GROUP BY s.id, s.name
+      ORDER BY orders DESC
+      LIMIT 50
+    `
+    const schoolStats = schoolRows.map(r => ({
+      name: r.name,
+      orders: Number(r.orders),
+      revenue: Number(r.revenue || 0)
     }))
 
-    // Daily orders for the last 7 days
-    const dailyOrders = await prisma.$queryRaw<Array<{ date: Date; count: bigint; revenue: number }>>`
+    // Gunluk/aylik grafikler: createdAt DB'de UTC tutulur -> gun/ay Turkiye saatine (UTC+3,
+    // yaz saati yok) cevrilerek gruplanir. Sayi = odenmis siparisler; ciro = REVENUE_STATUSES
+    // (karttaki "Toplam Ciro" ile ayni tanim).
+    const dailyOrders = await prisma.$queryRaw<Array<{ date: string; count: bigint; revenue: number }>>`
       SELECT
-        DATE(createdAt) as date,
+        DATE_FORMAT(CONVERT_TZ(createdAt, '+00:00', '+03:00'), '%Y-%m-%d') as date,
         COUNT(*) as count,
-        COALESCE(SUM(totalAmount), 0) as revenue
+        COALESCE(SUM(CASE WHEN status IN (${revenueIn}) THEN totalAmount ELSE 0 END), 0) as revenue
       FROM orders
-      WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-      GROUP BY DATE(createdAt)
+      WHERE createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)
+        AND status NOT IN (${unpaidIn})
+      GROUP BY date
       ORDER BY date ASC
     `
 
-    // Monthly orders for the last 6 months
     const monthlyOrders = await prisma.$queryRaw<Array<{ month: string; count: bigint; revenue: number }>>`
       SELECT
-        DATE_FORMAT(createdAt, '%Y-%m') as month,
+        DATE_FORMAT(CONVERT_TZ(createdAt, '+00:00', '+03:00'), '%Y-%m') as month,
         COUNT(*) as count,
-        COALESCE(SUM(totalAmount), 0) as revenue
+        COALESCE(SUM(CASE WHEN status IN (${revenueIn}) THEN totalAmount ELSE 0 END), 0) as revenue
       FROM orders
-      WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-      GROUP BY DATE_FORMAT(createdAt, '%Y-%m')
+      WHERE createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 6 MONTH)
+        AND status NOT IN (${unpaidIn})
+      GROUP BY month
       ORDER BY month ASC
     `
 
     // Recent orders
     const recentOrders = await prisma.order.findMany({
+      where: paidOnly,
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -193,7 +186,7 @@ const getDashboardData = unstable_cache(
       })),
       schoolStats,
       dailyOrders: dailyOrders.map(d => ({
-        date: d.date.toISOString().split('T')[0],
+        date: String(d.date),
         orders: Number(d.count),
         revenue: Number(d.revenue)
       })),

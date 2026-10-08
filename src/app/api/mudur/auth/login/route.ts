@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createToken, verifyPassword } from '@/lib/auth'
+import { createToken, verifyPassword, passwordFingerprint } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit'
 import { cookies } from 'next/headers'
@@ -85,7 +85,8 @@ export async function POST(request: Request) {
       email: school.directorEmail,
       type: 'mudur',
       name: school.directorName || 'Mudur',
-      schoolId: school.id
+      schoolId: school.id,
+      pwdFp: passwordFingerprint(school.directorPassword)
     })
 
     await prisma.school.update({

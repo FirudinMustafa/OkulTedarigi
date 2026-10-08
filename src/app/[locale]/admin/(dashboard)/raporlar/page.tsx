@@ -51,6 +51,7 @@ export default function RaporlarPage() {
   const [rateInput, setRateInput] = useState("")
   const [savingRate, setSavingRate] = useState(false)
   const [rateSaved, setRateSaved] = useState(false)
+  const [rateError, setRateError] = useState<string | null>(null)
 
   const buildQuery = useCallback(() => {
     if (appliedRange) {
@@ -92,8 +93,14 @@ export default function RaporlarPage() {
   }
 
   const saveRate = async () => {
-    const val = Number(rateInput)
-    if (!Number.isFinite(val) || val < 0 || val > 100) return
+    setRateError(null)
+    // Bos kutu Number("") === 0 olarak oran %0'a cekiliyordu (net kar sessizce sisiyordu)
+    const raw = rateInput.trim().replace(',', '.')
+    const val = Number(raw)
+    if (raw === '' || !Number.isFinite(val) || val < 0 || val > 100) {
+      setRateError(t('rateInvalid'))
+      return
+    }
     setSavingRate(true)
     setRateSaved(false)
     try {
@@ -107,9 +114,13 @@ export default function RaporlarPage() {
         setRateSaved(true)
         await fetchReport()
         setTimeout(() => setRateSaved(false), 2000)
+      } else {
+        const d = await res.json().catch(() => null)
+        setRateError(d?.error || t('rateSaveFailed'))
       }
     } catch (e) {
       console.error('Oran kaydedilemedi:', e)
+      setRateError(t('rateSaveFailed'))
     } finally {
       setSavingRate(false)
     }
@@ -258,6 +269,7 @@ export default function RaporlarPage() {
                 {rateSaved ? <Check className="h-3 w-3 text-green-600" /> : t('save')}
               </Button>
             </div>
+            {rateError && <p className="text-xs text-red-600 mt-1">{rateError}</p>}
           </CardContent>
         </Card>
 

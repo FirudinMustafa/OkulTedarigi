@@ -30,7 +30,8 @@ export async function GET() {
         where: ordersWhere,
         include: {
           class: { select: { name: true } },
-          package: { select: { name: true } }
+          package: { select: { name: true } },
+          students: { select: { firstName: true, lastName: true }, orderBy: { createdAt: 'asc' } }
         },
         orderBy: { createdAt: 'desc' },
         take: MAX_EXPORT_ROWS
@@ -103,7 +104,8 @@ export async function GET() {
         safe(o.orderNumber),
         safe(statusLabels[o.status] || o.status),
         safe(o.parentName),
-        safe(o.studentName),
+        // Kardesli sipariste tum ogrenciler
+        safe(o.students.length > 0 ? o.students.map(s => `${s.firstName} ${s.lastName}`.trim()).join(', ') : o.studentName),
         safe(o.phone),
         safe(o.class.name),
         safe(o.package?.name || ''),

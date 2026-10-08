@@ -354,7 +354,7 @@
       "fieldPackage": "الباقة",
       "selectPackage": "اختر باقة (اختياري)",
       "noPackage": "بدون باقة",
-      "fieldCommission": "مبلغ العمولة (ليرة تركية)",
+      "fieldCommission": "العمولة (ليرة، لكل طالب)",
       "commissionPlaceholder": "مثال: 25.00",
       "cancel": "إلغاء",
       "update": "تحديث",
@@ -367,7 +367,10 @@
       "permanentDeleteDesc": "يُحذف الصف وجميع البيانات المرتبطة به نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
       "permanentDeleteShort": "حذف نهائي",
       "deleteFailed": "تعذّر حذف الصف",
-      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "saveFailed": "تعذّر الحفظ. يرجى المحاولة مرة أخرى.",
+      "softDeleted": "الصف لديه سجل إلغاء/استرداد، لذا تم تعطيله بدلاً من حذفه.",
+      "dismiss": "إغلاق"
     },
     "packages": {
       "title": "الباقات",
@@ -412,7 +415,9 @@
       "permanentDeleteDesc": "تُحذف الباقة وجميع البيانات المرتبطة بها نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
       "permanentDeleteShort": "حذف نهائي",
       "deleteFailed": "تعذّر حذف الباقة",
-      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "needAtLeastOneItem": "يجب أن تحتوي الحزمة على عنصر واحد على الأقل.",
+      "saveFailed": "تعذّر حفظ الحزمة. يرجى المحاولة مرة أخرى."
     },
     "orders": {
       "title": "الطلبات",
@@ -560,7 +565,10 @@
       "printError": "حدث خطأ أثناء الطباعة: {message}",
       "unknown": "غير معروف",
       "downloadFailed": "فشل التنزيل",
-      "downloadError": "حدث خطأ أثناء التنزيل"
+      "downloadError": "حدث خطأ أثناء التنزيل",
+      "syncErrors": "فشل {count} استعلام",
+      "syncFailed": "تعذّر الاستعلام عن حالة الشحنة. يرجى المحاولة مرة أخرى.",
+      "pendingCancelBadge": "طلب إلغاء"
     },
     "payments": {
       "title": "العمولات",
@@ -573,7 +581,7 @@
       "loading": "جارٍ التحميل...",
       "noSummaryData": "لا توجد بيانات عمولة بعد",
       "colSchool": "المدرسة",
-      "colOrderCount": "عدد الطلبات",
+      "colOrderCount": "الطلبات (المحتسبة)",
       "colTotalRevenue": "إجمالي الإيرادات",
       "colTotalCommission": "إجمالي العمولة",
       "colPaid": "المدفوع",
@@ -616,7 +624,9 @@
       "createFailed": "تعذّر إنشاء العمولة (HTTP {status})",
       "awaitingConfirmation": "بانتظار التأكيد",
       "pendingConfirmationHint": "+ {value} بانتظار التأكيد",
-      "paymentRecordedAsPaid": "يُعتبر المبلغ المسجّل مدفوعًا للمدرسة ويظهر في لوحة المدير."
+      "paymentRecordedAsPaid": "يُعتبر المبلغ المسجّل مدفوعًا للمدرسة ويظهر في لوحة المدير.",
+      "inactiveSchool": "غير نشط",
+      "overpaid": "دفعة زائدة: {value}"
     },
     "discounts": {
       "title": "رموز الخصم",
@@ -696,7 +706,8 @@
       "reject": "رفض",
       "approveRefund": "الموافقة والاسترداد",
       "processFailed": "تعذّر تنفيذ العملية",
-      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "refundFailedNotice": "تمت الموافقة على الإلغاء لكن فشل الاسترداد ({message}). يبقى الطلب \"ملغى\"؛ أعد المحاولة من الطلبات > الملغاة > \"استرداد\"."
     },
     "reports": {
       "title": "التقارير",
@@ -705,7 +716,7 @@
       "selectPeriod": "اختر الفترة",
       "periodAll": "كل الأوقات",
       "periodMonth": "هذا الشهر",
-      "periodWeek": "هذا الأسبوع",
+      "periodWeek": "آخر 7 أيام",
       "periodToday": "اليوم",
       "loading": "جارٍ تحميل التقرير...",
       "noData": "لم يتم العثور على بيانات التقرير",
@@ -742,7 +753,9 @@
       "colOrders": "الطلبات",
       "colRevenue": "الإيراد",
       "colPaymentFee": "رسوم الدفع",
-      "colNet": "الصافي"
+      "colNet": "الصافي",
+      "rateInvalid": "أدخل نسبة بين 0 و100.",
+      "rateSaveFailed": "تعذّر حفظ النسبة."
     },
     "i18nFields": {
       "translations": "الترجمات",
@@ -806,7 +819,8 @@
       "paidSummary": "تم دفع إجمالي <bold>{amount}</bold> للمؤسسة.",
       "pendingSummary": "المبلغ المتبقي <bold>{amount}</bold> هو مستحقات معلّقة.",
       "recentOrdersTitle": "أحدث الطلبات",
-      "noOrders": "لا توجد طلبات بعد"
+      "noOrders": "لا توجد طلبات بعد",
+      "overpaidNote": "يبدو أنه تم دفع {amount} لمؤسستكم أكثر من المستحقات (ربما بسبب إلغاءات/استردادات بعد الدفع)."
     },
     "orders": {
       "title": "الطلبات",
@@ -842,16 +856,16 @@
       "passive": "غير نشط",
       "package": "الحزمة",
       "undefined": "غير محدّد",
-      "ordersBreakdown": "{completed} مكتمل، {pending} قيد التنفيذ",
+      "ordersBreakdown": "{completed} مكتمل، {pending} قيد التنفيذ، {cancelled} ملغى",
       "commissionAmount": "مبلغ المستحقات",
-      "perOrder": "لكل طلب",
+      "perOrder": "لكل طالب",
       "totalCommission": "إجمالي المستحقات"
     },
     "payments": {
       "title": "المستحقات",
       "subtitle": "حالة المستحقات والدفع",
       "totalCommission": "إجمالي المستحقات",
-      "calculatedByClass": "محسوبة على أساس الصف",
+      "calculatedByClass": "عمولة الصف × عدد الطلاب",
       "paid": "المدفوع",
       "pending": "المعلّق",
       "paymentHistory": "سجل المدفوعات",
@@ -860,10 +874,11 @@
       "colAmount": "المبلغ",
       "colDescription": "الوصف",
       "infoTitle": "معلومات المستحقات",
-      "info1": "يتم تحديد مبلغ المستحقات لكل صف على حدة.",
+      "info1": "تُحتسب المستحقات لكل طالب بناءً على عمولة الصف وقت الطلب.",
       "info2": "تُحسب المستحقات وتُدفع شهريًا.",
       "info3": "تتم عمليات الدفع عن طريق الحوالة المصرفية.",
-      "info4": "يمكنك التواصل مع الإدارة بشأن استفساراتك."
+      "info4": "يمكنك التواصل مع الإدارة بشأن استفساراتك.",
+      "overpaidNote": "دفعة زائدة: {amount}"
     },
     "reports": {
       "title": "التقارير",
@@ -1101,7 +1116,8 @@
     },
     "errors": {
       "failed": "فشلت عملية الدفع. لم يتم خصم أي مبلغ.",
-      "generic": "حدث خطأ أثناء عملية الدفع. لم يتم خصم أي مبلغ."
+      "generic": "حدث خطأ أثناء عملية الدفع. لم يتم خصم أي مبلغ.",
+      "amountChanged": "تم تحديث المبلغ المستحق: {amount} ليرة. يرجى التحقق منه والضغط على \"ادفع\" مرة أخرى."
     }
   },
   "tracking": {
@@ -1533,7 +1549,8 @@
       "paymentDeleteFailed": "تعذّر حذف الدفعة",
       "summaryLoadFailed": "تعذّر تحميل الملخّص",
       "exportFailed": "فشل التصدير",
-      "reportLoadFailed": "تعذّر تحميل التقرير"
+      "reportLoadFailed": "تعذّر تحميل التقرير",
+      "orderChangedRetry": "تغيّر الطلب في هذه الأثناء (مثلاً تم شحنه). حدّث الصفحة وحاول مرة أخرى."
     },
     "catalog": {
       "unauthorized": "وصول غير مصرح به",
@@ -1591,7 +1608,9 @@
       "packageUpdateFailed": "تعذر تحديث الحزمة",
       "packageHasActiveOrders": "يرتبط بهذه الحزمة {count} طلب نشط. قبل الحذف يجب إكمال الطلبات أو إلغاؤها.",
       "packageDeleteFailed": "تعذر حذف الحزمة",
-      "directorPasswordInUse": "كلمة المرور هذه مستخدمة بالفعل لبريد المدير هذا. أدخل كلمة مرور مدير مختلفة لكل مدرسة تشترك في نفس البريد الإلكتروني."
+      "directorPasswordInUse": "كلمة المرور هذه مستخدمة بالفعل لبريد المدير هذا. أدخل كلمة مرور مدير مختلفة لكل مدرسة تشترك في نفس البريد الإلكتروني.",
+      "classHasOrdersCannotMove": "هذا الصف لديه {count} طلبات ولا يمكن نقله إلى مدرسة أخرى. أنشئ صفاً جديداً.",
+      "packageHasOrdersDeactivate": "توجد {count} طلبات لهذه الحزمة. لا يمكن حذفها نهائياً؛ قم بتعطيلها بدلاً من ذلك."
     },
     "orders": {
       "unauthorized": "وصول غير مصرّح به",
@@ -1646,7 +1665,8 @@
         "COMPLETED": "تم إكماله",
         "UNDELIVERED": "تم وضع علامة عليه كغير مُسلّم",
         "REDISPATCH": "تمت إعادة إرساله للتوزيع"
-      }
+      },
+      "pendingCancelRequest": "يوجد طلب إلغاء معلّق لهذا الطلب؛ عالجه أولاً من صفحة طلبات الإلغاء."
     },
     "veli": {
       "chatUnavailable": "مساعد المحادثة غير متاح حاليًا.",
@@ -1687,7 +1707,8 @@
       "invalidPassword": "كلمة مرور غير صحيحة. يرجى التحقق من كلمة المرور التي حصلت عليها من مدرستك.",
       "noActiveClassPackage": "لم يتم بعد تعريف صف وحزمة نشطين لهذه المدرسة.",
       "genericError": "حدث خطأ",
-      "genericErrorRetry": "حدث خطأ. يرجى المحاولة مرة أخرى."
+      "genericErrorRetry": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "packageInactive": "هذه الحزمة غير متاحة حالياً."
     },
     "mudur": {
       "tooManyFailedAttempts": "محاولات فاشلة كثيرة جدًا. يرجى المحاولة مرة أخرى بعد {minutes} دقيقة.",

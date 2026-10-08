@@ -113,7 +113,7 @@ model Order {
   totalAmount        Decimal        @db.Decimal(10, 2)
   status             OrderStatus    @default(NEW)
   paymentMethod      PaymentMethod?
-  paymentId          String?
+  paymentId          String?        @unique
   paymentUrl         String?
   paidAt             DateTime?
   isCorporateInvoice Boolean        @default(false)
@@ -129,6 +129,9 @@ model Order {
   deliveredBy        String?
   discountCode       String?
   discountAmount     Decimal?       @db.Decimal(10, 2)
+  // Siparis anindaki okul hakedisi (sinif komisyonu x ogrenci sayisi). Sonradan sinif
+  // komisyonu degisse de gecmis hakedis bu degerle sabit kalir.
+  commissionAmount   Decimal?       @db.Decimal(10, 2)
   confirmedAt        DateTime?
   invoicedAt         DateTime?
   cancelledAt        DateTime?

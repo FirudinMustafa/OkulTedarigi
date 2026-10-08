@@ -95,8 +95,30 @@ export async function DELETE(
 
     const { id } = await params
 
-    await prisma.schoolPayment.delete({
-      where: { id }
+    // Yalnizca onaylanmamis (PENDING) kayit silinebilir; PAID kayit izsiz silinirse
+    // "Kalan" yeniden acilir ve cift odeme mumkun olur.
+    const existing = await prisma.schoolPayment.findUnique({
+      where: { id },
+      select: { id: true, status: true, amount: true, school: { select: { name: true } } }
+    })
+    if (!existing) {
+      return NextResponse.json({ error: t('adminMisc.paymentNotFound') }, { status: 404 })
+    }
+    if (existing.status !== 'PENDING') {
+      return NextResponse.json({ error: t('adminMisc.alreadyPaid') }, { status: 400 })
+    }
+    const deleted = await prisma.schoolPayment.deleteMany({ where: { id, status: 'PENDING' } })
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: t('adminMisc.paymentBeingProcessed') }, { status: 409 })
+    }
+
+    await logAction({
+      userId: session.id,
+      userType: 'ADMIN',
+      action: 'DELETE',
+      entity: 'PAYMENT',
+      entityId: id,
+      details: { schoolName: existing.school.name, amount: existing.amount }
     })
 
     return NextResponse.json({ success: true })

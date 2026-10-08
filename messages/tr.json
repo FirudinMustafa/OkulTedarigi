@@ -354,7 +354,7 @@
       "fieldPackage": "Paket",
       "selectPackage": "Paket seçin (opsiyonel)",
       "noPackage": "Paket yok",
-      "fieldCommission": "Hakediş Miktarı (TL)",
+      "fieldCommission": "Hakediş Miktarı (TL, öğrenci başına)",
       "commissionPlaceholder": "Örnek: 25.00",
       "cancel": "İptal",
       "update": "Güncelle",
@@ -367,7 +367,10 @@
       "permanentDeleteDesc": "Sınıf ve tüm ilişkili veriler kalıcı olarak silinir. Bu işlem geri alınamaz.",
       "permanentDeleteShort": "Kalıcı Sil",
       "deleteFailed": "Sınıf silinemedi",
-      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin."
+      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin.",
+      "softDeleted": "Sınıfın iptal/iade geçmişi olduğu için silinmedi, pasife çekildi.",
+      "dismiss": "Kapat"
     },
     "packages": {
       "title": "Paketler",
@@ -412,7 +415,9 @@
       "permanentDeleteDesc": "Paket ve tüm ilişkili veriler kalıcı olarak silinir. Bu işlem geri alınamaz.",
       "permanentDeleteShort": "Kalıcı Sil",
       "deleteFailed": "Paket silinemedi",
-      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin."
+      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "needAtLeastOneItem": "Pakette en az bir kalem olmalı.",
+      "saveFailed": "Paket kaydedilemedi. Lütfen tekrar deneyin."
     },
     "orders": {
       "title": "Siparişler",
@@ -560,7 +565,10 @@
       "printError": "Yazdırma sırasında hata oluştu: {message}",
       "unknown": "bilinmeyen",
       "downloadFailed": "İndirme başarısız",
-      "downloadError": "İndirme sırasında hata oluştu"
+      "downloadError": "İndirme sırasında hata oluştu",
+      "syncErrors": "{count} sorgu hata verdi",
+      "syncFailed": "Kargo durumu sorgulanamadı. Lütfen tekrar deneyin.",
+      "pendingCancelBadge": "İptal talebi var"
     },
     "payments": {
       "title": "Hakedişler",
@@ -573,7 +581,7 @@
       "loading": "Yükleniyor...",
       "noSummaryData": "Henüz hakediş verisi yok",
       "colSchool": "Okul",
-      "colOrderCount": "Sipariş Sayısı",
+      "colOrderCount": "Sipariş (hakedişe dahil)",
       "colTotalRevenue": "Toplam Ciro",
       "colTotalCommission": "Toplam Hakediş",
       "colPaid": "Verilen",
@@ -616,7 +624,9 @@
       "createFailed": "Hakediş oluşturulamadı (HTTP {status})",
       "awaitingConfirmation": "Onay bekliyor",
       "pendingConfirmationHint": "+ {value} onay bekliyor",
-      "paymentRecordedAsPaid": "Kaydedilen tutar okula ödenmiş sayılır ve müdür panelinde görünür."
+      "paymentRecordedAsPaid": "Kaydedilen tutar okula ödenmiş sayılır ve müdür panelinde görünür.",
+      "inactiveSchool": "Pasif",
+      "overpaid": "Fazla ödeme: {value}"
     },
     "discounts": {
       "title": "İndirim Kodları",
@@ -696,7 +706,8 @@
       "reject": "Reddet",
       "approveRefund": "Onayla ve İade Et",
       "processFailed": "İşlem yapılamadı",
-      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin."
+      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "refundFailedNotice": "İptal onaylandı ancak iade yapılamadı ({message}). Sipariş \"İptal\" durumunda kaldı; Siparişler > İptal sekmesinden \"İade Et\" ile tekrar deneyin."
     },
     "reports": {
       "title": "Raporlar",
@@ -705,7 +716,7 @@
       "selectPeriod": "Dönem seçin",
       "periodAll": "Tüm Zamanlar",
       "periodMonth": "Bu Ay",
-      "periodWeek": "Bu Hafta",
+      "periodWeek": "Son 7 Gün",
       "periodToday": "Bugün",
       "loading": "Rapor yükleniyor...",
       "noData": "Rapor verisi bulunamadı",
@@ -742,7 +753,9 @@
       "colOrders": "Sipariş",
       "colRevenue": "Ciro",
       "colPaymentFee": "Ödeme Kesintisi",
-      "colNet": "Net"
+      "colNet": "Net",
+      "rateInvalid": "0 ile 100 arasında bir oran girin.",
+      "rateSaveFailed": "Oran kaydedilemedi."
     },
     "i18nFields": {
       "translations": "Çeviriler",
@@ -806,7 +819,8 @@
       "paidSummary": "Kuruma toplam <bold>{amount}</bold> ödeme yapılmıştır.",
       "pendingSummary": "Kalan <bold>{amount}</bold> bekleyen hakediştir.",
       "recentOrdersTitle": "Son Siparişler",
-      "noOrders": "Henüz sipariş yok"
+      "noOrders": "Henüz sipariş yok",
+      "overpaidNote": "Kurumunuza hakedişten {amount} fazla ödeme yapılmış görünüyor (ödeme sonrası iptal/iade nedeniyle olabilir)."
     },
     "orders": {
       "title": "Siparişler",
@@ -842,16 +856,16 @@
       "passive": "Pasif",
       "package": "Paket",
       "undefined": "Tanımlanmamış",
-      "ordersBreakdown": "{completed} tamamlandı, {pending} devam ediyor",
+      "ordersBreakdown": "{completed} tamamlandı, {pending} devam ediyor, {cancelled} iptal",
       "commissionAmount": "Hakediş Miktarı",
-      "perOrder": "sipariş başına",
+      "perOrder": "öğrenci başına",
       "totalCommission": "Toplam Hakediş"
     },
     "payments": {
       "title": "Hakedişler",
       "subtitle": "Hakediş ve ödeme durumu",
       "totalCommission": "Toplam Hakediş",
-      "calculatedByClass": "Sınıf bazında hesaplandı",
+      "calculatedByClass": "Sınıf komisyonu × öğrenci sayısı",
       "paid": "Ödenen",
       "pending": "Bekleyen",
       "paymentHistory": "Ödeme Geçmişi",
@@ -860,10 +874,11 @@
       "colAmount": "Tutar",
       "colDescription": "Açıklama",
       "infoTitle": "Hakediş Bilgilendirmesi",
-      "info1": "Hakediş miktarı her sınıf için ayrı belirlenir.",
+      "info1": "Hakediş, sipariş anındaki sınıf komisyonu üzerinden öğrenci başına hesaplanır.",
       "info2": "Hakedişler aylık olarak hesaplanır ve ödenir.",
       "info3": "Ödeme işlemleri banka havalesi ile yapılır.",
-      "info4": "Sorularınız için yönetim ile iletişime geçebilirsiniz."
+      "info4": "Sorularınız için yönetim ile iletişime geçebilirsiniz.",
+      "overpaidNote": "Fazla ödeme: {amount}"
     },
     "reports": {
       "title": "Raporlar",
@@ -1101,7 +1116,8 @@
     },
     "errors": {
       "failed": "Ödeme işlemi başarısız. Hiçbir ücret alınmadı.",
-      "generic": "Ödeme işlemi sırasında bir hata oluştu. Hiçbir ücret alınmadı."
+      "generic": "Ödeme işlemi sırasında bir hata oluştu. Hiçbir ücret alınmadı.",
+      "amountChanged": "Ödenecek tutar güncellendi: {amount} TL. Lütfen tutarı kontrol edip tekrar \"Öde\"ye basın."
     }
   },
   "tracking": {
@@ -1533,7 +1549,8 @@
       "paymentDeleteFailed": "Ödeme silinemedi",
       "summaryLoadFailed": "Özet yüklenemedi",
       "exportFailed": "Export başarısız",
-      "reportLoadFailed": "Rapor yüklenemedi"
+      "reportLoadFailed": "Rapor yüklenemedi",
+      "orderChangedRetry": "Sipariş bu arada değişti (örn. kargolandı). Sayfayı yenileyip tekrar deneyin."
     },
     "catalog": {
       "unauthorized": "Yetkisiz erişim",
@@ -1591,7 +1608,9 @@
       "packageUpdateFailed": "Paket güncellenemedi",
       "packageHasActiveOrders": "Bu pakete ait {count} aktif sipariş bulunuyor. Silmeden önce siparişlerin tamamlanması veya iptal edilmesi gerekiyor.",
       "packageDeleteFailed": "Paket silinemedi",
-      "directorPasswordInUse": "Bu müdür e-postası için bu şifre zaten kullanımda. Aynı e-postalı her okul için farklı bir müdür şifresi giriniz."
+      "directorPasswordInUse": "Bu müdür e-postası için bu şifre zaten kullanımda. Aynı e-postalı her okul için farklı bir müdür şifresi giriniz.",
+      "classHasOrdersCannotMove": "Bu sınıfın {count} siparişi var; başka okula taşınamaz. Yeni okul için yeni sınıf oluşturun.",
+      "packageHasOrdersDeactivate": "Bu pakete ait {count} sipariş var (fatura/ciro/hakediş kaydı). Paket kalıcı silinemez; pasife çekin."
     },
     "orders": {
       "unauthorized": "Yetkisiz erişim",
@@ -1646,7 +1665,8 @@
         "COMPLETED": "tamamlandı",
         "UNDELIVERED": "teslim edilemeyen olarak işaretlendi",
         "REDISPATCH": "tekrar dağıtıma çıkarıldı"
-      }
+      },
+      "pendingCancelRequest": "Bu siparişin bekleyen bir iptal talebi var; önce İptal Talepleri sayfasından talebi işleyin."
     },
     "veli": {
       "chatUnavailable": "Sohbet asistanı şu an kullanılamıyor.",
@@ -1687,7 +1707,8 @@
       "invalidPassword": "Geçersiz şifre. Lütfen okulunuzdan aldığınız şifrenizi kontrol edin.",
       "noActiveClassPackage": "Bu okul için henüz aktif bir sınıf ve paket tanımlanmamış.",
       "genericError": "Bir hata oluştu",
-      "genericErrorRetry": "Bir hata oluştu. Lütfen tekrar deneyin."
+      "genericErrorRetry": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "packageInactive": "Bu paket şu anda satışta değil."
     },
     "mudur": {
       "tooManyFailedAttempts": "Çok fazla başarısız deneme. {minutes} dakika sonra tekrar deneyin.",

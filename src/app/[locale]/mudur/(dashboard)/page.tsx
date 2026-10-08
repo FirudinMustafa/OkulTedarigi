@@ -7,8 +7,9 @@ import {
   ShoppingCart, DollarSign, Users, Package,
   CheckCircle
 } from "lucide-react"
-import { formatNumber } from "@/lib/utils"
-import { COMMISSION_STATUSES, UNPAID_STATUSES } from "@/lib/constants"
+import { formatPrice } from "@/lib/utils"
+import { UNPAID_STATUSES } from "@/lib/constants"
+import { getSchoolPayoutSummary } from "@/lib/commission"
 import { OrderStatus } from "@prisma/client"
 
 interface Order {
@@ -19,64 +20,40 @@ interface Order {
   createdAt: Date
 }
 
-interface ClassItem {
-  id: string
-  commissionAmount: { toString(): string }
-  orders: Order[]
-}
-
 async function getDashboardStats(schoolId: string) {
   const school = await prisma.school.findUnique({
     where: { id: schoolId },
-    include: {
-      classes: {
-        include: {
-          // Odenmemis siparisleri gizle (admin ile ayni kural)
-          orders: { where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } } },
-          package: true
-        }
-      },
-      schoolPayments: true
-    }
+    select: { id: true, name: true, _count: { select: { classes: true } } }
   })
-
   if (!school) return null
 
-  const allOrders = school.classes.flatMap((c: ClassItem) => c.orders)
-  const totalOrders = allOrders.length
-  const completedOrders = allOrders.filter((o: Order) => o.status === 'COMPLETED').length
-  const pendingOrders = allOrders.filter((o: Order) =>
-    !['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(o.status)
-  ).length
-
-  // Hakedisi sinif bazinda hesapla (sadece odenmis ve sonrasi siparisler)
-  let totalCommission = 0
-  school.classes.forEach((classItem: ClassItem) => {
-    const classOrders = classItem.orders.filter(
-      (o: Order) => COMMISSION_STATUSES.includes(o.status)
-    ).length
-    totalCommission += Number(classItem.commissionAmount) * classOrders
-  })
-
-  const paidCommission = school.schoolPayments.reduce(
-    (acc: number, p: { amount: { toString(): string } }) => acc + Number(p.amount),
-    0
-  )
-
-  const recentOrders = allOrders
-    .sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5)
+  // Odenmemis (terk edilmis) siparisler sayilmaz — admin ile ayni kural
+  const paidScope = { class: { schoolId }, status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
+  const [totalOrders, completedOrders, recentOrders, payout] = await Promise.all([
+    prisma.order.count({ where: paidScope }),
+    prisma.order.count({ where: { class: { schoolId }, status: 'COMPLETED' } }),
+    prisma.order.findMany({
+      where: paidScope,
+      select: { id: true, orderNumber: true, studentName: true, status: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    }),
+    // Hakedis: admin hakedisler ve mudur hakedisler sayfasiyla AYNI hesap
+    getSchoolPayoutSummary(schoolId)
+  ])
 
   return {
     school,
     totalOrders,
     completedOrders,
-    pendingOrders,
-    commission: totalCommission,
-    paidCommission,
-    pendingCommission: totalCommission - paidCommission,
-    totalClasses: school.classes.length,
-    recentOrders
+    commission: payout?.commission ?? 0,
+    // Yalnizca PAID kayitlar "verilen" sayilir
+    paidCommission: payout?.paid ?? 0,
+    // Okulun henuz eline gecmeyen tutar (eksiye dusmez; fazla odeme ayri gosterilir)
+    pendingCommission: payout?.notYetPaid ?? 0,
+    overpaid: payout?.overpaid ?? 0,
+    totalClasses: school._count.classes,
+    recentOrders: recentOrders as Order[]
   }
 }
 
@@ -120,14 +97,14 @@ export default async function MudurDashboard() {
     },
     {
       title: t('totalCommission'),
-      value: `${formatNumber(stats.commission)} TL`,
+      value: `${formatPrice(stats.commission, locale)} TL`,
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-100"
     },
     {
       title: t('paidAmount'),
-      value: `${formatNumber(stats.paidCommission)} TL`,
+      value: `${formatPrice(stats.paidCommission, locale)} TL`,
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-100"
@@ -170,32 +147,37 @@ export default async function MudurDashboard() {
             <div className="p-4 bg-emerald-50 rounded-lg text-center">
               <p className="text-sm text-emerald-600 mb-1 font-medium">{t('totalCommission')}</p>
               <p className="text-2xl font-bold text-emerald-700">
-                {stats.commission.toFixed(2)} TL
+                {formatPrice(stats.commission, locale)} TL
               </p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg text-center">
               <p className="text-sm text-green-600 mb-1 font-medium">{t('givenToInstitution')}</p>
               <p className="text-2xl font-bold text-green-700">
-                {stats.paidCommission.toFixed(2)} TL
+                {formatPrice(stats.paidCommission, locale)} TL
               </p>
             </div>
             <div className="p-4 bg-yellow-50 rounded-lg text-center">
               <p className="text-sm text-yellow-600 mb-1 font-medium">{t('remaining')}</p>
               <p className="text-2xl font-bold text-yellow-700">
-                {stats.pendingCommission.toFixed(2)} TL
+                {formatPrice(stats.pendingCommission, locale)} TL
               </p>
             </div>
           </div>
+          {stats.overpaid > 0 && (
+            <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-100 text-sm text-red-700 text-center">
+              {t('overpaidNote', { amount: `${formatPrice(stats.overpaid, locale)} TL` })}
+            </div>
+          )}
           {stats.paidCommission > 0 && (
             <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
               <p className="text-sm text-green-700 text-center">
                 {t.rich('paidSummary', {
-                  amount: `${stats.paidCommission.toFixed(2)} TL`,
+                  amount: `${formatPrice(stats.paidCommission, locale)} TL`,
                   bold: (chunks) => <span className="font-bold">{chunks}</span>
                 })}
                 {stats.pendingCommission > 0 && (
                   <span>{' '}{t.rich('pendingSummary', {
-                    amount: `${stats.pendingCommission.toFixed(2)} TL`,
+                    amount: `${formatPrice(stats.pendingCommission, locale)} TL`,
                     bold: (chunks) => <span className="font-bold">{chunks}</span>
                   })}</span>
                 )}

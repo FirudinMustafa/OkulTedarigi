@@ -354,7 +354,7 @@
       "fieldPackage": "Package",
       "selectPackage": "Select a package (optional)",
       "noPackage": "No package",
-      "fieldCommission": "Commission Amount (TL)",
+      "fieldCommission": "Commission (TL, per student)",
       "commissionPlaceholder": "Example: 25.00",
       "cancel": "Cancel",
       "update": "Update",
@@ -367,7 +367,10 @@
       "permanentDeleteDesc": "The class and all related data are permanently deleted. This action cannot be undone.",
       "permanentDeleteShort": "Delete Permanently",
       "deleteFailed": "Could not delete class",
-      "genericError": "An error occurred. Please try again."
+      "genericError": "An error occurred. Please try again.",
+      "saveFailed": "Could not be saved. Please try again.",
+      "softDeleted": "The class has cancellation/refund history, so it was deactivated instead of deleted.",
+      "dismiss": "Dismiss"
     },
     "packages": {
       "title": "Packages",
@@ -412,7 +415,9 @@
       "permanentDeleteDesc": "The package and all related data are permanently deleted. This action cannot be undone.",
       "permanentDeleteShort": "Delete Permanently",
       "deleteFailed": "Could not delete package",
-      "genericError": "An error occurred. Please try again."
+      "genericError": "An error occurred. Please try again.",
+      "needAtLeastOneItem": "The package must have at least one item.",
+      "saveFailed": "Package could not be saved. Please try again."
     },
     "orders": {
       "title": "Orders",
@@ -560,7 +565,10 @@
       "printError": "An error occurred during printing: {message}",
       "unknown": "unknown",
       "downloadFailed": "Download failed",
-      "downloadError": "An error occurred during download"
+      "downloadError": "An error occurred during download",
+      "syncErrors": "{count} queries failed",
+      "syncFailed": "Cargo status could not be queried. Please try again.",
+      "pendingCancelBadge": "Cancellation requested"
     },
     "payments": {
       "title": "Commissions",
@@ -573,7 +581,7 @@
       "loading": "Loading...",
       "noSummaryData": "No commission data yet",
       "colSchool": "School",
-      "colOrderCount": "Order Count",
+      "colOrderCount": "Orders (counted)",
       "colTotalRevenue": "Total Revenue",
       "colTotalCommission": "Total Commission",
       "colPaid": "Paid",
@@ -616,7 +624,9 @@
       "createFailed": "Commission could not be created (HTTP {status})",
       "awaitingConfirmation": "Awaiting confirmation",
       "pendingConfirmationHint": "+ {value} awaiting confirmation",
-      "paymentRecordedAsPaid": "The recorded amount is counted as paid to the school and appears in the director panel."
+      "paymentRecordedAsPaid": "The recorded amount is counted as paid to the school and appears in the director panel.",
+      "inactiveSchool": "Inactive",
+      "overpaid": "Overpaid: {value}"
     },
     "discounts": {
       "title": "Discount Codes",
@@ -696,7 +706,8 @@
       "reject": "Reject",
       "approveRefund": "Approve and Refund",
       "processFailed": "The operation could not be performed",
-      "genericError": "An error occurred. Please try again."
+      "genericError": "An error occurred. Please try again.",
+      "refundFailedNotice": "Cancellation approved but the refund failed ({message}). The order remains \"Cancelled\"; retry via Orders > Cancelled > \"Refund\"."
     },
     "reports": {
       "title": "Reports",
@@ -705,7 +716,7 @@
       "selectPeriod": "Select period",
       "periodAll": "All Time",
       "periodMonth": "This Month",
-      "periodWeek": "This Week",
+      "periodWeek": "Last 7 Days",
       "periodToday": "Today",
       "loading": "Loading report...",
       "noData": "No report data found",
@@ -742,7 +753,9 @@
       "colOrders": "Orders",
       "colRevenue": "Revenue",
       "colPaymentFee": "Payment Fee",
-      "colNet": "Net"
+      "colNet": "Net",
+      "rateInvalid": "Enter a rate between 0 and 100.",
+      "rateSaveFailed": "Rate could not be saved."
     },
     "i18nFields": {
       "translations": "Translations",
@@ -806,7 +819,8 @@
       "paidSummary": "A total of <bold>{amount}</bold> has been paid to the institution.",
       "pendingSummary": "The remaining <bold>{amount}</bold> is pending earnings.",
       "recentOrdersTitle": "Recent Orders",
-      "noOrders": "No orders yet"
+      "noOrders": "No orders yet",
+      "overpaidNote": "Your institution appears to have been paid {amount} more than its earnings (possibly due to cancellations/refunds after payment)."
     },
     "orders": {
       "title": "Orders",
@@ -842,16 +856,16 @@
       "passive": "Inactive",
       "package": "Package",
       "undefined": "Not defined",
-      "ordersBreakdown": "{completed} completed, {pending} in progress",
+      "ordersBreakdown": "{completed} completed, {pending} in progress, {cancelled} cancelled",
       "commissionAmount": "Earnings Amount",
-      "perOrder": "per order",
+      "perOrder": "per student",
       "totalCommission": "Total Earnings"
     },
     "payments": {
       "title": "Earnings",
       "subtitle": "Earnings and payment status",
       "totalCommission": "Total Earnings",
-      "calculatedByClass": "Calculated per class",
+      "calculatedByClass": "Class commission × number of students",
       "paid": "Paid",
       "pending": "Pending",
       "paymentHistory": "Payment History",
@@ -860,10 +874,11 @@
       "colAmount": "Amount",
       "colDescription": "Description",
       "infoTitle": "Earnings Information",
-      "info1": "The earnings amount is set separately for each class.",
+      "info1": "Earnings are calculated per student from the class commission at the time of the order.",
       "info2": "Earnings are calculated and paid monthly.",
       "info3": "Payments are made by bank transfer.",
-      "info4": "You can contact the administration with your questions."
+      "info4": "You can contact the administration with your questions.",
+      "overpaidNote": "Overpaid: {amount}"
     },
     "reports": {
       "title": "Reports",
@@ -1101,7 +1116,8 @@
     },
     "errors": {
       "failed": "Payment failed. No charge was made.",
-      "generic": "An error occurred during payment. No charge was made."
+      "generic": "An error occurred during payment. No charge was made.",
+      "amountChanged": "The amount due was updated: {amount} TL. Please check it and press \"Pay\" again."
     }
   },
   "tracking": {
@@ -1533,7 +1549,8 @@
       "paymentDeleteFailed": "Could not delete payment",
       "summaryLoadFailed": "Could not load summary",
       "exportFailed": "Export failed",
-      "reportLoadFailed": "Could not load report"
+      "reportLoadFailed": "Could not load report",
+      "orderChangedRetry": "The order changed in the meantime (e.g. shipped). Refresh and try again."
     },
     "catalog": {
       "unauthorized": "Unauthorized access",
@@ -1591,7 +1608,9 @@
       "packageUpdateFailed": "Failed to update package",
       "packageHasActiveOrders": "This package has {count} active orders. Before deleting, the orders must be completed or cancelled.",
       "packageDeleteFailed": "Failed to delete package",
-      "directorPasswordInUse": "This password is already in use for this director email. Enter a different director password for each school that shares the same email."
+      "directorPasswordInUse": "This password is already in use for this director email. Enter a different director password for each school that shares the same email.",
+      "classHasOrdersCannotMove": "This class has {count} orders and cannot be moved to another school. Create a new class instead.",
+      "packageHasOrdersDeactivate": "This package has {count} orders (invoice/revenue records). It cannot be deleted permanently; deactivate it instead."
     },
     "orders": {
       "unauthorized": "Unauthorized access",
@@ -1646,7 +1665,8 @@
         "COMPLETED": "completed",
         "UNDELIVERED": "marked as undelivered",
         "REDISPATCH": "redispatched"
-      }
+      },
+      "pendingCancelRequest": "This order has a pending cancellation request; process it first on the Cancellation Requests page."
     },
     "veli": {
       "chatUnavailable": "The chat assistant is currently unavailable.",
@@ -1687,7 +1707,8 @@
       "invalidPassword": "Invalid password. Please check the password you received from your school.",
       "noActiveClassPackage": "No active class and package has been defined for this school yet.",
       "genericError": "An error occurred",
-      "genericErrorRetry": "An error occurred. Please try again."
+      "genericErrorRetry": "An error occurred. Please try again.",
+      "packageInactive": "This package is currently not available."
     },
     "mudur": {
       "tooManyFailedAttempts": "Too many failed attempts. Please try again in {minutes} minutes.",

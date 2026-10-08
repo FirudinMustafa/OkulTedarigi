@@ -106,10 +106,18 @@ export async function PUT(
         orderNote: true,
         invoiceNo: true,
         orderNumber: true,
+        cancelRequest: { select: { id: true, status: true } },
       }
     })
     if (!previousOrder) {
       return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+    }
+
+    // Velinin bekleyen iptal talebi varken siparis ilerletilemez (once talep islenmeli);
+    // aksi halde kargolanan siparisin talebi "iptal edilemez" hatasiyla takilir.
+    const hasPendingCancel = previousOrder.cancelRequest?.status === 'PENDING'
+    if (hasPendingCancel && updateData.status && updateData.status !== 'CANCELLED') {
+      return NextResponse.json({ error: t('orders.pendingCancelRequest') }, { status: 409 })
     }
 
     // Status degisikligi varsa gecerli gecis kontrolu
@@ -157,6 +165,21 @@ export async function PUT(
 
     if (!order) {
       return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+    }
+
+    // Admin siparisi dogrudan iptal etti: bekleyen veli talebi de kapanir (onaylandi).
+    // Odenmis siparisin parasi "Iade Et" ile iade edilir; iade basarili olunca talebe
+    // refundId yazilir ve veliye mail gider (lib/refund).
+    if (updateData.status === 'CANCELLED' && hasPendingCancel && previousOrder.cancelRequest) {
+      await prisma.cancelRequest.updateMany({
+        where: { id: previousOrder.cancelRequest.id, status: 'PENDING' },
+        data: {
+          status: 'APPROVED',
+          processedAt: new Date(),
+          processedBy: session.id,
+          adminNote: 'Siparis admin tarafindan dogrudan iptal edildi.'
+        }
+      })
     }
 
     // Audit trail: hassas alanlarin oncesi/sonrasi log'a yazilsin

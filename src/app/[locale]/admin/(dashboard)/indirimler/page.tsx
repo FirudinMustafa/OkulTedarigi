@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Edit2, Tag } from "lucide-react"
+import { formatPrice } from "@/lib/utils"
 
 interface Discount {
   id: string
@@ -36,6 +37,7 @@ interface SchoolOption {
 
 export default function IndirimlerPage() {
   const t = useTranslations('admin.discounts')
+  const locale = useLocale()
   const tf = useTranslations('admin.i18nFields')
   const [discounts, setDiscounts] = useState<Discount[]>([])
   const [schools, setSchools] = useState<SchoolOption[]>([])
@@ -119,6 +121,14 @@ export default function IndirimlerPage() {
     setShowForm(false)
   }
 
+  // datetime-local input'u YEREL saat bekler; toISOString() UTC verir ve her
+  // duzenle-kaydet dongusunde tarihi 3 saat kaydiriyordu.
+  const toLocalInput = (v: string | Date) => {
+    const dt = new Date(v)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+  }
+
   const handleEdit = (d: Discount) => {
     setFormData({
       code: d.code,
@@ -130,8 +140,8 @@ export default function IndirimlerPage() {
       value: String(d.value),
       minAmount: d.minAmount ? String(d.minAmount) : "",
       maxDiscount: d.maxDiscount ? String(d.maxDiscount) : "",
-      validFrom: new Date(d.validFrom).toISOString().slice(0, 16),
-      validUntil: new Date(d.validUntil).toISOString().slice(0, 16),
+      validFrom: toLocalInput(d.validFrom),
+      validUntil: toLocalInput(d.validUntil),
       usageLimit: d.usageLimit ? String(d.usageLimit) : "",
       schoolIds: (d.schools || []).map(s => s.schoolId)
     })
@@ -189,6 +199,9 @@ export default function IndirimlerPage() {
       const res = await fetch(`/api/admin/discounts/${id}`, { method: "DELETE", credentials: 'include' })
       if (res.ok) {
         loadDiscounts()
+      } else {
+        const data = await res.json().catch(() => null)
+        alert(data?.error || t('deleteFailed'))
       }
     } catch {
       alert(t('deleteFailed'))
@@ -205,6 +218,9 @@ export default function IndirimlerPage() {
       })
       if (res.ok) {
         loadDiscounts()
+      } else {
+        const data = await res.json().catch(() => null)
+        alert(data?.error || t('updateFailed'))
       }
     } catch {
       alert(t('updateFailed'))
@@ -457,7 +473,7 @@ export default function IndirimlerPage() {
                       )}
                       <div className="flex gap-4 mt-1 text-xs text-gray-400">
                         <span>
-                          {t('discountAmount', { value: d.type === "PERCENTAGE" ? `%${Number(d.value)}` : `${Number(d.value)} TL` })}
+                          {t('discountAmount', { value: d.type === "PERCENTAGE" ? `%${Number(d.value)}` : `${formatPrice(Number(d.value), locale)} TL` })}
                         </span>
                         <span>{formatDate(d.validFrom)} - {formatDate(d.validUntil)}</span>
                         <span>

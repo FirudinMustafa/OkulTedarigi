@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { COMMISSION_STATUSES } from '@/lib/constants'
-import type { OrderStatus } from '@prisma/client'
+import { getPayoutSummaries } from '@/lib/commission'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -14,63 +12,25 @@ export async function GET() {
       return NextResponse.json({ error: t('adminMisc.unauthorized') }, { status: 401 })
     }
 
-    const schools = await prisma.school.findMany({
-      where: { isActive: true },
-      include: {
-        classes: {
-          include: {
-            orders: {
-              where: {
-                status: {
-                  in: COMMISSION_STATUSES as OrderStatus[]
-                }
-              }
-            }
-          }
-        },
-        schoolPayments: true
-      }
-    })
-
-    const summaries = schools.map(school => {
-      let totalCommission = 0
-      let totalOrders = 0
-      let totalRevenue = 0
-
-      school.classes.forEach(classItem => {
-        const classOrders = classItem.orders
-        totalOrders += classOrders.length
-        totalCommission += Number(classItem.commissionAmount) * classOrders.length
-        totalRevenue += classOrders.reduce((acc: number, order) => acc + Number(order.totalAmount), 0)
-      })
-
-      // Fiilen ödenmiş (status=PAID)
-      const paid = school.schoolPayments
-        .filter(p => p.status === 'PAID')
-        .reduce((acc, p) => acc + Number(p.amount), 0)
-
-      // Onay bekleyen ödeme kayıtları (admin oluşturdu, henüz "Ödendi İşaretle" basmadı)
-      const pendingPayments = school.schoolPayments
-        .filter(p => p.status === 'PENDING')
-        .reduce((acc, p) => acc + Number(p.amount), 0)
-
-      // Henüz commit edilmemiş kalan komisyon — yeni ödeme oluştururken kullanılacak
-      const remaining = Math.max(totalCommission - paid - pendingPayments, 0)
-
-      const commissionRate = totalRevenue > 0 ? (totalCommission / totalRevenue * 100) : 0
-
-      return {
-        id: school.id,
-        name: school.name,
-        commissionRate: Number(commissionRate.toFixed(2)),
-        totalOrders,
-        totalRevenue,
-        commission: totalCommission,
-        paid,
-        pendingPayments,
-        pending: remaining
-      }
-    })
+    // Aktif okullar + hakedisi/odemesi olan pasif okullar (pasife alinan okulun
+    // odenmemis veya fazla odenmis hakedisi listeden kaybolmasin).
+    const all = await getPayoutSummaries()
+    const summaries = all
+      .filter(s => s.isActive || s.commission > 0 || s.paid > 0 || s.pendingPayments > 0)
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        isActive: s.isActive,
+        commissionRate: s.commissionRate,
+        totalOrders: s.totalOrders,
+        totalStudents: s.totalStudents,
+        totalRevenue: s.totalRevenue,
+        commission: s.commission,
+        paid: s.paid,
+        pendingPayments: s.pendingPayments,
+        pending: s.remaining,
+        overpaid: s.overpaid,
+      }))
 
     return NextResponse.json({ summaries })
   } catch (error) {

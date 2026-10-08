@@ -256,15 +256,12 @@ export async function DELETE(
           { status: 409 }
         )
       }
-
-      // Siparis hic yoksa siniflari guvenle sil
-      await prisma.class.deleteMany({
-        where: { schoolId: id }
-      })
     }
 
     // Hakedisler: order kaydi yoksa hakedis de uretilmemis olur (commission siparisten geliyor).
     // Buna ragmen manuel girilmis kayit olabilir — onlar da yasal kayit, silmeyelim.
+    // NOT: bu kontrol sinif silmeden ONCE yapilir; aksi halde okul duruyor ama siniflari
+    // silinmis halde kaliyordu.
     const hasPayments = await prisma.schoolPayment.findFirst({
       where: { schoolId: id },
       select: { id: true }
@@ -276,10 +273,11 @@ export async function DELETE(
       )
     }
 
-    // Hicbir muhasebesel kayit yok — okulu sil
-    await prisma.school.delete({
-      where: { id }
-    })
+    // Hicbir muhasebesel kayit yok — siniflar + okul tek transaction'da silinir
+    await prisma.$transaction([
+      prisma.class.deleteMany({ where: { schoolId: id } }),
+      prisma.school.delete({ where: { id } })
+    ])
 
     await logAction({
       userId: session.id,

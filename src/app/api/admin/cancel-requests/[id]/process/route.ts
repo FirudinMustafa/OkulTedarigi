@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { refundOrderPayment } from '@/lib/paynkolay'
-import { sendCancellationConfirmation, sendCancellationRejected } from '@/lib/email'
+import { refundCancelledOrder } from '@/lib/refund'
+import { sendCancellationRejected } from '@/lib/email'
 import { CANCELLABLE_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+
+class OrderChangedError extends Error {}
 
 export async function POST(
   request: Request,
@@ -88,18 +91,15 @@ export async function POST(
       const updatedRequest = await tx.cancelRequest.findUnique({ where: { id } })
 
       if (status === 'APPROVED') {
-        // Odenmis siparis (PAID ve sonrasi) -> REFUNDED. Aksi halde -> CANCELLED.
-        const wasPaid = cancelRequest.order.paidAt !== null
-        const newStatus = wasPaid ? 'REFUNDED' : 'CANCELLED'
-        const now = new Date()
-        await tx.order.update({
-          where: { id: cancelRequest.orderId },
-          data: {
-            status: newStatus,
-            cancelledAt: now,
-            ...(wasPaid ? { refundedAt: now } : {})
-          }
+        // Siparis once CANCELLED olur; REFUNDED'a ancak PayNKolay iadesi basarili olunca
+        // gecer (asagida). Status guard: bu arada kargolanan/degisen siparis iptal edilmez.
+        const cancelled = await tx.order.updateMany({
+          where: { id: cancelRequest.orderId, status: { in: CANCELLABLE_STATUSES as OrderStatus[] } },
+          data: { status: 'CANCELLED', cancelledAt: new Date() }
         })
+        if (cancelled.count === 0) {
+          throw new OrderChangedError()
+        }
       }
 
       return { request: updatedRequest, order: cancelRequest.order, status: 200 as const }
@@ -110,64 +110,32 @@ export async function POST(
     }
 
     let finalRequest = result.request
+    let refundFailed: string | null = null
 
-    // PayNKolay iade/iptal - DB transaction'in disinda (external call).
-    // referenceCode = PayNKolay referansi (callback'te paymentId'ye yazilir, IKSIRPF...).
-    // Ayni gun cekim ise "cancel" (iptal), sonraki gunler "refund" (iade).
-    if (status === 'APPROVED' && result.order?.paymentId) {
+    // PayNKolay iadesi — DB transaction'in disinda (external call). Basariliysa siparis
+    // REFUNDED olur, iptal talebine refundId yazilir ve veliye mail gider (lib/refund).
+    // Basarisizsa siparis CANCELLED kalir; admin Siparisler > "Iade Et" ile tekrar dener.
+    if (status === 'APPROVED') {
       try {
-        const refundResult = await refundOrderPayment(result.order)
-
-        if (refundResult.success && refundResult.refundId) {
-          const refundedAt = new Date()
-          const [persistedRequest] = await prisma.$transaction([
-            prisma.cancelRequest.update({
-              where: { id },
-              data: {
-                refundId: refundResult.refundId,
-                refundAmount: Number(result.order.totalAmount),
-                refundedAt
-              }
-            }),
-            prisma.order.update({
-              where: { id: result.order.id },
-              data: { refundedAt }
-            })
-          ])
-          finalRequest = persistedRequest
-        } else {
-          // PayNKolay istegi atildi ama basarisiz sonuc dondu (exception firlatmadi) —
-          // order zaten CANCELLED/REFUNDED isaretlendi, refundId hic yazilmadi. Admin
-          // panelde "Iade Basarisiz" rozetiyle gorunur olmasi icin loglanir (invoiceMissing ile
-          // ayni desen: derived-state, refundId null kaldigi surece rozet gozukur).
-          console.error('[REFUND] PayNKolay basarisiz sonuc dondu:', refundResult)
-          await logAction({
-            userId: session.id,
-            userType: 'ADMIN',
-            action: 'REFUND_FAILED',
-            entity: 'CANCEL_REQUEST',
-            entityId: id,
-            details: {
-              orderNumber: result.order?.orderNumber,
-              message: refundResult.message || 'PayNKolay basarisiz sonuc dondu'
-            }
-          })
+        const outcome = await refundCancelledOrder(result.order!.id, session.id)
+        if (!outcome.ok) {
+          refundFailed = outcome.reason === 'gatewayFailed' ? outcome.message : outcome.reason
         }
       } catch (refundErr) {
-        console.error('Iade isleminde hata (siparis zaten CANCELLED):', refundErr)
-        // Order zaten CANCELLED, refund manuel takip edilmeli — admin panelde rozetle gorunur olsun.
+        refundFailed = String(refundErr)
+      }
+      if (refundFailed) {
+        console.error('[REFUND] Iptal onaylandi ama iade basarisiz:', refundFailed)
         await logAction({
           userId: session.id,
           userType: 'ADMIN',
           action: 'REFUND_FAILED',
           entity: 'CANCEL_REQUEST',
           entityId: id,
-          details: {
-            orderNumber: result.order?.orderNumber,
-            message: String(refundErr)
-          }
+          details: { orderNumber: result.order?.orderNumber, message: refundFailed }
         })
       }
+      finalRequest = await prisma.cancelRequest.findUnique({ where: { id } })
     }
 
     await logAction({
@@ -183,18 +151,11 @@ export async function POST(
       }
     })
 
-    // Veliye bildirim maili (best-effort)
+    // Veliye bildirim maili (best-effort). Onay maili lib/refund icinde, iade BASARILI
+    // olunca gider (iade basarisizken "X TL iade edilecek" sozu verilmez).
     if (result.order?.email) {
       const orderEmail = result.order.email
-      if (status === 'APPROVED') {
-        sendCancellationConfirmation({
-          email: orderEmail,
-          orderNumber: result.order.orderNumber,
-          parentName: result.order.parentName,
-          refundAmount: result.order.paidAt ? Number(result.order.totalAmount) : undefined,
-          locale: (result.order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined)
-        }).catch(err => console.error('[email] sendCancellationConfirmation hatasi:', err))
-      } else if (status === 'REJECTED') {
+      if (status === 'REJECTED') {
         sendCancellationRejected({
           email: orderEmail,
           orderNumber: result.order.orderNumber,
@@ -205,8 +166,11 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ request: finalRequest })
+    return NextResponse.json({ request: finalRequest, refundFailed })
   } catch (error) {
+    if (error instanceof OrderChangedError) {
+      return NextResponse.json({ error: t('adminMisc.orderChangedRetry') }, { status: 409 })
+    }
     console.error('Iptal talebi islenemedi:', error)
     return NextResponse.json(
       { error: t('adminMisc.processFailed') },

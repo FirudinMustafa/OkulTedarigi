@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
-import { normalizeSearch } from "@/lib/utils"
+import { useTranslations, useLocale } from "next-intl"
+import { normalizeSearch, formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -50,6 +50,7 @@ interface PackageType {
 
 export default function PaketlerPage() {
   const t = useTranslations("admin.packages")
+  const locale = useLocale()
   const tf = useTranslations("admin.i18nFields")
   const [packages, setPackages] = useState<PackageType[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,6 +60,7 @@ export default function PaketlerPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [packageToDelete, setPackageToDelete] = useState<PackageType | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [editingPackage, setEditingPackage] = useState<PackageType | null>(null)
   const [viewingPackage, setViewingPackage] = useState<PackageType | null>(null)
   const [formData, setFormData] = useState({
@@ -106,8 +108,13 @@ export default function PaketlerPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFormError(null)
 
     const validItems = items.filter(item => item.name.trim() !== "")
+    if (validItems.length === 0) {
+      setFormError(t("needAtLeastOneItem"))
+      return
+    }
 
     try {
       const url = editingPackage
@@ -148,13 +155,18 @@ export default function PaketlerPage() {
         fetchPackages()
         setDialogOpen(false)
         resetForm()
+      } else {
+        const data = await res.json().catch(() => null)
+        setFormError(data?.error || t("saveFailed"))
       }
     } catch (error) {
       console.error("Kayit hatasi:", error)
+      setFormError(t("genericError"))
     }
   }
 
   const handleEdit = (pkg: PackageType) => {
+    setFormError(null)
     setEditingPackage(pkg)
     setFormData({
       name: pkg.name,
@@ -345,7 +357,7 @@ export default function PaketlerPage() {
                     <TableCell className="max-w-xs truncate">
                       {pkg.description || "-"}
                     </TableCell>
-                    <TableCell>{Number(pkg.basePrice).toFixed(2)} TL</TableCell>
+                    <TableCell>{formatPrice(pkg.basePrice, locale)} TL</TableCell>
                     <TableCell>{pkg.items.length}</TableCell>
                     <TableCell>{pkg._count.classes}</TableCell>
                     <TableCell>
@@ -413,14 +425,14 @@ export default function PaketlerPage() {
                       {item.name} x{item.quantity}
                     </span>
                     <span className="font-medium">
-                      {Number(item.unitPrice).toFixed(2)} TL
+                      {formatPrice(item.unitPrice, locale)} TL
                     </span>
                   </div>
                 ))}
               </div>
               <div className="mt-3 p-3 bg-gray-50 rounded-lg flex justify-between font-medium">
                 <span>{t("totalPrice")}</span>
-                <span>{Number(viewingPackage?.basePrice).toFixed(2)} TL</span>
+                <span>{formatPrice(viewingPackage?.basePrice ?? 0, locale)} TL</span>
               </div>
             </div>
           </div>
@@ -655,6 +667,11 @@ export default function PaketlerPage() {
                 </div>
               </div>
             </div>
+            {formError && (
+              <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{formError}</p>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {t("cancel")}

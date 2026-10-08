@@ -55,6 +55,8 @@ export default function SiniflarPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [classToDelete, setClassToDelete] = useState<ClassType | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null)
   const [editingClass, setEditingClass] = useState<ClassType | null>(null)
   const [showTranslations, setShowTranslations] = useState(false)
   const [formData, setFormData] = useState({
@@ -97,33 +99,45 @@ export default function SiniflarPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFormError(null)
 
     try {
       const url = editingClass
         ? `/api/admin/classes/${editingClass.id}`
         : "/api/admin/classes"
 
+      // Bos komisyon alani: duzenlemede "degismedi" (gonderilmez), yeni sinifta 0.
+      // Aksi halde bos birakilan alan komisyonu sessizce 0'a cekerdi.
+      const commissionRaw = formData.commissionAmount.trim().replace(',', '.')
+      const { commissionAmount: _omit, ...rest } = formData
+      void _omit
+      const payload: Record<string, unknown> = { ...rest, packageId: formData.packageId || null }
+      if (commissionRaw !== '') payload.commissionAmount = parseFloat(commissionRaw)
+      else if (!editingClass) payload.commissionAmount = 0
+
       const res = await fetch(url, {
         method: editingClass ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          commissionAmount: parseFloat(formData.commissionAmount) || 0
-        })
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {
         fetchData()
         setDialogOpen(false)
         resetForm()
+      } else {
+        const data = await res.json().catch(() => null)
+        setFormError(data?.error || t("saveFailed"))
       }
     } catch (error) {
       console.error("Kayit hatasi:", error)
+      setFormError(t("saveFailed"))
     }
   }
 
   const handleEdit = (cls: ClassType) => {
+    setFormError(null)
     setEditingClass(cls)
     setShowTranslations(Boolean(cls.name_en || cls.name_de || cls.name_ar))
     setFormData({
@@ -173,6 +187,8 @@ export default function SiniflarPage() {
         fetchData()
         setDeleteDialogOpen(false)
         setClassToDelete(null)
+        // Iptal/iade gecmisi olan sinif silinmez, pasife cekilir — admin bilgilendirilsin
+        setDeleteNotice(data.mode === 'soft_delete' ? (data.message || t("softDeleted")) : null)
       } else {
         setDeleteError(data.error || t("deleteFailed"))
       }
@@ -220,6 +236,12 @@ export default function SiniflarPage() {
 
   return (
     <div className="space-y-6">
+      {deleteNotice && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex justify-between gap-4">
+          <span>{deleteNotice}</span>
+          <button type="button" className="text-amber-700 underline" onClick={() => setDeleteNotice(null)}>{t("dismiss")}</button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
@@ -433,6 +455,11 @@ export default function SiniflarPage() {
                 />
               </div>
             </div>
+            {formError && (
+              <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{formError}</p>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {t("cancel")}

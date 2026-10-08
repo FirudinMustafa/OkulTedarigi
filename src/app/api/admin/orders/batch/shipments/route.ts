@@ -39,22 +39,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: t('orders.invalidOrderId') }, { status: 400 })
     }
 
-    // Kargolanabilir siparisler: CONFIRMED (Hazirlaniyor)
-    const orders = await prisma.order.findMany({
-      where: { id: { in: orderIds }, status: 'CONFIRMED' },
-      include: { class: { include: { school: true } }, _count: { select: { students: true } } }
+    // Kargolanabilir siparisler: CONFIRMED (Hazirlaniyor), CARGO teslimatli,
+    // bekleyen iptal talebi OLMAYAN. Elenenler sonuc listesinde "basarisiz" olarak doner
+    // (admin hangi siparislerin kaldigini gorebilsin).
+    const requested = await prisma.order.findMany({
+      where: { id: { in: orderIds } },
+      include: {
+        class: { include: { school: true } },
+        cancelRequest: { select: { status: true } },
+        _count: { select: { students: true } }
+      }
+    })
+    const skippedResults: BatchResult[] = []
+    const cargoOrders = requested.filter(o => {
+      let reason: string | null = null
+      if (o.status !== 'CONFIRMED' && o.status !== 'INVOICED') reason = t('orders.notEligibleForAction', { action: 'SHIP', status: o.status })
+      else if (o.class.school.deliveryType !== 'CARGO') reason = t('orders.notCargoDelivery')
+      else if (o.cancelRequest?.status === 'PENDING') reason = t('orders.pendingCancelRequest')
+      if (reason) skippedResults.push({ orderId: o.id, orderNumber: o.orderNumber, success: false, error: reason })
+      return !reason
     })
 
-    // Sadece CARGO teslimat tipindekiler
-    const cargoOrders = orders.filter(o => o.class.school.deliveryType === 'CARGO')
-
     if (cargoOrders.length === 0) {
-      return NextResponse.json({ error: t('orders.noShippableOrders') }, { status: 400 })
+      return NextResponse.json({
+        error: t('orders.noShippableOrders'),
+        results: skippedResults,
+        summary: { total: requested.length, success: 0, failed: skippedResults.length }
+      }, { status: 400 })
     }
 
     const sessionId = session.id
 
     async function processOne(order: typeof cargoOrders[number]): Promise<BatchResult> {
+      // Atomic claim ONCE (tekli /shipment ile ayni desen): bu arada degisen/iptal edilen
+      // siparis icin Yurtici'de sahipsiz kargo kaydi acilmasin.
+      const claim = await prisma.order.updateMany({
+        where: { id: order.id, status: order.status, trackingNo: null },
+        data: { status: 'SHIPPED', shippedAt: new Date() }
+      })
+      if (claim.count === 0) {
+        return { orderId: order.id, orderNumber: order.orderNumber, success: false, error: t('orders.shipmentClaimConflict') }
+      }
+      const rollback = () => prisma.order.updateMany({
+        where: { id: order.id, status: 'SHIPPED', trackingNo: null },
+        data: { status: order.status, shippedAt: null }
+      }).catch(err => console.error('Batch shipment rollback error:', err))
+
       try {
         const shipmentResult = await createShipment({
           orderNumber: order.orderNumber,
@@ -71,6 +101,7 @@ export async function POST(request: Request) {
         })
 
         if (!shipmentResult.success) {
+          await rollback()
           return {
             orderId: order.id,
             orderNumber: order.orderNumber,
@@ -79,23 +110,11 @@ export async function POST(request: Request) {
           }
         }
 
-        // Atomic: trackingNo bos + status hala CONFIRMED olanlari guncelle
-        const shipUpdate = await prisma.order.updateMany({
-          where: { id: order.id, status: 'CONFIRMED', trackingNo: null },
-          data: {
-            status: 'SHIPPED',
-            trackingNo: shipmentResult.trackingNo,
-            shippedAt: new Date()
-          }
+        // Takip numarasini yaz (siparis claim ile zaten SHIPPED)
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { trackingNo: shipmentResult.trackingNo }
         })
-        if (shipUpdate.count === 0) {
-          return {
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            success: false,
-            error: t('orders.shipmentAlreadyCreated')
-          }
-        }
 
         logAction({
           userId: sessionId,
@@ -117,6 +136,7 @@ export async function POST(request: Request) {
           trackingNo: shipmentResult.trackingNo,
         }
       } catch (error) {
+        await rollback()
         return {
           orderId: order.id,
           orderNumber: order.orderNumber,
@@ -128,7 +148,7 @@ export async function POST(request: Request) {
 
     // 10'arli paralel (3rd-party rate-limit korunur)
     const CONCURRENCY = 10
-    const results: BatchResult[] = []
+    const results: BatchResult[] = [...skippedResults]
     for (let i = 0; i < cargoOrders.length; i += CONCURRENCY) {
       const chunk = cargoOrders.slice(i, i + CONCURRENCY)
       const chunkResults = await Promise.all(chunk.map(processOne))
@@ -155,7 +175,7 @@ export async function POST(request: Request) {
       success: true,
       message: t('orders.batchShipmentResult', { success: successCount, failed: failCount }),
       results,
-      summary: { total: cargoOrders.length, success: successCount, failed: failCount }
+      summary: { total: results.length, success: successCount, failed: failCount }
     })
 
   } catch (error) {

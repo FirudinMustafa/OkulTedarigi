@@ -4,7 +4,8 @@ import { getAdminSession } from '@/lib/auth'
 import { buildContentDisposition } from '@/lib/security'
 import { buildTeslimExcel, type DocLocale } from '@/lib/teslim-excel'
 import { getTeslimPackageColumns } from '@/lib/teslim-packages'
-import { UNPAID_STATUSES } from '@/lib/constants'
+import { REVENUE_STATUSES } from '@/lib/constants'
+import { parseYmd, endOfDay } from '@/lib/report-range'
 import type { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -30,16 +31,15 @@ export async function GET(request: Request) {
 
     let start: Date | undefined
     let end: Date | undefined
+    // "YYYY-MM-DD" yerel gun olarak okunur (new Date('YYYY-MM-DD') UTC gece yarisi = TR 03:00
+    // olur ve 00:00-03:00 arasi siparisler listeden duserdi).
     if (startStr) {
-      const d = new Date(startStr)
-      if (!isNaN(d.getTime())) start = d
+      const d = isDateOnly(startStr) ? parseYmd(startStr) : new Date(startStr)
+      if (d && !isNaN(d.getTime())) start = d
     }
     if (endStr) {
-      const d = new Date(endStr)
-      if (!isNaN(d.getTime())) {
-        if (isDateOnly(endStr)) d.setHours(23, 59, 59, 999)
-        end = d
-      }
+      const d = isDateOnly(endStr) ? (parseYmd(endStr) && endOfDay(parseYmd(endStr)!)) : new Date(endStr)
+      if (d && !isNaN(d.getTime())) end = d
     }
 
     const dateWhere: { gte?: Date; lte?: Date } = {}
@@ -47,8 +47,9 @@ export async function GET(request: Request) {
     if (end) dateWhere.lte = end
 
     const teslimWhere = {
-      // Odenmemis siparisleri haric tut
-      status: { notIn: UNPAID_STATUSES as OrderStatus[] },
+      // Yalniz teslim edilecek (ciroya dahil) siparisler: odenmemis + iptal/iade HARIC —
+      // iptal edilmis siparisin ogrencisi sahada teslim listesinde gorunmesin
+      status: { in: REVENUE_STATUSES as OrderStatus[] },
       ...(schoolId ? { class: { schoolId } } : {}),
       ...(start || end ? { createdAt: dateWhere } : {}),
     }

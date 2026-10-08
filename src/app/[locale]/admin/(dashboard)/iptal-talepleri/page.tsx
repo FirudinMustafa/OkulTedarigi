@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Search, XCircle, CheckCircle, Clock, AlertCircle } from "lucide-react"
-import { formatDateTime, normalizeSearch } from "@/lib/utils"
+import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
 
 interface CancelRequest {
   id: string
@@ -50,6 +50,8 @@ const statusColors: Record<string, string> = {
 
 export default function IptalTalepleriPage() {
   const t = useTranslations('admin.cancelRequests')
+  const locale = useLocale()
+  const [notice, setNotice] = useState<{ kind: 'error' | 'warning'; text: string } | null>(null)
   const statusLabels: Record<string, string> = {
     PENDING: t('statusPending'),
     APPROVED: t('statusApproved'),
@@ -92,17 +94,22 @@ export default function IptalTalepleriPage() {
         body: JSON.stringify({ status, adminNote })
       })
 
+      const data = await res.json().catch(() => null)
       if (res.ok) {
         fetchRequests()
         setProcessDialogOpen(false)
         setAdminNote("")
+        // Iptal onaylandi ama PayNKolay iadesi basarisiz: siparis CANCELLED kaldi,
+        // Siparisler > Iptal sekmesinden "Iade Et" ile tekrar denenmeli.
+        setNotice(data?.refundFailed
+          ? { kind: 'warning', text: t('refundFailedNotice', { message: String(data.refundFailed) }) }
+          : null)
       } else {
-        const data = await res.json()
-        alert(data.error || t('processFailed'))
+        setNotice({ kind: 'error', text: data?.error || t('processFailed') })
       }
     } catch (error) {
       console.error("Islem hatasi:", error)
-      alert(t('genericError'))
+      setNotice({ kind: 'error', text: t('genericError') })
     } finally {
       setProcessing(false)
     }
@@ -122,6 +129,12 @@ export default function IptalTalepleriPage() {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className={`p-3 rounded-lg border text-sm flex justify-between gap-4 ${notice.kind === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+          <span>{notice.text}</span>
+          <button type="button" className="underline" onClick={() => setNotice(null)}>{t('dismiss')}</button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
@@ -245,7 +258,7 @@ export default function IptalTalepleriPage() {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {Number(request.order.totalAmount).toFixed(2)} TL
+                      {formatPrice(request.order.totalAmount, locale)} TL
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {request.reason}
@@ -304,7 +317,7 @@ export default function IptalTalepleriPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-500">{t('amountLabel')}</span>
                   <span className="font-medium">
-                    {Number(selectedRequest.order.totalAmount).toFixed(2)} TL
+                    {formatPrice(selectedRequest.order.totalAmount, locale)} TL
                   </span>
                 </div>
               </div>

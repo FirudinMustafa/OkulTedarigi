@@ -54,11 +54,13 @@ export async function POST(
       )
     }
 
-    // Fatura bilgilerini temizle ve durumu CONFIRMED'a geri al
+    // Fatura bilgilerini temizle. Durum YALNIZ eski INVOICED ise CONFIRMED'a doner;
+    // SHIPPED/COMPLETED/REFUNDED siparis geri alinmaz (aksi halde iade edilmis siparis
+    // tekrar ciroya/hakedise girer, kargodaki siparis "Hazirlaniyor"a duserdi).
     await prisma.order.update({
       where: { id },
       data: {
-        status: 'CONFIRMED',
+        ...(order.status === 'INVOICED' ? { status: 'CONFIRMED' as const } : {}),
         invoiceNo: null,
         invoiceDate: null,
         invoicePdfPath: null,

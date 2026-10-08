@@ -87,7 +87,9 @@ export async function GET(request: Request) {
           students: {
             select: { id: true, firstName: true, lastName: true, section: true },
             orderBy: { createdAt: 'asc' }
-          }
+          },
+          // Bekleyen veli iptal talebi listede rozetle gosterilir
+          cancelRequest: { select: { status: true } }
         }
       }),
       prisma.order.count({ where })

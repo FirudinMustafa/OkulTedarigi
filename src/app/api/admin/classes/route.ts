@@ -6,6 +6,8 @@ import { adminClassCreateSchema, formatZodError } from '@/lib/validators'
 import { buildTranslationData } from '@/lib/i18n-content'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 
 export async function GET() {
   const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
@@ -27,7 +29,8 @@ export async function GET() {
         isActive: true,
         school: { select: { id: true, name: true, password: true } },
         package: { select: { id: true, name: true } },
-        _count: { select: { orders: true } }
+        // Odenmemis (terk edilmis) siparisler sayilmaz — mudur paneli ve siparis listesiyle ayni
+        _count: { select: { orders: { where: { status: { notIn: UNPAID_STATUSES as OrderStatus[] } } } } }
       }
     })
 

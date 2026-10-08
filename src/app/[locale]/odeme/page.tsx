@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Lock, Loader2, ShieldCheck } from "lucide-react"
 import { CHECKOUT_DRAFT_KEY } from "@/lib/constants"
+import { formatPrice } from "@/lib/utils"
 
 // Checkout draft — /paket/[id] formunda sessionStorage'a yazilir.
 interface CheckoutDraft {
@@ -110,6 +111,17 @@ function OdemeInner() {
         return
       }
 
+      // Sunucunun hesapladigi tutar ekrandakinden farkliysa (fiyat/indirim degismis)
+      // veliyi habersiz farkli tutara yonlendirme: yeni tutari goster, tekrar onaylatsin.
+      if (typeof data.finalAmount === 'number' && Math.abs(data.finalAmount - Number(draft.summary.totalAmount)) > 0.009) {
+        const updated = { ...draft, summary: { ...draft.summary, totalAmount: data.finalAmount } }
+        setDraft(updated)
+        try { sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify(updated)) } catch {}
+        setError(t('errors.amountChanged', { amount: formatPrice(data.finalAmount, locale) }))
+        setProcessing(false)
+        return
+      }
+
       // Taslagi SILME — odeme basarisiz/iptal donerse kullanici geri gelip tekrar deneyebilsin.
       // Taslak, odeme basarili olunca siparis-onay sayfasinda temizlenir.
       // PayNKolay Ortak Odeme sayfasina yonlendir (kart + taksit orada alinir).
@@ -161,12 +173,12 @@ function OdemeInner() {
                 {draft.summary.discountCode && draft.summary.discountAmount ? (
                   <div className="flex justify-between mb-2 text-green-600 text-sm">
                     <span>{t('summary.discount', { code: draft.summary.discountCode })}</span>
-                    <span>-{draft.summary.discountAmount.toFixed(2)} TL</span>
+                    <span>-{formatPrice(draft.summary.discountAmount, locale)} TL</span>
                   </div>
                 ) : null}
                 <div className="flex justify-between font-bold text-lg">
                   <span>{t('summary.total')}</span>
-                  <span className="text-blue-600">{Number(draft.summary.totalAmount).toFixed(2)} TL</span>
+                  <span className="text-blue-600">{formatPrice(draft.summary.totalAmount, locale)} TL</span>
                 </div>
               </div>
             )}
@@ -186,7 +198,7 @@ function OdemeInner() {
               ) : (
                 <>
                   <Lock className="h-4 w-4 mr-2" />
-                  {t('form.pay', { amount: Number(draft?.summary.totalAmount).toFixed(2) })}
+                  {t('form.pay', { amount: formatPrice(draft?.summary.totalAmount ?? 0, locale) })}
                 </>
               )}
             </Button>

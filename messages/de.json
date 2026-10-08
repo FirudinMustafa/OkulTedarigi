@@ -354,7 +354,7 @@
       "fieldPackage": "Paket",
       "selectPackage": "Paket auswählen (optional)",
       "noPackage": "Kein Paket",
-      "fieldCommission": "Provisionsbetrag (TL)",
+      "fieldCommission": "Provision (TL, pro Schüler)",
       "commissionPlaceholder": "Beispiel: 25.00",
       "cancel": "Abbrechen",
       "update": "Aktualisieren",
@@ -367,7 +367,10 @@
       "permanentDeleteDesc": "Die Klasse und alle zugehörigen Daten werden endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
       "permanentDeleteShort": "Endgültig löschen",
       "deleteFailed": "Klasse konnte nicht gelöscht werden",
-      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "saveFailed": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+      "softDeleted": "Die Klasse hat Storno-/Erstattungsverlauf und wurde deaktiviert statt gelöscht.",
+      "dismiss": "Schließen"
     },
     "packages": {
       "title": "Pakete",
@@ -412,7 +415,9 @@
       "permanentDeleteDesc": "Das Paket und alle zugehörigen Daten werden endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
       "permanentDeleteShort": "Endgültig löschen",
       "deleteFailed": "Paket konnte nicht gelöscht werden",
-      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "needAtLeastOneItem": "Das Paket muss mindestens einen Artikel enthalten.",
+      "saveFailed": "Paket konnte nicht gespeichert werden. Bitte erneut versuchen."
     },
     "orders": {
       "title": "Bestellungen",
@@ -560,7 +565,10 @@
       "printError": "Beim Drucken ist ein Fehler aufgetreten: {message}",
       "unknown": "unbekannt",
       "downloadFailed": "Download fehlgeschlagen",
-      "downloadError": "Beim Herunterladen ist ein Fehler aufgetreten"
+      "downloadError": "Beim Herunterladen ist ein Fehler aufgetreten",
+      "syncErrors": "{count} Abfragen fehlgeschlagen",
+      "syncFailed": "Sendungsstatus konnte nicht abgefragt werden. Bitte erneut versuchen.",
+      "pendingCancelBadge": "Stornierung angefragt"
     },
     "payments": {
       "title": "Provisionen",
@@ -573,7 +581,7 @@
       "loading": "Wird geladen...",
       "noSummaryData": "Noch keine Provisionsdaten",
       "colSchool": "Schule",
-      "colOrderCount": "Anzahl Bestellungen",
+      "colOrderCount": "Bestellungen (gezählt)",
       "colTotalRevenue": "Gesamtumsatz",
       "colTotalCommission": "Gesamtprovision",
       "colPaid": "Gezahlt",
@@ -616,7 +624,9 @@
       "createFailed": "Provision konnte nicht erstellt werden (HTTP {status})",
       "awaitingConfirmation": "Bestätigung ausstehend",
       "pendingConfirmationHint": "+ {value} Bestätigung ausstehend",
-      "paymentRecordedAsPaid": "Der erfasste Betrag gilt als an die Schule gezahlt und erscheint im Direktorenbereich."
+      "paymentRecordedAsPaid": "Der erfasste Betrag gilt als an die Schule gezahlt und erscheint im Direktorenbereich.",
+      "inactiveSchool": "Inaktiv",
+      "overpaid": "Überzahlt: {value}"
     },
     "discounts": {
       "title": "Rabattcodes",
@@ -696,7 +706,8 @@
       "reject": "Ablehnen",
       "approveRefund": "Genehmigen und erstatten",
       "processFailed": "Der Vorgang konnte nicht ausgeführt werden",
-      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "refundFailedNotice": "Stornierung genehmigt, aber die Erstattung ist fehlgeschlagen ({message}). Die Bestellung bleibt \"Storniert\"; erneut über Bestellungen > Storniert > \"Erstatten\" versuchen."
     },
     "reports": {
       "title": "Berichte",
@@ -705,7 +716,7 @@
       "selectPeriod": "Zeitraum auswählen",
       "periodAll": "Gesamter Zeitraum",
       "periodMonth": "Dieser Monat",
-      "periodWeek": "Diese Woche",
+      "periodWeek": "Letzte 7 Tage",
       "periodToday": "Heute",
       "loading": "Bericht wird geladen...",
       "noData": "Keine Berichtsdaten gefunden",
@@ -742,7 +753,9 @@
       "colOrders": "Bestellungen",
       "colRevenue": "Umsatz",
       "colPaymentFee": "Zahlungsgebühr",
-      "colNet": "Netto"
+      "colNet": "Netto",
+      "rateInvalid": "Geben Sie einen Satz zwischen 0 und 100 ein.",
+      "rateSaveFailed": "Satz konnte nicht gespeichert werden."
     },
     "i18nFields": {
       "translations": "Übersetzungen",
@@ -806,7 +819,8 @@
       "paidSummary": "Insgesamt <bold>{amount}</bold> wurden an die Einrichtung gezahlt.",
       "pendingSummary": "Die verbleibenden <bold>{amount}</bold> sind ausstehende Provision.",
       "recentOrdersTitle": "Letzte Bestellungen",
-      "noOrders": "Noch keine Bestellungen"
+      "noOrders": "Noch keine Bestellungen",
+      "overpaidNote": "Ihrer Einrichtung wurden offenbar {amount} mehr als die Provision gezahlt (evtl. wegen Stornierungen/Erstattungen nach der Zahlung)."
     },
     "orders": {
       "title": "Bestellungen",
@@ -842,16 +856,16 @@
       "passive": "Inaktiv",
       "package": "Paket",
       "undefined": "Nicht definiert",
-      "ordersBreakdown": "{completed} abgeschlossen, {pending} laufend",
+      "ordersBreakdown": "{completed} abgeschlossen, {pending} laufend, {cancelled} storniert",
       "commissionAmount": "Provisionsbetrag",
-      "perOrder": "pro Bestellung",
+      "perOrder": "pro Schüler",
       "totalCommission": "Gesamtprovision"
     },
     "payments": {
       "title": "Provisionen",
       "subtitle": "Provisions- und Zahlungsstatus",
       "totalCommission": "Gesamtprovision",
-      "calculatedByClass": "Pro Klasse berechnet",
+      "calculatedByClass": "Klassenprovision × Anzahl Schüler",
       "paid": "Bezahlt",
       "pending": "Ausstehend",
       "paymentHistory": "Zahlungsverlauf",
@@ -860,10 +874,11 @@
       "colAmount": "Betrag",
       "colDescription": "Beschreibung",
       "infoTitle": "Provisionsinformationen",
-      "info1": "Der Provisionsbetrag wird für jede Klasse separat festgelegt.",
+      "info1": "Die Provision wird pro Schüler anhand der Klassenprovision zum Bestellzeitpunkt berechnet.",
       "info2": "Provisionen werden monatlich berechnet und ausgezahlt.",
       "info3": "Zahlungen erfolgen per Banküberweisung.",
-      "info4": "Bei Fragen können Sie sich an die Verwaltung wenden."
+      "info4": "Bei Fragen können Sie sich an die Verwaltung wenden.",
+      "overpaidNote": "Überzahlt: {amount}"
     },
     "reports": {
       "title": "Berichte",
@@ -1101,7 +1116,8 @@
     },
     "errors": {
       "failed": "Zahlung fehlgeschlagen. Es wurde kein Betrag belastet.",
-      "generic": "Bei der Zahlung ist ein Fehler aufgetreten. Es wurde kein Betrag belastet."
+      "generic": "Bei der Zahlung ist ein Fehler aufgetreten. Es wurde kein Betrag belastet.",
+      "amountChanged": "Der zu zahlende Betrag wurde aktualisiert: {amount} TL. Bitte prüfen und erneut auf \"Bezahlen\" klicken."
     }
   },
   "tracking": {
@@ -1533,7 +1549,8 @@
       "paymentDeleteFailed": "Zahlung konnte nicht gelöscht werden",
       "summaryLoadFailed": "Übersicht konnte nicht geladen werden",
       "exportFailed": "Export fehlgeschlagen",
-      "reportLoadFailed": "Bericht konnte nicht geladen werden"
+      "reportLoadFailed": "Bericht konnte nicht geladen werden",
+      "orderChangedRetry": "Die Bestellung wurde inzwischen geändert (z. B. versendet). Bitte neu laden und erneut versuchen."
     },
     "catalog": {
       "unauthorized": "Nicht autorisierter Zugriff",
@@ -1591,7 +1608,9 @@
       "packageUpdateFailed": "Paket konnte nicht aktualisiert werden",
       "packageHasActiveOrders": "Diesem Paket sind {count} aktive Bestellungen zugeordnet. Vor dem Löschen müssen die Bestellungen abgeschlossen oder storniert werden.",
       "packageDeleteFailed": "Paket konnte nicht gelöscht werden",
-      "directorPasswordInUse": "Dieses Passwort wird für diese Direktor-E-Mail bereits verwendet. Geben Sie für jede Schule mit derselben E-Mail ein anderes Direktor-Passwort ein."
+      "directorPasswordInUse": "Dieses Passwort wird für diese Direktor-E-Mail bereits verwendet. Geben Sie für jede Schule mit derselben E-Mail ein anderes Direktor-Passwort ein.",
+      "classHasOrdersCannotMove": "Diese Klasse hat {count} Bestellungen und kann nicht verschoben werden. Erstellen Sie eine neue Klasse.",
+      "packageHasOrdersDeactivate": "Zu diesem Paket gibt es {count} Bestellungen. Es kann nicht dauerhaft gelöscht werden; bitte deaktivieren."
     },
     "orders": {
       "unauthorized": "Unbefugter Zugriff",
@@ -1646,7 +1665,8 @@
         "COMPLETED": "abgeschlossen",
         "UNDELIVERED": "als nicht zustellbar markiert",
         "REDISPATCH": "erneut versandt"
-      }
+      },
+      "pendingCancelRequest": "Für diese Bestellung liegt eine offene Stornierungsanfrage vor; bitte zuerst bearbeiten."
     },
     "veli": {
       "chatUnavailable": "Der Chat-Assistent ist derzeit nicht verfügbar.",
@@ -1687,7 +1707,8 @@
       "invalidPassword": "Ungültiges Passwort. Bitte überprüfen Sie das Passwort, das Sie von Ihrer Schule erhalten haben.",
       "noActiveClassPackage": "Für diese Schule wurde noch keine aktive Klasse und kein Paket definiert.",
       "genericError": "Ein Fehler ist aufgetreten",
-      "genericErrorRetry": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      "genericErrorRetry": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "packageInactive": "Dieses Paket ist derzeit nicht verfügbar."
     },
     "mudur": {
       "tooManyFailedAttempts": "Zu viele fehlgeschlagene Versuche. Bitte versuchen Sie es in {minutes} Minuten erneut.",

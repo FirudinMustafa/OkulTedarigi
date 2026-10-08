@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { createInvoice } from '@/lib/kolaybi'
+import { claimInvoiceSlot, releaseInvoiceSlot } from '@/lib/invoice-slot'
 import { buildInvoiceItems } from '@/lib/invoice-items'
 import { sendInvoiceCreated } from '@/lib/email'
 import { getApiLocale } from '@/lib/api-locale'
@@ -73,6 +74,10 @@ export async function POST(request: Request) {
 
     // Tek bir siparis icin fatura kesim islemi (paralel calisacak)
     async function processOne(order: typeof orders[number]): Promise<BatchResult> {
+      // KolayBi'ye gitmeden ONCE slot ayir (paralel toplu/tekli/otomatik fatura cift kesmesin)
+      if (!(await claimInvoiceSlot(order.id))) {
+        return { orderId: order.id, orderNumber: order.orderNumber, success: false, error: t('orders.invoiceInProgress') }
+      }
       try {
         // Fatura kalemleri: velinin sectigi kalemler order.items (OrderItem snapshot) icinden.
         // Eski snapshot'siz siparisler icin paket listesine fallback. Adetler ogrenci sayisiyla carpilir.
@@ -95,6 +100,7 @@ export async function POST(request: Request) {
         })
 
         if (!invoiceResult.success) {
+          await releaseInvoiceSlot(order.id)
           return {
             orderId: order.id,
             orderNumber: order.orderNumber,
@@ -103,15 +109,11 @@ export async function POST(request: Request) {
           }
         }
 
-        // Idempotency: invoiceNo bos olanlari atomic olarak guncelle.
-        // Iki paralel batch ayni siparise gelse 2.si count=0 doner.
-        // PAID/CONFIRMED'de status INVOICED'a alinir (eski davranis); SHIPPED/COMPLETED'de
-        // status DEGISTIRILMEZ (zaten ilerlemis/tamamlanmis bir siparisi geriye almamak icin).
-        const shouldAdvanceStatus = ['PAID', 'CONFIRMED'].includes(order.status)
+        // Fatura no yaz. Siparis durumu DEGISTIRILMEZ: INVOICED'a almak siparisi 4-asamali
+        // akisin disina (hicbir sekmede/aksiyonda olmayan duruma) dusuruyordu.
         const updated = await prisma.order.updateMany({
           where: { id: order.id, invoiceNo: null },
           data: {
-            ...(shouldAdvanceStatus ? { status: 'INVOICED' as const } : {}),
             invoiceNo: invoiceResult.invoiceNo,
             invoicePdfPath: invoiceResult.invoiceUrl,
             invoiceDate: new Date(),

@@ -29,18 +29,29 @@ async function getSchoolOrders(schoolId: string, page: number, limit: number) {
   // Siparisleri okul bazinda filtrele (cross-tenant koruma) + odenmemis siparisleri gizle (admin ile ayni kural)
   const where = { class: { schoolId }, status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
 
-  const [total, rawOrders] = await prisma.$transaction([
-    prisma.order.count({ where }),
-    prisma.order.findMany({
-      where,
-      include: { class: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    })
-  ])
+  const total = await prisma.order.count({ where })
+  // Aralik disi sayfa (?page=999) son sayfaya cekilir: baslikta "toplam N" yazip listede
+  // "siparis yok" gostermesin (sayfa bileseni de ayni safePageNum'u kullanir)
+  const safePage = Math.min(page, Math.max(1, Math.ceil(total / limit)))
+  const rawOrders = await prisma.order.findMany({
+    where,
+    include: {
+      class: { select: { name: true } },
+      // Kardesli sipariste tum ogrenciler gosterilir (order.studentName yalniz ilk ogrenci)
+      students: { select: { firstName: true, lastName: true }, orderBy: { createdAt: 'asc' } }
+    },
+    orderBy: { createdAt: 'desc' },
+    skip: (safePage - 1) * limit,
+    take: limit,
+  })
 
-  const orders = rawOrders.map(o => ({ ...o, className: o.class.name }))
+  const orders = rawOrders.map(o => ({
+    ...o,
+    className: o.class.name,
+    studentNames: o.students.length > 0
+      ? o.students.map(s => `${s.firstName} ${s.lastName}`.trim()).join(', ')
+      : o.studentName
+  }))
   return { orders, deliveryType: school.deliveryType, total }
 }
 
@@ -129,7 +140,7 @@ export default async function MudurSiparislerPage(
                       </TableCell>
                       <TableCell>{order.className}</TableCell>
                       <TableCell className="font-medium">
-                        {order.studentName}
+                        {order.studentNames}
                       </TableCell>
                       <TableCell>
                         <div>
@@ -146,7 +157,7 @@ export default async function MudurSiparislerPage(
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
-                        {formatDateTime(order.createdAt)}
+                        {formatDateTime(order.createdAt, locale)}
                       </TableCell>
                     </TableRow>
                   ))}

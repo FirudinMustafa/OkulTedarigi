@@ -8,6 +8,7 @@ import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
+import { getPayoutSummaries } from '@/lib/commission'
 
 const safe = escapeCsvValue
 
@@ -37,24 +38,14 @@ export async function GET(request: Request) {
       )
     }
 
-    // Tum aktif okullari hesapla (veya secili okul)
-    const schools = await prisma.school.findMany({
-      where: { isActive: true, ...(schoolId ? { id: schoolId } : {}) },
-      include: {
-        classes: {
-          include: {
-            orders: {
-              where: {
-                status: {
-                  in: COMMISSION_STATUSES as OrderStatus[]
-                }
-              }
-            }
-          }
-        },
-        schoolPayments: { orderBy: { createdAt: 'desc' } }
-      },
-      orderBy: { name: 'asc' }
+    // Hakedis ekraniyla AYNI hesap (lib/commission). Pasif okullar da dahil: hakedisi
+    // veya odemesi olan pasif okul mutabakattan dusmesin.
+    const summaries = (await getPayoutSummaries(schoolId ? { schoolId } : {}))
+      .filter(s => s.isActive || s.commission > 0 || s.paid > 0 || s.pendingPayments > 0)
+    const payments = await prisma.schoolPayment.findMany({
+      where: schoolId ? { schoolId } : {},
+      select: { period: true, amount: true, status: true, createdAt: true, school: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
     })
 
     // ---- Excel olustur ----
@@ -76,21 +67,21 @@ export async function GET(request: Request) {
     // ==================== SAYFA 1: HAKEDIS OZETI ====================
     const wsOzet = workbook.addWorksheet('Hakedis Ozeti', { properties: { tabColor: { argb: primaryColor } } })
 
-    wsOzet.mergeCells('A1:G1')
+    wsOzet.mergeCells('A1:I1')
     const titleCell = wsOzet.getCell('A1')
     titleCell.value = 'Hakedis Ozeti - Okul Bazli'
     titleCell.font = { bold: true, size: 16, color: { argb: '92400E' } }
     titleCell.alignment = { horizontal: 'left', vertical: 'middle' }
     wsOzet.getRow(1).height = 35
 
-    wsOzet.mergeCells('A2:G2')
+    wsOzet.mergeCells('A2:I2')
     const subtitleCell = wsOzet.getCell('A2')
     subtitleCell.value = `Olusturma: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })}`
     subtitleCell.font = { size: 10, color: { argb: '6B7280' }, italic: true }
 
     wsOzet.addRow([])
 
-    const headers = ['#', 'Okul', 'Siparis Sayisi', 'Toplam Ciro (TL)', 'Toplam Hakedis (TL)', 'Verilen (TL)', 'Kalan (TL)']
+    const headers = ['#', 'Okul', 'Siparis Sayisi', 'Toplam Ciro (TL)', 'Toplam Hakedis (TL)', 'Verilen (TL)', 'Kalan (TL)', 'Onay Bekleyen (TL)', 'Fazla Odeme (TL)']
     const headerRow = wsOzet.addRow(headers)
     headerRow.eachCell((cell) => {
       cell.fill = headerFill
@@ -105,31 +96,20 @@ export async function GET(request: Request) {
     let totalCommissionAll = 0
     let totalPaidAll = 0
     let totalPendingAll = 0
+    let totalAwaitingAll = 0
+    let totalOverpaidAll = 0
 
-    schools.forEach((school, idx) => {
-      let totalCommission = 0
-      let totalOrders = 0
-      let totalRevenue = 0
+    summaries.forEach((s, idx) => {
+      totalOrdersAll += s.totalOrders
+      totalRevenueAll += s.totalRevenue
+      totalCommissionAll += s.commission
+      totalPaidAll += s.paid
+      totalPendingAll += s.remaining
+      totalAwaitingAll += s.pendingPayments
+      totalOverpaidAll += s.overpaid
 
-      school.classes.forEach(cls => {
-        const classOrders = cls.orders
-        totalOrders += classOrders.length
-        totalCommission += Number(cls.commissionAmount) * classOrders.length
-        totalRevenue += classOrders.reduce((acc, o) => acc + Number(o.totalAmount), 0)
-      })
-
-      const paid = school.schoolPayments
-        .filter(p => p.status === 'PAID')
-        .reduce((acc, p) => acc + Number(p.amount), 0)
-      const pending = totalCommission - paid > 0 ? totalCommission - paid : 0
-
-      totalOrdersAll += totalOrders
-      totalRevenueAll += totalRevenue
-      totalCommissionAll += totalCommission
-      totalPaidAll += paid
-      totalPendingAll += pending
-
-      const row = wsOzet.addRow([idx + 1, safe(school.name), totalOrders, totalRevenue, totalCommission, paid, pending])
+      const name = s.isActive ? s.name : `${s.name} (Pasif)`
+      const row = wsOzet.addRow([idx + 1, safe(name), s.totalOrders, s.totalRevenue, s.commission, s.paid, s.remaining, s.pendingPayments, s.overpaid])
       const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'FEF3C7' : 'FFFFFF' } }
       row.eachCell((cell, colNumber) => {
         cell.fill = stripeFill
@@ -140,13 +120,15 @@ export async function GET(request: Request) {
       row.getCell(5).numFmt = currencyFormat
       row.getCell(6).numFmt = currencyFormat
       row.getCell(7).numFmt = currencyFormat
+      row.getCell(8).numFmt = currencyFormat
+      row.getCell(9).numFmt = currencyFormat
       row.getCell(6).font = { bold: true, color: { argb: '16A34A' } }
       row.getCell(7).font = { bold: true, color: { argb: 'D97706' } }
       row.height = 24
     })
 
     // Toplam satiri
-    const totalRow = wsOzet.addRow(['', 'TOPLAM', totalOrdersAll, totalRevenueAll, totalCommissionAll, totalPaidAll, totalPendingAll])
+    const totalRow = wsOzet.addRow(['', 'TOPLAM', totalOrdersAll, totalRevenueAll, totalCommissionAll, totalPaidAll, totalPendingAll, totalAwaitingAll, totalOverpaidAll])
     totalRow.eachCell((cell, colNumber) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FDE68A' } }
       cell.font = { bold: true, size: 11, color: { argb: '92400E' } }
@@ -162,6 +144,8 @@ export async function GET(request: Request) {
     totalRow.getCell(5).numFmt = currencyFormat
     totalRow.getCell(6).numFmt = currencyFormat
     totalRow.getCell(7).numFmt = currencyFormat
+    totalRow.getCell(8).numFmt = currencyFormat
+    totalRow.getCell(9).numFmt = currencyFormat
     totalRow.height = 28
 
     wsOzet.getColumn(1).width = 6
@@ -171,6 +155,8 @@ export async function GET(request: Request) {
     wsOzet.getColumn(5).width = 20
     wsOzet.getColumn(6).width = 18
     wsOzet.getColumn(7).width = 18
+    wsOzet.getColumn(8).width = 18
+    wsOzet.getColumn(9).width = 18
 
     // ==================== SAYFA 2: ODEME GECMISI ====================
     const wsOdeme = workbook.addWorksheet('Odeme Gecmisi', { properties: { tabColor: { argb: '16A34A' } } })
@@ -194,15 +180,13 @@ export async function GET(request: Request) {
     })
     odemeHeaderRow.height = 28
 
-    const allPayments = schools.flatMap(s =>
-      s.schoolPayments.map(p => ({
-        schoolName: s.name,
-        period: p.period,
-        amount: Number(p.amount),
-        status: p.status,
-        createdAt: p.createdAt
-      }))
-    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    const allPayments = payments.map(p => ({
+      schoolName: p.school.name,
+      period: p.period,
+      amount: Number(p.amount),
+      status: p.status,
+      createdAt: p.createdAt
+    }))
 
     allPayments.forEach((p, idx) => {
       const row = wsOdeme.addRow([

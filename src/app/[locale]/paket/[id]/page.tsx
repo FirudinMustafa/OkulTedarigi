@@ -144,11 +144,17 @@ export default function PaketPage() {
   const updateStudent = (idx: number, field: keyof StudentRow, value: string) => {
     setStudents(prev => prev.map((s, i) => i === idx ? { ...s, [field]: field === 'section' ? value.toUpperCase().slice(0, 1) : value } : s))
   }
+  // Ogrenci sayisi degisince toplam degisir: uygulanmis indirim eski tutara gore
+  // hesaplandigi icin kaldirilir (veli tekrar uygular, sunucu yeni tutarla dogrular).
   const addStudent = () => {
+    if (students.length >= MAX_STUDENTS) return
     setStudents(prev => prev.length >= MAX_STUDENTS ? prev : [...prev, { firstName: '', lastName: '', section: '' }])
+    resetDiscount()
   }
   const removeStudent = (idx: number) => {
+    if (students.length === 1) return
     setStudents(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))
+    resetDiscount()
   }
 
   // Form state - Ek Alanlar
@@ -166,6 +172,10 @@ export default function PaketPage() {
   const [discountError, setDiscountError] = useState("")
   const [discountLoading, setDiscountLoading] = useState(false)
   const [discountAvailable, setDiscountAvailable] = useState(false)
+  const resetDiscount = () => {
+    setDiscountApplied(null)
+    setDiscountError("")
+  }
 
   // Form state - Yasal Onaylar
   const [acceptMesafeliSatis, setAcceptMesafeliSatis] = useState(false)
@@ -410,7 +420,8 @@ export default function PaketPage() {
     setDiscountError("")
 
     try {
-      const baseTotal = Number(classData?.package.price || 0) * students.length
+      // Sunucudaki checkout ile ayni taban: (ozellestirilebilirse secili kalemler) x ogrenci
+      const baseTotal = Math.round(getUnitPrice() * students.length * 100) / 100
       const res = await fetch("/api/veli/discount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -145,7 +145,8 @@ export type AdminSchoolUpdateBody = z.infer<typeof adminSchoolUpdateSchema>
 export const adminClassCreateSchema = z.object({
   name: noHtmlString(1, 100),
   schoolId: z.string().trim().min(1).max(40),
-  packageId: z.string().trim().min(1).max(40).optional().nullable(),
+  // "Paket yok" secimi formdan "" gelebilir -> null (aksi halde min(1) 400 verir)
+  packageId: z.preprocess(v => (v === '' ? null : v), z.string().trim().min(1).max(40).optional().nullable()),
   commissionAmount: z.coerce.number().nonnegative('Komisyon negatif olamaz').max(1_000_000).optional(),
   // Cok dilli sinif adi (opsiyonel)
   name_en: translationString,

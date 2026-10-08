@@ -77,7 +77,7 @@ async function getSchoolReports(schoolId: string, year?: string) {
     school,
     totalOrders: allOrders.length,
     completedOrders: allOrders.filter((o: OrderItem) => o.status === 'COMPLETED').length,
-    cancelledOrders: allOrders.filter((o: OrderItem) => o.status === 'CANCELLED').length,
+    cancelledOrders: allOrders.filter((o: OrderItem) => o.status === 'CANCELLED' || o.status === 'REFUNDED').length,
     ordersByStatus,
     ordersByDeliveryType,
     classStat,

@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { COMMISSION_STATUSES } from '@/lib/constants'
-import type { OrderStatus } from '@prisma/client'
+import { getSchoolPayoutSummary, round2, toKurus } from '@/lib/commission'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -72,70 +71,61 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: t('adminMisc.descriptionTooLong') }, { status: 400 })
     }
 
-    // Okulu komisyon hesabı için ihtiyaç duyulan ilişkilerle çek
-    const school = await prisma.school.findUnique({
-      where: { id: schoolId },
-      include: {
-        classes: {
-          include: {
-            orders: {
-              where: {
-                status: {
-                  in: COMMISSION_STATUSES as OrderStatus[]
-                }
-              },
-              select: { id: true }
-            }
-          }
-        },
-        schoolPayments: { select: { amount: true, status: true } }
+    const amountKurus = toKurus(numericAmount)
+    const now = new Date()
+    const period = now.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' })
+
+    // Over-commitment guard + kayit TEK transaction icinde, okul satiri kilitli:
+    // iki sekme/iki admin ayni anda "Tamami" derse ikincisi birincinin kaydini gorur.
+    type Result =
+      | { kind: 'notFound' }
+      | { kind: 'exceeds'; total: number; committed: number; remaining: number }
+      | { kind: 'ok'; payment: { id: string; school: { id: string; name: string } } }
+    const result: Result = await prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM schools WHERE id = ${schoolId} FOR UPDATE`
+      if (locked.length === 0) return { kind: 'notFound' }
+
+      const summary = await getSchoolPayoutSummary(schoolId, tx)
+      if (!summary) return { kind: 'notFound' }
+
+      // amount + (mevcut PAID + PENDING) <= toplam hakedis (kurus bazinda)
+      const committed = round2(summary.paid + summary.pendingPayments)
+      if (amountKurus > toKurus(summary.commission) - toKurus(committed)) {
+        return { kind: 'exceeds', total: summary.commission, committed, remaining: summary.remaining }
       }
+
+      const payment = await tx.schoolPayment.create({
+        data: {
+          schoolId,
+          amount: amountKurus / 100,
+          description: description?.trim() || null,
+          period,
+          // Tek adim: admin "Odeme Yap" dediginde odeme yapilmis sayilir
+          status: 'PAID',
+          paymentDate: now,
+          paidAt: now
+        },
+        select: { id: true, school: { select: { id: true, name: true } } }
+      })
+      return { kind: 'ok', payment }
     })
-    if (!school) {
+
+    if (result.kind === 'notFound') {
       return NextResponse.json({ error: t('adminMisc.schoolNotFound') }, { status: 404 })
     }
-
-    // Server-side over-commitment guard:
-    // amount + (mevcut PAID + PENDING) <= toplam komisyon olmalı.
-    let totalCommission = 0
-    for (const c of school.classes) {
-      totalCommission += Number(c.commissionAmount) * c.orders.length
-    }
-    const alreadyCommitted = school.schoolPayments.reduce(
-      (acc, p) => acc + Number(p.amount), 0
-    )
-    const remaining = totalCommission - alreadyCommitted
-    if (numericAmount > remaining + 0.001) {
+    if (result.kind === 'exceeds') {
       return NextResponse.json(
         {
           error: t('adminMisc.amountExceedsCommission', {
-            total: totalCommission.toFixed(2),
-            committed: alreadyCommitted.toFixed(2),
-            remaining: remaining.toFixed(2)
+            total: result.total.toFixed(2),
+            committed: result.committed.toFixed(2),
+            remaining: result.remaining.toFixed(2)
           })
         },
         { status: 400 }
       )
     }
-
-    const now = new Date()
-    const period = now.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
-
-    const payment = await prisma.schoolPayment.create({
-      data: {
-        schoolId,
-        amount: numericAmount,
-        description: description?.trim() || null,
-        period,
-        // Tek adim: admin "Odeme Yap" dediginde odeme yapilmis sayilir
-        status: 'PAID',
-        paymentDate: now,
-        paidAt: now
-      },
-      include: {
-        school: { select: { id: true, name: true } }
-      }
-    })
+    const payment = result.payment
 
     await logAction({
       userId: session.id,

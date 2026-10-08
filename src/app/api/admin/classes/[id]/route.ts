@@ -6,6 +6,8 @@ import { adminClassUpdateSchema, formatZodError } from '@/lib/validators'
 import { buildTranslationData } from '@/lib/i18n-content'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 
 export async function GET(
   request: Request,
@@ -104,6 +106,21 @@ export async function PUT(
       updateData.commissionAmount = c
     }
 
+    // Odenmis siparisi olan sinif baska okula tasinamaz: Order'da schoolId yok, okul
+    // iliskisi sinif uzerinden — tasima gecmis siparis/ciro/hakedisi yeni okula gecirir
+    // ve eski mudur kendi siparislerini, yeni mudur baskasinin velilerini gorur (KVKK).
+    if (typeof updateData.schoolId === 'string') {
+      const current = await prisma.class.findUnique({ where: { id }, select: { schoolId: true } })
+      if (current && current.schoolId !== updateData.schoolId) {
+        const paidOrders = await prisma.order.count({
+          where: { classId: id, status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
+        })
+        if (paidOrders > 0) {
+          return NextResponse.json({ error: t('catalog.classHasOrdersCannotMove', { count: paidOrders }) }, { status: 409 })
+        }
+      }
+    }
+
     // FK existence checks (kullanici dostu hata mesaji icin)
     if (typeof updateData.schoolId === 'string') {
       const school = await prisma.school.findUnique({
@@ -178,7 +195,8 @@ export async function DELETE(
     const activeOrderCount = await prisma.order.count({
       where: {
         classId: id,
-        status: { notIn: ['CANCELLED', 'REFUNDED'] }
+        // Odenmemis (terk edilmis) siparisler admin listesinde gorunmez; silmeyi engellemesin
+        status: { notIn: ['CANCELLED', 'REFUNDED', ...UNPAID_STATUSES] as OrderStatus[] }
       }
     })
 

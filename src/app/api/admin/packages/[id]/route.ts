@@ -6,6 +6,8 @@ import { NO_HTML_REGEX } from '@/lib/validators'
 import { buildTranslationData } from '@/lib/i18n-content'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 
 export async function GET(
   request: Request,
@@ -151,6 +153,10 @@ export async function PUT(
       if (items.length > 100) {
         return NextResponse.json({ error: t('catalog.packageMax100Items') }, { status: 400 })
       }
+      // Bos kalem listesi paketi kalemsiz birakir (ozellestirilebilir pakette veli hic secim yapamaz)
+      if (items.length === 0) {
+        return NextResponse.json({ error: t('catalog.packageNeedsItem') }, { status: 400 })
+      }
       for (const item of items) {
         if (!item.name || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 200) {
           return NextResponse.json({ error: t('catalog.itemNameLength') }, { status: 400 })
@@ -168,25 +174,32 @@ export async function PUT(
         }
       }
 
-      await prisma.packageItem.deleteMany({
-        where: { packageId: id }
-      })
-
-      await prisma.packageItem.createMany({
-        data: items.map((item: { name: string; quantity: number; unitPrice?: number; price?: number; name_en?: string; name_de?: string; name_ar?: string }) => ({
-          packageId: id,
-          name: item.name.trim(),
-          ...buildTranslationData('name', { en: item.name_en, de: item.name_de, ar: item.name_ar }),
-          quantity: item.quantity || 1,
-          price: item.unitPrice !== undefined ? item.unitPrice : (item.price || 0)
-        }))
-      })
     }
 
-    const pkg = await prisma.package.update({
-      where: { id },
-      data: packageData,
-      include: { items: true }
+    // Kalem degisimi + paket guncellemesi TEK transaction: createMany hata verirse
+    // paket kalemsiz kalmasin.
+    const pkg = await prisma.$transaction(async (tx) => {
+      if (items) {
+        await tx.packageItem.deleteMany({
+          where: { packageId: id }
+        })
+
+        await tx.packageItem.createMany({
+          data: items.map((item: { name: string; quantity: number; unitPrice?: number; price?: number; name_en?: string; name_de?: string; name_ar?: string }) => ({
+            packageId: id,
+            name: item.name.trim(),
+            ...buildTranslationData('name', { en: item.name_en, de: item.name_de, ar: item.name_ar }),
+            quantity: item.quantity || 1,
+            price: item.unitPrice !== undefined ? item.unitPrice : (item.price || 0)
+          }))
+        })
+      }
+
+      return tx.package.update({
+        where: { id },
+        data: packageData,
+        include: { items: true }
+      })
     })
 
     await logAction({
@@ -240,46 +253,41 @@ export async function DELETE(
       return NextResponse.json({ error: t('catalog.packageNotFound') }, { status: 404 })
     }
 
-    // Aktif siparis kontrolu
-    const activeOrders = await prisma.order.count({
+    // Odenmis (tamamlanmis/iptal/iade dahil) HERHANGI bir siparisi olan paket kalici
+    // silinemez: siparisler, faturalar, ciro ve hakedis gecmisi pakete bagli (VUK/TTK
+    // saklama — okul silme ile ayni kural). Bu durumda paket pasife cekilmeli.
+    const paidOrders = await prisma.order.count({
       where: {
         packageId: id,
-        status: { notIn: ['COMPLETED', 'CANCELLED', 'REFUNDED'] }
+        status: { notIn: UNPAID_STATUSES as OrderStatus[] }
       }
     })
 
-    if (activeOrders > 0) {
+    if (paidOrders > 0) {
       return NextResponse.json(
-        { error: t('catalog.packageHasActiveOrders', { count: activeOrders }) },
-        { status: 400 }
+        { error: t('catalog.packageHasOrdersDeactivate', { count: paidOrders }) },
+        { status: 409 }
       )
     }
 
-    // Bagli verileri sirayla sil
-    // 1. Bu pakete ait siparis iptal taleplerini sil
-    await prisma.cancelRequest.deleteMany({
-      where: { order: { packageId: id } }
-    })
-
-    // 2. Bu pakete ait siparisleri sil (sadece tamamlanmis/iptal/iade)
-    await prisma.order.deleteMany({
-      where: { packageId: id }
-    })
-
-    // 3. Siniflardaki paket atamasini kaldir
-    await prisma.class.updateMany({
-      where: { packageId: id },
-      data: { packageId: null }
-    })
-
-    // 4. Paket itemlarini sil
-    await prisma.packageItem.deleteMany({
-      where: { packageId: id }
-    })
-
-    // 5. Paketi sil
-    await prisma.package.delete({
-      where: { id }
+    // Yalniz odenmemis (terk edilmis) siparisler + paket: hepsi tek transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.cancelRequest.deleteMany({
+        where: { order: { packageId: id, status: { in: UNPAID_STATUSES as OrderStatus[] } } }
+      })
+      await tx.order.deleteMany({
+        where: { packageId: id, status: { in: UNPAID_STATUSES as OrderStatus[] } }
+      })
+      await tx.class.updateMany({
+        where: { packageId: id },
+        data: { packageId: null }
+      })
+      await tx.packageItem.deleteMany({
+        where: { packageId: id }
+      })
+      await tx.package.delete({
+        where: { id }
+      })
     })
 
     await logAction({

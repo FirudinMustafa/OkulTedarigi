@@ -66,9 +66,26 @@ export async function POST(request: Request) {
     return redirectTo(`/${locale}/odeme?reason=failed`)
   }
 
+  // REFERENCE_CODE (Nkolay islem no) zorunlu: iade icin gerekli ve ayni odemenin
+  // baska siparise "tekrar oynatilmasini" engellemek icin tekil olmali.
+  const paymentRef = verdict.paynkolayReference?.trim()
+  if (!paymentRef) {
+    console.error('[paynkolay/callback] REFERENCE_CODE yok', sanitizeForLog({ orderNumber: refCode }))
+    return redirectTo(`/${locale}/odeme?reason=failed`)
+  }
+
   // Tutar tutarliligi (taksitte vade farki ile AUTHORIZATION_AMOUNT >= principal olabilir).
   // Eksik tahsilati reddet (taksitte vade farki ile USTUNE cikabilir; ALTINA inemez). Epsilon yalniz float toleransi.
-  if (verdict.authorizationAmount != null && verdict.authorizationAmount + 0.001 < Number(order.totalAmount)) {
+  if (verdict.authorizationAmount === undefined) {
+    console.error('[paynkolay/callback] AUTHORIZATION_AMOUNT yok', sanitizeForLog({ orderNumber: refCode }))
+    return redirectTo(`/${locale}/odeme?reason=failed`)
+  }
+  if (Number.isNaN(verdict.authorizationAmount)) {
+    // Bicim taninmadi; alan hash kapsaminda oldugu icin manipule edilemez — reddetmek yerine logla.
+    console.error('[paynkolay/callback] AUTHORIZATION_AMOUNT okunamadi', sanitizeForLog({
+      orderNumber: refCode, raw: body.AUTHORIZATION_AMOUNT,
+    }))
+  } else if (verdict.authorizationAmount + 0.001 < Number(order.totalAmount)) {
     console.error('[paynkolay/callback] Tutar uyusmazligi', sanitizeForLog({
       orderNumber: refCode,
       expectedAmount: Number(order.totalAmount),
@@ -77,19 +94,68 @@ export async function POST(request: Request) {
     return redirectTo(`/${locale}/odeme?reason=failed`)
   }
 
-  // Idempotent claim: yalnizca PAYMENT_PENDING ise PAID'e cevir.
-  const claim = await prisma.order.updateMany({
-    where: { id: order.id, status: 'PAYMENT_PENDING' },
-    data: {
-      status: 'PAID',
-      paidAt: new Date(),
-      paymentId: verdict.paynkolayReference || `PNK_${Date.now()}`,
-    },
+  // Replay korumasi: ayni Nkolay islemi baska bir siparisi odemis sayamaz.
+  const reused = await prisma.order.findFirst({
+    where: { paymentId: paymentRef, id: { not: order.id } },
+    select: { orderNumber: true },
   })
+  if (reused) {
+    console.error('[paynkolay/callback] REFERENCE_CODE baska sipariste kullanilmis (replay?)', sanitizeForLog({
+      orderNumber: refCode, otherOrder: reused.orderNumber, ip,
+    }))
+    await logAction({
+      action: 'PAYMENT_REPLAY_REJECTED',
+      entity: 'ORDER',
+      entityId: order.id,
+      ipAddress: ip,
+      details: { orderNumber: refCode, otherOrder: reused.orderNumber },
+    }).catch(() => {})
+    return redirectTo(`/${locale}/odeme?reason=failed`)
+  }
 
-  if (claim.count === 0) {
-    // Zaten islenmis (cift callback) — dogrudan onay sayfasina.
-    return redirectTo(`/${locale}/siparis-onay/${order.orderNumber}`)
+  // Idempotent claim: yalnizca PAYMENT_PENDING ise PAID'e cevir.
+  // paymentId DB'de UNIQUE — yaris durumunda ikinci claim P2002 ile duser.
+  let claimCount = 0
+  try {
+    const claim = await prisma.order.updateMany({
+      where: { id: order.id, status: 'PAYMENT_PENDING' },
+      data: {
+        status: 'PAID',
+        paidAt: new Date(),
+        paymentId: paymentRef,
+      },
+    })
+    claimCount = claim.count
+  } catch (err) {
+    if ((err as { code?: string })?.code === 'P2002') {
+      console.error('[paynkolay/callback] paymentId tekillik ihlali (replay yarisi)', sanitizeForLog({ orderNumber: refCode }))
+      return redirectTo(`/${locale}/odeme?reason=failed`)
+    }
+    throw err
+  }
+
+  if (claimCount === 0) {
+    // Ya cift callback (zaten PAID ve sonrasi) ya da siparis bu arada iptal edilmis.
+    const current = await prisma.order.findUnique({
+      where: { id: order.id },
+      select: { status: true, paymentId: true },
+    })
+    const alreadyPaid = current && !['NEW', 'PAYMENT_PENDING', 'CANCELLED', 'REFUNDED'].includes(current.status)
+    if (alreadyPaid && current?.paymentId === paymentRef) {
+      return redirectTo(`/${locale}/siparis-onay/${order.orderNumber}`)
+    }
+    // Para cekildi ama siparis odenebilir durumda degil — admin elle iade etmeli.
+    console.error('[paynkolay/callback] Odeme alindi ama siparis odenebilir durumda degil', sanitizeForLog({
+      orderNumber: refCode, status: current?.status, paymentRef,
+    }))
+    await logAction({
+      action: 'PAYMENT_ON_UNPAYABLE_ORDER',
+      entity: 'ORDER',
+      entityId: order.id,
+      ipAddress: ip,
+      details: { orderNumber: refCode, status: current?.status, paymentId: paymentRef, amount: verdict.authorizationAmount },
+    }).catch(() => {})
+    return redirectTo(`/${locale}/odeme?reason=failed`)
   }
 
   const effectiveAmount = Number(order.totalAmount)

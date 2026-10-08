@@ -29,12 +29,17 @@ export async function POST(
             package: { include: { items: true } }
           }
         },
+        cancelRequest: { select: { status: true } },
         _count: { select: { students: true } }
       }
     })
 
     if (!order) {
       return NextResponse.json({ error: t('orders.orderNotFound') }, { status: 404 })
+    }
+
+    if (order.cancelRequest?.status === 'PENDING') {
+      return NextResponse.json({ error: t('orders.pendingCancelRequest') }, { status: 409 })
     }
 
     // Teslimat tipi okul uzerinden alinir

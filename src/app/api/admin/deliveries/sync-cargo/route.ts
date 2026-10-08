@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { getTrackingInfo } from '@/lib/yurtici-kargo'
-import { sendDeliveryConfirmation } from '@/lib/email'
+import { autoInvoiceOrderOnComplete } from '@/lib/auto-invoice'
 import { OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -47,9 +47,7 @@ export async function POST(request: Request) {
         orderNumber: true,
         trackingNo: true,
         status: true,
-        email: true,
-        parentName: true,
-        locale: true
+        invoiceNo: true
       }
     })
 
@@ -77,19 +75,35 @@ export async function POST(request: Request) {
         // Yurtici Kargo status kodlari (yurtici-kargo.ts uretir):
         // - TESLIM_EDILDI: Teslim edildi (deliveryDate dolu veya "Teslim Edildi")
         // - IN_TRANSIT: Dagitimda / yolda
+        // Teslim edilen kargo dogrudan COMPLETED olur: "Tamamlandi" butonuyla ayni sonuc
+        // (DELIVERED hicbir sekmede/aksiyonda yer almadigi icin siparis takilip kaliyor ve
+        // otomatik e-fatura hic kesilmiyordu).
         if (['TESLIM_EDILDI', 'DELIVERED'].includes(trackingInfo.statusCode)) {
-          newStatus = OrderStatus.DELIVERED
+          newStatus = OrderStatus.COMPLETED
         }
 
         if (newStatus && newStatus !== order.status) {
-          // Durumu guncelle
-          await prisma.order.update({
-            where: { id: order.id },
+          // Atomic: yalnizca hala SHIPPED ise guncelle (bu arada degisen siparise dokunma)
+          const upd = await prisma.order.updateMany({
+            where: { id: order.id, status: 'SHIPPED' },
             data: {
               status: newStatus,
               deliveredAt: new Date()
             }
           })
+          if (upd.count === 0) {
+            results.push({
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              trackingNo: order.trackingNo,
+              previousStatus: order.status,
+              newStatus: null,
+              cargoStatus: trackingInfo.status,
+              updated: false,
+              error: t('orders.statusChanged')
+            })
+            continue
+          }
 
           results.push({
             orderId: order.id,
@@ -117,15 +131,10 @@ export async function POST(request: Request) {
             }
           })
 
-          // Teslim onay maili (best-effort)
-          if (newStatus === OrderStatus.DELIVERED && order.email) {
-            sendDeliveryConfirmation({
-              email: order.email,
-              orderNumber: order.orderNumber,
-              parentName: order.parentName,
-              deliveryDate: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-              locale: (order.locale ?? undefined) as ('tr'|'en'|'de'|'ar' | undefined)
-            }).catch(err => console.error('[email] sendDeliveryConfirmation sync-cargo hatasi:', err))
+          // COMPLETED: otomatik e-fatura (idempotent, best-effort) — tekli/toplu "Tamamlandi" ile ayni.
+          // Veliye teslim maili GONDERILMEZ ("veliye tek mail" kurali; tekli/toplu tamamlama da gondermiyor).
+          if (!order.invoiceNo) {
+            await autoInvoiceOrderOnComplete(order.id, session.id)
           }
         } else {
           results.push({

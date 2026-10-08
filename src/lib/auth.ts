@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import { createHash } from 'crypto'
 import { prisma } from './prisma'
 
 const KNOWN_WEAK_SECRETS = [
@@ -37,6 +38,12 @@ export interface JWTPayload {
   type: 'admin' | 'mudur'
   name: string
   schoolId?: string // Mudur icin
+  pwdFp?: string // Mudur icin: sifre hash parmak izi (sifre degisince eski oturumlar duser)
+}
+
+/** Mudur sifre hash'inin kisa parmak izi — JWT'ye konur, sifre degisince eslesmez. */
+export function passwordFingerprint(passwordHash: string): string {
+  return createHash('sha256').update(passwordHash).digest('hex').slice(0, 16)
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -125,16 +132,20 @@ export async function getMudurSession(): Promise<JWTPayload | null> {
   if (!session || session.type !== 'mudur' || !session.schoolId) return null
 
   // Token icindeki okul DB'de hala aktif mi? (silinmis/pasif okul engellenir)
-  const cacheKey = `mudur:${session.schoolId}:${session.email}`
+  // Parmak izi olmayan (eski) token gecersiz: mudur bir kez yeniden giris yapar
+  if (!session.pwdFp) return null
+  const cacheKey = `mudur:${session.schoolId}:${session.email}:${session.pwdFp}`
   const cached = getCachedValidity(cacheKey)
   if (cached === false) return null
   if (cached === null) {
     const school = await prisma.school.findUnique({
       where: { id: session.schoolId },
-      select: { isActive: true, directorEmail: true }
+      select: { isActive: true, directorEmail: true, directorPassword: true }
     })
-    // Okul pasif veya email degistirilmisse session gecersiz
-    const valid = !!school?.isActive && school.directorEmail === session.email
+    // Okul pasif, email degistirilmis veya SIFRE degistirilmisse session gecersiz
+    // (sifre ele gecirildigi icin degistirildiyse eski oturum 7 gun daha surmesin)
+    const valid = !!school?.isActive && school.directorEmail === session.email &&
+      passwordFingerprint(school.directorPassword) === session.pwdFp
     setCachedValidity(cacheKey, valid)
     if (!valid) return null
   }

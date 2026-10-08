@@ -70,6 +70,7 @@ interface OrderType {
   package: { name: string; items?: { id: string; name: string; quantity: number; price: number }[] } | null
   items?: { id: string; name: string; quantity: number; price: number }[]
   students?: OrderStudent[]
+  cancelRequest?: { status: string } | null
 }
 
 // ============================================================
@@ -88,8 +89,10 @@ interface OrderType {
 // statusKey: status namespace anahtari (durum adi sekmeleri icin); 'tumu' icin null.
 const TABS = [
   { id: 'gelen',             statusKey: 'PAID',        statuses: ['PAID'] as string[] },
-  { id: 'hazirlaniyor',      statusKey: 'CONFIRMED',   statuses: ['CONFIRMED'] as string[] },
-  { id: 'dagitimda',         statusKey: 'SHIPPED',     statuses: ['SHIPPED'] as string[] },
+  // INVOICED: eski akistan kalan (fatura kesilince durum INVOICED'a cekiliyordu)
+  { id: 'hazirlaniyor',      statusKey: 'CONFIRMED',   statuses: ['CONFIRMED', 'INVOICED'] as string[] },
+  // DELIVERED: eski kargo senkronundan kalan siparisler (artik dogrudan COMPLETED olur)
+  { id: 'dagitimda',         statusKey: 'SHIPPED',     statuses: ['SHIPPED', 'DELIVERED'] as string[] },
   { id: 'teslim_edilemeyen', statusKey: 'UNDELIVERED', statuses: ['UNDELIVERED'] as string[] },
   { id: 'tamamlandi',        statusKey: 'COMPLETED',   statuses: ['COMPLETED'] as string[] },
   { id: 'iptal',             statusKey: 'CANCELLED',   statuses: ['CANCELLED', 'REFUNDED'] as string[] },
@@ -114,10 +117,12 @@ function getNextStep(order: OrderType): NextStep {
     case 'PAID':
       return { kind: 'confirm', labelKey: 'actionConfirm' }
     case 'CONFIRMED':
+    case 'INVOICED':
       return isCargo
         ? { kind: 'ship', labelKey: 'actionShip' }
         : { kind: 'school_dispatch', labelKey: 'actionSchoolDispatch' }
     case 'SHIPPED':
+    case 'DELIVERED':
       return { kind: 'complete', labelKey: 'actionComplete' }
     case 'UNDELIVERED':
       return { kind: 'redispatch', labelKey: 'actionRedispatch' }
@@ -136,9 +141,9 @@ const BULK_ACTIONS: Record<BulkActionKey, {
   icon: typeof FileText
 }> = {
   confirm:         { labelKey: 'bulkConfirm',        eligibleStatuses: ['PAID'],        icon: CheckCircle },
-  ship:            { labelKey: 'bulkShip',           eligibleStatuses: ['CONFIRMED'],   deliveryType: 'CARGO',           icon: Truck },
-  school_dispatch: { labelKey: 'bulkSchoolDispatch', eligibleStatuses: ['CONFIRMED'],   deliveryType: 'SCHOOL_DELIVERY', icon: ArrowRight },
-  complete:        { labelKey: 'bulkComplete',       eligibleStatuses: ['SHIPPED'],     icon: CheckCheck },
+  ship:            { labelKey: 'bulkShip',           eligibleStatuses: ['CONFIRMED', 'INVOICED'], deliveryType: 'CARGO',           icon: Truck },
+  school_dispatch: { labelKey: 'bulkSchoolDispatch', eligibleStatuses: ['CONFIRMED', 'INVOICED'], deliveryType: 'SCHOOL_DELIVERY', icon: ArrowRight },
+  complete:        { labelKey: 'bulkComplete',       eligibleStatuses: ['SHIPPED', 'DELIVERED'], icon: CheckCheck },
   undeliver:       { labelKey: 'bulkUndeliver',      eligibleStatuses: ['SHIPPED'],     icon: RotateCcw },
   redispatch:      { labelKey: 'bulkRedispatch',     eligibleStatuses: ['UNDELIVERED'], icon: RefreshCw },
 }
@@ -211,7 +216,7 @@ export default function SiparislerPage() {
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [bulkAction, setBulkAction] = useState<BulkActionKey | null>(null)
   const [bulkLoading, setBulkLoading] = useState(false)
-  const [bulkResult, setBulkResult] = useState<{ message: string; success: number; failed: number } | null>(null)
+  const [bulkResult, setBulkResult] = useState<{ message: string; success: number; failed: number; errors?: string[] } | null>(null)
 
   // Sayfa-genel sync loading (kargo durum sorgulama)
   const [syncLoading, setSyncLoading] = useState(false)
@@ -424,7 +429,7 @@ export default function SiparislerPage() {
   // eskiden burada doğrudan PUT {status:'REFUNDED'} yapılıyordu ve para hiç iade
   // edilmeden "başarılı" mesajı gösteriliyordu.
   const refundOrder = async (order: OrderType) => {
-    const tutar = Number(order.totalAmount).toFixed(2)
+    const tutar = formatPrice(order.totalAmount, locale)
     if (!confirm(t('confirmRefund', { orderNumber: order.orderNumber, amount: tutar }))) return
     setOrderBusy(order.id, t('refunding'))
     try {
@@ -567,17 +572,22 @@ export default function SiparislerPage() {
         body: JSON.stringify(body),
       })
       const data = await res.json().catch(() => ({}))
+      const results: { orderId: string; orderNumber: string; success: boolean; error?: string }[] =
+        Array.isArray(data.results) ? data.results : []
+      const failedResults = results.filter(r => !r.success)
       const success = data.summary?.success ?? 0
-      const failed = (data.summary?.failed ?? 0) + skipped
+      const failed = (data.summary?.failed ?? (res.ok ? 0 : ids.length)) + skipped
       const skipNote = skipped > 0 ? t('bulkSkipNote', { count: skipped }) : ''
       setBulkResult({
-        message: (data.message || t('bulkDone')) + skipNote,
+        message: (res.ok ? (data.message || t('bulkDone')) : (data.error || t('actionFailed'))) + skipNote,
         success,
         failed,
+        errors: failedResults.map(r => `${r.orderNumber}: ${r.error || t('actionFailed')}`),
       })
 
       await Promise.all([fetchOrders(), fetchTabCounts()])
-      setSelectedOrders(new Set())
+      // Basarisiz siparisler secili kalsin (admin tekrar deneyebilsin / hangileri kaldi gorsun)
+      setSelectedOrders(res.ok ? new Set(failedResults.map(r => r.orderId)) : new Set(ids))
     } catch (error) {
       console.error("Toplu islem hatasi:", error)
       setBulkResult({ message: t('genericError'), success: 0, failed: ids.length + skipped })
@@ -593,13 +603,19 @@ export default function SiparislerPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         credentials: 'include', body: JSON.stringify({})
       })
-      const data = await res.json()
-      if (data.success) {
-        alert(t('syncResult', { total: data.summary.total, updated: data.summary.updated }))
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.success) {
+        const errs = data.summary?.errors ? ` — ${t('syncErrors', { count: data.summary.errors })}` : ''
+        alert(t('syncResult', { total: data.summary.total, updated: data.summary.updated }) + errs)
         fetchOrders()
         fetchTabCounts()
+      } else {
+        alert(data.error || t('syncFailed'))
       }
-    } catch (error) { console.error('Kargo sync hatasi:', error) }
+    } catch (error) {
+      console.error('Kargo sync hatasi:', error)
+      alert(t('syncFailed'))
+    }
     finally { setSyncLoading(false) }
   }
 
@@ -1172,7 +1188,7 @@ export default function SiparislerPage() {
                           <p className="text-sm text-gray-500">{order.class.name}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{Number(order.totalAmount).toFixed(2)} TL</TableCell>
+                      <TableCell className="font-medium">{formatPrice(order.totalAmount, locale)} TL</TableCell>
                       <TableCell>
                         <div>
                           <span className="text-sm">{order.deliveryType === "CARGO" ? t('cargo') : t('schoolDelivery')}</span>
@@ -1188,6 +1204,9 @@ export default function SiparislerPage() {
                           </Badge>
                           {order.status === "COMPLETED" && !order.invoiceNo && (
                             <Badge className="bg-red-100 text-red-800">{t('invoiceMissing')}</Badge>
+                          )}
+                          {order.cancelRequest?.status === "PENDING" && (
+                            <Badge className="bg-orange-100 text-orange-800">{t('pendingCancelBadge')}</Badge>
                           )}
                         </div>
                       </TableCell>
@@ -1343,9 +1362,9 @@ export default function SiparislerPage() {
               <div className="border-t pt-4">
                 <h4 className="font-medium text-gray-900 mb-2">{t('paymentHeading')}</h4>
                 <div className="text-sm space-y-1">
-                  <p><span className="text-gray-500">{t('amountFieldLabel')}</span> <span className="font-medium">{Number(selectedOrder.totalAmount).toFixed(2)} TL</span></p>
+                  <p><span className="text-gray-500">{t('amountFieldLabel')}</span> <span className="font-medium">{formatPrice(selectedOrder.totalAmount, locale)} TL</span></p>
                   {selectedOrder.discountCode && (
-                    <p><span className="text-gray-500">{t('discountLabel')}</span> <span className="text-green-600">{selectedOrder.discountCode} (-{Number(selectedOrder.discountAmount).toFixed(2)} TL)</span></p>
+                    <p><span className="text-gray-500">{t('discountLabel')}</span> <span className="text-green-600">{selectedOrder.discountCode} (-{formatPrice(selectedOrder.discountAmount ?? 0, locale)} TL)</span></p>
                   )}
                   <p><span className="text-gray-500">{t('methodLabel')}</span> {selectedOrder.paymentMethod === "CREDIT_CARD" ? t('creditCard') : selectedOrder.paymentMethod || "-"}</p>
                   <p><span className="text-gray-500">{t('statusLabel')}</span> <Badge className={ORDER_STATUS_COLORS[selectedOrder.status] || ""}>{ts.has(selectedOrder.status) ? ts(selectedOrder.status) : selectedOrder.status}</Badge></p>
@@ -1402,6 +1421,11 @@ export default function SiparislerPage() {
                       <span className="text-green-600">{t('resultSuccess', { count: bulkResult.success })}</span>
                       {bulkResult.failed > 0 && <span className="text-red-600 ml-3">{t('resultFailed', { count: bulkResult.failed })}</span>}
                     </div>
+                    {bulkResult.errors && bulkResult.errors.length > 0 && (
+                      <ul className="mt-2 max-h-40 overflow-y-auto text-xs text-red-700 list-disc pl-4 space-y-0.5">
+                        {bulkResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                      </ul>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1430,7 +1454,12 @@ export default function SiparislerPage() {
               <>
                 <AlertDialogCancel disabled={bulkLoading}>{t('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleBulkAction}
+                  onClick={(e) => {
+                    // Radix AlertDialogAction tiklaninca dialogu kapatir; sonuc (basarili/
+                    // basarisiz listesi) ayni dialogda gosterilecegi icin kapanmayi engelle.
+                    e.preventDefault()
+                    handleBulkAction()
+                  }}
                   disabled={bulkLoading || (bulkAction !== null && bulkEligibility[bulkAction] === 0)}
                 >
                   {bulkLoading ? t('processing') : t('confirm')}

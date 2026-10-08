@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { ORDER_STATUS_LABELS } from '@/lib/constants'
+import { ORDER_STATUS_LABELS, REVENUE_STATUSES, UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus } from '@prisma/client'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
@@ -28,6 +29,10 @@ export async function GET(request: Request) {
 
     if (status) {
       where.status = status
+    } else {
+      // Odenmemis (terk edilmis checkout) siparisler listede/ciroda yer almaz —
+      // admin siparis listesi ve raporlarla ayni kural
+      where.status = { notIn: UNPAID_STATUSES as OrderStatus[] }
     }
     if (schoolId) {
       where.class = { schoolId }
@@ -54,9 +59,11 @@ export async function GET(request: Request) {
       }),
       prisma.order.count({ where }),
       prisma.order.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      // Ciro: yalniz ciroya dahil statuler (raporlar/dashboard ile ayni tanim)
       prisma.order.aggregate({
-        where: { ...where, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
-        _sum: { totalAmount: true }
+        where: { AND: [where, { status: { in: REVENUE_STATUSES as OrderStatus[] } }] },
+        _sum: { totalAmount: true },
+        _count: { _all: true }
       })
     ])
     const isTruncated = totalCount > orders.length
@@ -129,8 +136,12 @@ export async function GET(request: Request) {
     // Ozet verileri (DB-taraflı, kesme (take) limitinden bağımsız doğru toplamlar)
     const totalRevenue = Number(revenueAgg._sum.totalAmount || 0)
     const completedOrders = statusGroups.find(g => g.status === 'COMPLETED')?._count._all || 0
-    const cancelledOrders = statusGroups.find(g => g.status === 'CANCELLED')?._count._all || 0
-    const avgOrder = totalCount > 0 ? totalRevenue / totalCount : 0
+    const cancelledOrders = statusGroups
+      .filter(g => g.status === 'CANCELLED' || g.status === 'REFUNDED')
+      .reduce((a, g) => a + g._count._all, 0)
+    // Ortalama: ciro / ciroya dahil siparis adedi (iptaller paydaya girmez)
+    const revenueCount = revenueAgg._count._all
+    const avgOrder = revenueCount > 0 ? totalRevenue / revenueCount : 0
 
     const summaryData = [
       ['Toplam Siparis', totalCount],
@@ -283,7 +294,7 @@ export async function GET(request: Request) {
     // Ozet sayfasindaki Toplam Ciro ile farkli olabilir, o DB-genelidir)
     if (orders.length > 0) {
       const sheetRevenue = orders
-        .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
+        .filter(o => REVENUE_STATUSES.includes(o.status))
         .reduce((acc, o) => acc + Number(o.totalAmount), 0)
       const totalDiscounts = orders.reduce((acc, o) => acc + (o.discountAmount ? Number(o.discountAmount) : 0), 0)
       const tRow = wsDetay.addRow([

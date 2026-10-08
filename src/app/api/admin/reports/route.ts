@@ -6,28 +6,9 @@ import { REVENUE_STATUSES, COMMISSION_STATUSES, ACTIVE_SCHOOL_WHERE, UNPAID_STAT
 import { getPaymentCommissionRate } from '@/lib/settings'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
+import { resolveReportRange, rangeWhere, ymd } from '@/lib/report-range'
+import { orderCommission, round2 } from '@/lib/commission'
 
-const round2 = (n: number) => Math.round(n * 100) / 100
-
-// Sunucu yerel saatine gore gun siniri (mevcut "today/week/month" mantigiyla tutarli)
-function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
-}
-function endOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
-}
-// 'YYYY-MM-DD' -> yerel Date (UTC kaymasi olmadan)
-function parseYmd(s: string): Date | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
-  if (!m) return null
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-}
-function ymd(d: Date): string {
-  const y = d.getFullYear()
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  const da = String(d.getDate()).padStart(2, '0')
-  return `${y}-${mo}-${da}`
-}
 
 export async function GET(request: Request) {
   const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
@@ -38,44 +19,8 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || 'all'
-    const fromParam = searchParams.get('from')
-    const toParam = searchParams.get('to')
-
-    // Tarih araligi olustur: ozel from/to onceliklidir, yoksa period preset.
-    let gte: Date | undefined
-    let lte: Date | undefined
-    const now = new Date()
-
-    if (fromParam || toParam) {
-      const from = fromParam ? parseYmd(fromParam) : null
-      const to = toParam ? parseYmd(toParam) : null
-      if (from) gte = startOfDay(from)
-      if (to) lte = endOfDay(to)
-    } else {
-      switch (period) {
-        case 'today':
-          gte = startOfDay(now)
-          break
-        case 'yesterday': {
-          const y = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-          gte = startOfDay(y)
-          lte = endOfDay(y)
-          break
-        }
-        case 'week':
-          gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          break
-        case 'month':
-          gte = new Date(now.getFullYear(), now.getMonth(), 1)
-          break
-      }
-    }
-
-    const createdAt: { gte?: Date; lte?: Date } = {}
-    if (gte) createdAt.gte = gte
-    if (lte) createdAt.lte = lte
-    const dateWhere = (gte || lte) ? { createdAt } : {}
+    // Tarih araligi: Excel export ile AYNI fonksiyon (lib/report-range)
+    const dateWhere = rangeWhere(resolveReportRange(searchParams))
 
     const paymentCommissionRate = await getPaymentCommissionRate()
 
@@ -87,7 +32,8 @@ export async function GET(request: Request) {
             include: {
               school: { select: { id: true, name: true, deliveryType: true } }
             }
-          }
+          },
+          _count: { select: { students: true } }
         }
       }),
       prisma.school.count({ where: ACTIVE_SCHOOL_WHERE }),
@@ -107,11 +53,11 @@ export async function GET(request: Request) {
     const paymentCommissionAmount = round2(totalRevenue * paymentCommissionRate / 100)
     const netAfterPayment = round2(totalRevenue - paymentCommissionAmount)
 
-    // Okul hakedisi toplami (payments/summaries ile tutarli: hakedise dahil siparis basina class komisyonu)
+    // Okul hakedisi toplami (lib/commission ile ayni: siparis anindaki, ogrenci basina hakedis)
     const totalSchoolCommission = round2(
       orders
         .filter(o => COMMISSION_STATUSES.includes(o.status))
-        .reduce((acc, o) => acc + Number(o.class.commissionAmount), 0)
+        .reduce((acc, o) => acc + orderCommission(o, o.class.commissionAmount), 0)
     )
     const netProfit = round2(netAfterPayment - totalSchoolCommission)
 

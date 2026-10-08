@@ -95,6 +95,13 @@ export async function GET(
       )
     }
 
+    if (!classData.package.isActive) {
+      return NextResponse.json(
+        { error: t('veli.packageInactive') },
+        { status: 403 }
+      )
+    }
+
     // Basarili sorgu — meşru kullanıcı cezalandırılmasın
     await resetRateLimit(rlIdentifier)
 

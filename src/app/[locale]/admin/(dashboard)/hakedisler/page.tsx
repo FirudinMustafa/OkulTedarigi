@@ -31,6 +31,8 @@ interface SchoolPayment {
 interface SchoolSummary {
   id: string
   name: string
+  isActive: boolean
+  overpaid: number
   commissionRate: number
   totalOrders: number
   totalRevenue: number
@@ -113,12 +115,13 @@ export default function HakedislerPage() {
     if (!selectedSchool || submitting) return
     setPaymentError("")
 
-    const amount = parseFloat(paymentAmount)
+    const amount = parseFloat(paymentAmount.replace(',', '.'))
     if (isNaN(amount) || amount <= 0) {
       setPaymentError(t('invalidAmount'))
       return
     }
-    if (amount > selectedSchool.pending) {
+    // Kurus bazinda karsilastir: "Tamami" 26.95 iken pending 26.949999... olabilir
+    if (Math.round(amount * 100) > Math.round(selectedSchool.pending * 100)) {
       setPaymentError(t('amountExceeds', { value: formatPrice(selectedSchool.pending, locale) }))
       return
     }
@@ -260,7 +263,12 @@ export default function HakedislerPage() {
               <TableBody>
                 {schoolSummaries.map((school) => (
                   <TableRow key={school.id}>
-                    <TableCell className="font-medium">{school.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {school.name}
+                      {!school.isActive && (
+                        <Badge variant="secondary" className="ml-2">{t('inactiveSchool')}</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{school.totalOrders}</TableCell>
                     <TableCell>{tl(school.totalRevenue)}</TableCell>
                     <TableCell>{tl(school.commission)}</TableCell>
@@ -273,9 +281,11 @@ export default function HakedislerPage() {
                     <TableCell className="font-medium text-yellow-600">
                       {school.pending > 0
                         ? tl(school.pending)
-                        : school.pendingPayments > 0
-                          ? <span className="text-orange-600">{t('awaitingConfirmation')}</span>
-                          : <span className="text-green-500">{t('done')}</span>}
+                        : school.overpaid > 0
+                          ? <span className="text-red-600">{t('overpaid', { value: tl(school.overpaid) })}</span>
+                          : school.pendingPayments > 0
+                            ? <span className="text-orange-600">{t('awaitingConfirmation')}</span>
+                            : <span className="text-green-500">{t('done')}</span>}
                     </TableCell>
                     <TableCell className="text-right">
                       {school.pending > 0 && (

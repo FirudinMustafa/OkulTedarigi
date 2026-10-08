@@ -5,12 +5,15 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Users, Package, ShoppingCart } from "lucide-react"
-import { formatNumber } from "@/lib/utils"
+import { formatPrice } from "@/lib/utils"
 import { COMMISSION_STATUSES, UNPAID_STATUSES } from "@/lib/constants"
+import { orderCommission, round2 } from "@/lib/commission"
 import type { OrderStatus } from "@prisma/client"
 
 interface ClassOrder {
   status: string
+  commissionAmount: { toString(): string } | null
+  _count: { students: number }
 }
 
 interface ClassWithDetails {
@@ -39,7 +42,9 @@ async function getSchoolClasses(schoolId: string) {
               status: { notIn: UNPAID_STATUSES as OrderStatus[] }
             },
             select: {
-              status: true
+              status: true,
+              commissionAmount: true,
+              _count: { select: { students: true } }
             }
           }
         }
@@ -108,10 +113,14 @@ export default async function MudurSiniflarPage() {
         {school.classes.map((cls: ClassWithDetails) => {
           const commissionOrders = cls.orders.filter((o: ClassOrder) => COMMISSION_STATUSES.includes(o.status))
           const completedOrders = cls.orders.filter((o: ClassOrder) => o.status === 'COMPLETED').length
-          const pendingOrders = cls.orders.filter((o: ClassOrder) =>
-            !['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(o.status)
+          const cancelledOrders = cls.orders.filter((o: ClassOrder) =>
+            ['CANCELLED', 'REFUNDED'].includes(o.status)
           ).length
-          const commission = Number(cls.commissionAmount) * commissionOrders.length
+          const pendingOrders = cls.orders.length - completedOrders - cancelledOrders
+          // Siparis anindaki hakedis (ogrenci basina) — admin ile ayni hesap
+          const commission = round2(commissionOrders.reduce(
+            (acc: number, o: ClassOrder) => acc + orderCommission(o, cls.commissionAmount), 0
+          ))
 
           return (
             <Card key={cls.id}>
@@ -136,17 +145,17 @@ export default async function MudurSiniflarPage() {
                     <p className="text-xs text-blue-600">{t('totalOrders')}</p>
                     <p className="font-bold text-lg text-blue-700">{cls.orders.length}</p>
                     <p className="text-xs text-blue-500">
-                      {t('ordersBreakdown', { completed: completedOrders, pending: pendingOrders })}
+                      {t('ordersBreakdown', { completed: completedOrders, pending: pendingOrders, cancelled: cancelledOrders })}
                     </p>
                   </div>
                   <div className="p-3 bg-emerald-50 rounded-lg">
                     <p className="text-xs text-emerald-600">{t('commissionAmount')}</p>
-                    <p className="font-bold text-lg text-emerald-700">{Number(cls.commissionAmount).toFixed(2)} TL</p>
+                    <p className="font-bold text-lg text-emerald-700">{formatPrice(cls.commissionAmount.toString(), locale)} TL</p>
                     <p className="text-xs text-emerald-500">{t('perOrder')}</p>
                   </div>
                   <div className="p-3 bg-yellow-50 rounded-lg">
                     <p className="text-xs text-yellow-600">{t('totalCommission')}</p>
-                    <p className="font-bold text-lg text-yellow-700">{formatNumber(commission)} TL</p>
+                    <p className="font-bold text-lg text-yellow-700">{formatPrice(commission, locale)} TL</p>
                   </div>
                 </div>
               </CardContent>

@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
-import { ORDER_STATUS_LABELS, REVENUE_STATUSES, COMMISSION_STATUSES } from '@/lib/constants'
+import { ORDER_STATUS_LABELS, REVENUE_STATUSES, COMMISSION_STATUSES, UNPAID_STATUSES } from '@/lib/constants'
+import type { OrderStatus, Prisma } from '@prisma/client'
 import { getPaymentCommissionRate } from '@/lib/settings'
 import { escapeCsvValue, buildContentDisposition } from '@/lib/security'
 import ExcelJS from 'exceljs'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { MAX_EXPORT_ROWS } from '@/lib/export-limits'
+import { resolveReportRange, rangeWhere } from '@/lib/report-range'
+import { orderCommission } from '@/lib/commission'
 
 const safe = escapeCsvValue
 
@@ -21,45 +24,18 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || 'all' // all | today | yesterday | week | month
-    const fromParam = searchParams.get('from')
-    const toParam = searchParams.get('to')
+    // Ekrandaki Raporlar ile AYNI aralik (lib/report-range) — "Bu Ay" artik ayin 1'inden
+    const range = resolveReportRange(searchParams)
+    const periodLabel = range.label
 
-    const parseYmd = (s: string): Date | null => {
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
-      return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
+    // Odenmemis (NEW/PAYMENT_PENDING) siparisler on-ekrandaki Raporlar sayfasinda
+    // gosterilmiyor (bkz. src/app/api/admin/reports/route.ts) — export de ayni
+    // kumeyi kullanmali, aksi halde indirilen rapordaki "Toplam Siparis" ve oranlar
+    // ekrandakiyle tutmaz.
+    const orderWhere: Prisma.OrderWhereInput = {
+      status: { notIn: UNPAID_STATUSES as OrderStatus[] },
+      ...rangeWhere(range)
     }
-
-    const now = new Date()
-    let gte: Date | undefined
-    let lte: Date | undefined
-    let periodLabel = 'Tum Zamanlar'
-
-    if (fromParam || toParam) {
-      const from = fromParam ? parseYmd(fromParam) : null
-      const to = toParam ? parseYmd(toParam) : null
-      if (from) gte = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0, 0)
-      if (to) lte = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59, 999)
-      periodLabel = `${fromParam || '...'} - ${toParam || '...'}`
-    } else if (period === 'today') {
-      gte = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      periodLabel = 'Bugun'
-    } else if (period === 'yesterday') {
-      const y = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      gte = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0, 0, 0, 0)
-      lte = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999)
-      periodLabel = 'Dun'
-    } else if (period === 'week') {
-      gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      periodLabel = 'Son 7 Gun'
-    } else if (period === 'month') {
-      gte = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      periodLabel = 'Son 30 Gun'
-    }
-
-    const orderCreatedAt: { gte?: Date; lte?: Date } = {}
-    if (gte) orderCreatedAt.gte = gte
-    if (lte) orderCreatedAt.lte = lte
-    const orderWhere = (gte || lte) ? { createdAt: orderCreatedAt } : undefined
 
     const paymentCommissionRate = await getPaymentCommissionRate()
 
@@ -77,7 +53,7 @@ export async function GET(request: Request) {
       include: {
         classes: {
           include: {
-            orders: { where: orderWhere },
+            orders: { where: orderWhere, include: { _count: { select: { students: true } } } },
             package: true
           }
         }
@@ -101,7 +77,9 @@ export async function GET(request: Request) {
     const netAfterPayment = round2(totalRevenue - paymentCommissionAmount)
     const totalSchoolCommission = round2(schools.reduce((acc, s) =>
       acc + s.classes.reduce((ca, cls) =>
-        ca + Number(cls.commissionAmount) * cls.orders.filter(o => COMMISSION_STATUSES.includes(o.status)).length
+        ca + cls.orders
+          .filter(o => COMMISSION_STATUSES.includes(o.status))
+          .reduce((oa, o) => oa + orderCommission(o, cls.commissionAmount), 0)
       , 0)
     , 0))
     const netProfit = round2(netAfterPayment - totalSchoolCommission)
@@ -244,10 +222,10 @@ export async function GET(request: Request) {
       const ciro = orders
         .filter(o => REVENUE_STATUSES.includes(o.status))
         .reduce((acc, o) => acc + Number(o.totalAmount), 0)
-      // Komisyon: her sinifin commissionAmount * o sinifin hakedise dahil siparis sayisi
+      // Komisyon: siparis anindaki (ogrenci basina) hakedis — lib/commission ile ayni
       const komisyon = s.classes.reduce((acc, cls) => {
         const validClassOrders = cls.orders.filter(o => COMMISSION_STATUSES.includes(o.status))
-        return acc + Number(cls.commissionAmount) * validClassOrders.length
+        return acc + validClassOrders.reduce((oa, o) => oa + orderCommission(o, cls.commissionAmount), 0)
       }, 0)
       return {
         name: s.name,
