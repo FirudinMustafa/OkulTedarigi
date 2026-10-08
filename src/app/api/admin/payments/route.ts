@@ -127,8 +127,10 @@ export async function POST(request: Request) {
         amount: numericAmount,
         description: description?.trim() || null,
         period,
-        status: 'PENDING',
-        paymentDate: now
+        // Tek adim: admin "Odeme Yap" dediginde odeme yapilmis sayilir
+        status: 'PAID',
+        paymentDate: now,
+        paidAt: now
       },
       include: {
         school: { select: { id: true, name: true } }
@@ -143,7 +145,8 @@ export async function POST(request: Request) {
       entityId: payment.id,
       details: {
         schoolName: payment.school.name,
-        amount
+        amount,
+        action: 'created_as_paid'
       }
     })
 

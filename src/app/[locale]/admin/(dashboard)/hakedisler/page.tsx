@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Search, DollarSign, CheckCircle, Clock, Building2, Download } from "lucide-react"
-import { formatDate, normalizeSearch } from "@/lib/utils"
+import { formatDate, formatPrice, normalizeSearch } from "@/lib/utils"
 
 interface SchoolPayment {
   id: string
@@ -42,6 +42,8 @@ interface SchoolSummary {
 
 export default function HakedislerPage() {
   const t = useTranslations('admin.payments')
+  const locale = useLocale()
+  const tl = (v: number | string) => `${formatPrice(v, locale)} TL`
   const [payments, setPayments] = useState<SchoolPayment[]>([])
   const [schoolSummaries, setSchoolSummaries] = useState<SchoolSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -117,7 +119,7 @@ export default function HakedislerPage() {
       return
     }
     if (amount > selectedSchool.pending) {
-      setPaymentError(t('amountExceeds', { value: selectedSchool.pending.toFixed(2) }))
+      setPaymentError(t('amountExceeds', { value: formatPrice(selectedSchool.pending, locale) }))
       return
     }
 
@@ -159,6 +161,10 @@ export default function HakedislerPage() {
   const totalPaid = payments
     .filter(p => p.status === "PAID")
     .reduce((acc, p) => acc + Number(p.amount), 0)
+  // Eski akistan kalan, henuz "Odendi" isaretlenmemis kayitlar
+  const totalAwaiting = payments
+    .filter(p => p.status === "PENDING")
+    .reduce((acc, p) => acc + Number(p.amount), 0)
 
   return (
     <div className="space-y-6">
@@ -187,7 +193,7 @@ export default function HakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {totalPending.toFixed(2)} TL
+              {tl(totalPending)}
             </div>
           </CardContent>
         </Card>
@@ -200,8 +206,13 @@ export default function HakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {totalPaid.toFixed(2)} TL
+              {tl(totalPaid)}
             </div>
+            {totalAwaiting > 0 && (
+              <p className="text-xs text-orange-600 mt-1">
+                {t('pendingConfirmationHint', { value: tl(totalAwaiting) })}
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -251,16 +262,20 @@ export default function HakedislerPage() {
                   <TableRow key={school.id}>
                     <TableCell className="font-medium">{school.name}</TableCell>
                     <TableCell>{school.totalOrders}</TableCell>
-                    <TableCell>{school.totalRevenue.toFixed(2)} TL</TableCell>
-                    <TableCell>{school.commission.toFixed(2)} TL</TableCell>
+                    <TableCell>{tl(school.totalRevenue)}</TableCell>
+                    <TableCell>{tl(school.commission)}</TableCell>
                     <TableCell className="font-medium text-green-600">
-                      {school.paid > 0 ? `${school.paid.toFixed(2)} TL` : <span className="text-gray-400">—</span>}
+                      {school.paid > 0 ? tl(school.paid) : <span className="text-gray-400">—</span>}
                     </TableCell>
                     <TableCell className="font-medium text-orange-600">
-                      {school.pendingPayments > 0 ? `${school.pendingPayments.toFixed(2)} TL` : <span className="text-gray-400">—</span>}
+                      {school.pendingPayments > 0 ? tl(school.pendingPayments) : <span className="text-gray-400">—</span>}
                     </TableCell>
                     <TableCell className="font-medium text-yellow-600">
-                      {school.pending > 0 ? `${school.pending.toFixed(2)} TL` : <span className="text-green-500">{t('done')}</span>}
+                      {school.pending > 0
+                        ? tl(school.pending)
+                        : school.pendingPayments > 0
+                          ? <span className="text-orange-600">{t('awaitingConfirmation')}</span>
+                          : <span className="text-green-500">{t('done')}</span>}
                     </TableCell>
                     <TableCell className="text-right">
                       {school.pending > 0 && (
@@ -342,7 +357,7 @@ export default function HakedislerPage() {
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">{payment.school.name}</TableCell>
                     <TableCell>{payment.period}</TableCell>
-                    <TableCell>{Number(payment.amount).toFixed(2)} TL</TableCell>
+                    <TableCell>{tl(payment.amount)}</TableCell>
                     <TableCell>
                       <Badge variant={payment.status === "PAID" ? "default" : "secondary"}>
                         {payment.status === "PAID" ? t('statusPaid') : t('statusPending')}
@@ -388,23 +403,25 @@ export default function HakedislerPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-500">{t('totalRevenueLabel')}</span>
-                  <p className="font-medium">{selectedSchool.totalRevenue.toFixed(2)} TL</p>
+                  <p className="font-medium">{tl(selectedSchool.totalRevenue)}</p>
                 </div>
                 <div>
                   <span className="text-gray-500">{t('totalCommissionLabel')}</span>
-                  <p className="font-medium">{selectedSchool.commission.toFixed(2)} TL</p>
+                  <p className="font-medium">{tl(selectedSchool.commission)}</p>
                 </div>
                 <div>
                   <span className="text-gray-500">{t('paidLabel')}</span>
-                  <p className="font-medium text-green-600">{selectedSchool.paid.toFixed(2)} TL</p>
+                  <p className="font-medium text-green-600">{tl(selectedSchool.paid)}</p>
                 </div>
-                <div>
-                  <span className="text-gray-500">{t('processingLabel')}</span>
-                  <p className="font-medium text-orange-600">{selectedSchool.pendingPayments.toFixed(2)} TL</p>
-                </div>
+                {selectedSchool.pendingPayments > 0 && (
+                  <div>
+                    <span className="text-gray-500">{t('processingLabel')}</span>
+                    <p className="font-medium text-orange-600">{tl(selectedSchool.pendingPayments)}</p>
+                  </div>
+                )}
                 <div className="col-span-2 border-t pt-2">
                   <span className="text-gray-500">{t('remainingLabel')}</span>
-                  <p className="font-bold text-yellow-700 text-lg">{selectedSchool.pending.toFixed(2)} TL</p>
+                  <p className="font-bold text-yellow-700 text-lg">{tl(selectedSchool.pending)}</p>
                 </div>
               </div>
               <div className="border-t pt-4 space-y-3">
@@ -433,7 +450,10 @@ export default function HakedislerPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
-                    {t('pendingHint', { value: selectedSchool.pending.toFixed(2) })}
+                    {t('pendingHint', { value: formatPrice(selectedSchool.pending, locale) })}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t('paymentRecordedAsPaid')}
                   </p>
                 </div>
                 {paymentError && (

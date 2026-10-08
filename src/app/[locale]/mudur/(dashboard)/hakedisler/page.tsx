@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table"
 import { DollarSign, CheckCircle, Clock } from "lucide-react"
-import { formatDateTime } from "@/lib/utils"
+import { formatDateTime, formatPrice } from "@/lib/utils"
 
 interface Order {
   status: string
@@ -108,7 +108,7 @@ export default async function MudurHakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {data.totalCommission.toFixed(2)} TL
+              {formatPrice(data.totalCommission, locale)} TL
             </div>
             <p className="text-xs text-gray-500">
               {t('calculatedByClass')}
@@ -124,7 +124,7 @@ export default async function MudurHakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {data.paidAmount.toFixed(2)} TL
+              {formatPrice(data.paidAmount, locale)} TL
             </div>
           </CardContent>
         </Card>
@@ -137,7 +137,7 @@ export default async function MudurHakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {data.pendingAmount.toFixed(2)} TL
+              {formatPrice(data.pendingAmount, locale)} TL
             </div>
           </CardContent>
         </Card>
@@ -170,7 +170,7 @@ export default async function MudurHakedislerPage() {
                       {formatDateTime(payment.paidAt ?? payment.paymentDate)}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {Number(payment.amount).toFixed(2)} TL
+                      {formatPrice(payment.amount.toString(), locale)} TL
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {payment.description || '-'}
