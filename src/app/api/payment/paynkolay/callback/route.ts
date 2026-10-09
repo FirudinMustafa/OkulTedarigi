@@ -85,11 +85,12 @@ export async function POST(request: Request) {
 
   // Tutar tutarliligi (taksitte vade farki ile AUTHORIZATION_AMOUNT >= principal olabilir).
   // Eksik tahsilati reddet (taksitte vade farki ile USTUNE cikabilir; ALTINA inemez). Epsilon yalniz float toleransi.
+  // Alan yoksa/okunamazsa REDDETME: hash dogrulanmis basarili odemede para cekilmistir;
+  // reddetmek "para cekildi ama siparis olusmadi" demektir (eski kod da kabul ediyordu).
+  // Replay korumasini paymentId tekilligi saglar. Durum loglanir.
   if (verdict.authorizationAmount === undefined) {
-    console.error('[paynkolay/callback] AUTHORIZATION_AMOUNT yok', sanitizeForLog({ orderNumber: refCode }))
-    return redirectTo(`/${locale}/odeme?reason=failed`)
-  }
-  if (Number.isNaN(verdict.authorizationAmount)) {
+    console.error('[paynkolay/callback] AUTHORIZATION_AMOUNT yok (kabul edildi)', sanitizeForLog({ orderNumber: refCode }))
+  } else if (Number.isNaN(verdict.authorizationAmount)) {
     // Bicim taninmadi; alan hash kapsaminda oldugu icin manipule edilemez — reddetmek yerine logla.
     console.error('[paynkolay/callback] AUTHORIZATION_AMOUNT okunamadi', sanitizeForLog({
       orderNumber: refCode, raw: body.AUTHORIZATION_AMOUNT,
@@ -212,6 +213,8 @@ export async function POST(request: Request) {
       orderNumber: order.orderNumber,
       paymentId: verdict.paynkolayReference,
       amount: effectiveAmount,
+      // Ham bicim kayit altinda: gercek dönüs formatini gozlemlemek icin
+      authorizationAmountRaw: body.AUTHORIZATION_AMOUNT ?? null,
       installment: verdict.installment,
     },
   }).catch(() => {})
