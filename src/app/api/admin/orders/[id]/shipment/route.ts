@@ -114,6 +114,12 @@ export async function POST(
       )
     }
 
+    // 60020: bu siparise ait aktif Yurtici kaydi zaten var (onceki deneme yanitsiz kalmis) ->
+    // kaydi sahiplen (takip no = siparis no), siparis kalici olarak kargolanamaz hale gelmesin.
+    if (!shipmentResult.success && shipmentResult.duplicate) {
+      shipmentResult = { success: true, trackingNo: order.orderNumber }
+    }
+
     // Is hatasi (Yurtici outFlag!=0, ornn duplicate/hatali veri): success=false doner,
     // throw etmez -> burada yakalayip rollback + gercek hata mesajini admin'e don.
     if (!shipmentResult.success) {

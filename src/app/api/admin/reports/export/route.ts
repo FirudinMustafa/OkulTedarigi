@@ -118,8 +118,9 @@ export async function GET(request: Request) {
     wsOzet.addRow([])
 
     const summaryData: Array<[string, string | number]> = [
-      ['Toplam Okul', schools.length],
-      ['Toplam Sinif', schools.reduce((a, s) => a + s.classes.length, 0)],
+      // Ekrandaki Raporlar ile ayni: yalniz AKTIF okul/sinif sayilir
+      ['Aktif Okul', schools.filter(s => s.isActive).length],
+      ['Aktif Sinif', schools.reduce((a, s) => a + s.classes.filter(c => c.isActive).length, 0)],
       ['Toplam Siparis', totalOrders],
       ['Tamamlanan Siparis', completedOrders],
       ['Iptal/Iade Siparis', cancelledOrders],

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
 import { getSchoolPayoutSummary, round2, toKurus } from '@/lib/commission'
+import { formatPrice } from '@/lib/utils'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -117,9 +118,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: t('adminMisc.amountExceedsCommission', {
-            total: result.total.toFixed(2),
-            committed: result.committed.toFixed(2),
-            remaining: result.remaining.toFixed(2)
+            total: formatPrice(result.total, 'tr'),
+            committed: formatPrice(result.committed, 'tr'),
+            remaining: formatPrice(result.remaining, 'tr')
           })
         },
         { status: 400 }

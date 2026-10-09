@@ -227,7 +227,7 @@ export default function HakedislerPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {schoolSummaries.filter(s => s.totalOrders > 0).length}
+              {schoolSummaries.filter(s => s.isActive && s.totalOrders > 0).length}
             </div>
           </CardContent>
         </Card>

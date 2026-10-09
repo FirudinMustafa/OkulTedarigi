@@ -44,7 +44,8 @@ export const FILTERABLE_ORDER_STATUSES = [
 ] as const
 
 // Iptal edilebilir durumlar (veli tarafindan) — dagitima cikmadan once
-export const CANCELLABLE_STATUSES = ['PAID', 'CONFIRMED']
+// INVOICED: eski akistan kalan, kargolanmamis (Hazirlaniyor ile ayni asama)
+export const CANCELLABLE_STATUSES = ['PAID', 'CONFIRMED', 'INVOICED']
 
 // Gelire dahil edilecek durumlar (odenmis siparisler)
 // Eski veri uyumu icin INVOICED/DELIVERED de dahil edilir.

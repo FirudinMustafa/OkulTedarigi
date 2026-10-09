@@ -1666,7 +1666,8 @@
         "UNDELIVERED": "als nicht zustellbar markiert",
         "REDISPATCH": "erneut versandt"
       },
-      "pendingCancelRequest": "Für diese Bestellung liegt eine offene Stornierungsanfrage vor; bitte zuerst bearbeiten."
+      "pendingCancelRequest": "Für diese Bestellung liegt eine offene Stornierungsanfrage vor; bitte zuerst bearbeiten.",
+      "trackingWriteFailed": "Die Sendung wurde bei Yurtiçi erstellt (Nr. {trackingNo}), konnte aber nicht gespeichert werden. Bitte neu laden und prüfen."
     },
     "veli": {
       "chatUnavailable": "Der Chat-Assistent ist derzeit nicht verfügbar.",

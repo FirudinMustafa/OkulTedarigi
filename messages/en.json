@@ -1666,7 +1666,8 @@
         "UNDELIVERED": "marked as undelivered",
         "REDISPATCH": "redispatched"
       },
-      "pendingCancelRequest": "This order has a pending cancellation request; process it first on the Cancellation Requests page."
+      "pendingCancelRequest": "This order has a pending cancellation request; process it first on the Cancellation Requests page.",
+      "trackingWriteFailed": "Shipment was created at Yurtiçi (tracking {trackingNo}) but could not be saved to the order. Refresh and check."
     },
     "veli": {
       "chatUnavailable": "The chat assistant is currently unavailable.",

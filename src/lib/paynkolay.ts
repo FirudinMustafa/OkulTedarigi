@@ -281,7 +281,9 @@ export async function processRefund(input: RefundInput): Promise<RefundResult> {
   form.append('hashDatav2', hashDataV2)
 
   try {
-    const res = await fetch(PAYNKOLAY_REFUND_URL, { method: 'POST', body: form })
+    // Zaman asimi: iade lib/refund icindeki 60 sn'lik DB transaction'inda calisir; istek
+    // ondan once kesilmeli ki satir kilidi asili kalmasin.
+    const res = await fetch(PAYNKOLAY_REFUND_URL, { method: 'POST', body: form, signal: AbortSignal.timeout(20_000) })
     const text = await res.text()
     let json: any = null
     try { json = JSON.parse(text) } catch { /* ignore */ }
@@ -295,6 +297,11 @@ export async function processRefund(input: RefundInput): Promise<RefundResult> {
     }
     return { success: false, message: json?.RESPONSE_DATA || json?.responseMessage || `Iade basarisiz (HTTP ${res.status})` }
   } catch (err) {
-    return { success: false, message: `Iade istegi hatasi: ${(err as Error).message}` }
+    const e = err as Error
+    if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+      // Sonuc BELIRSIZ: PayNKolay iadeyi yapmis olabilir. Tekrar denemeden once panelden kontrol.
+      return { success: false, message: 'PayNKolay 20 sn icinde yanit vermedi; iade sonucu BELIRSIZ. Tekrar denemeden once PayNKolay panelinden iadeyi kontrol edin.' }
+    }
+    return { success: false, message: `Iade istegi hatasi: ${e.message}` }
   }
 }

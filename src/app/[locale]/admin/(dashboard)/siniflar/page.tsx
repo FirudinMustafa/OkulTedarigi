@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
-import { normalizeSearch } from "@/lib/utils"
+import { useTranslations, useLocale } from "next-intl"
+import { normalizeSearch, formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,6 +44,7 @@ interface PackageType {
 
 export default function SiniflarPage() {
   const t = useTranslations("admin.classes")
+  const locale = useLocale()
   const tf = useTranslations("admin.i18nFields")
   const [classes, setClasses] = useState<ClassType[]>([])
   const [schools, setSchools] = useState<SchoolType[]>([])
@@ -312,7 +313,7 @@ export default function SiniflarPage() {
                         {cls.school.password}
                       </code>
                     </TableCell>
-                    <TableCell>{cls.commissionAmount ? Number(cls.commissionAmount).toFixed(2) + ' TL' : '-'}</TableCell>
+                    <TableCell>{cls.commissionAmount ? formatPrice(Number(cls.commissionAmount), locale) + ' TL' : '-'}</TableCell>
                     <TableCell>{cls.package?.name || "-"}</TableCell>
                     <TableCell>{cls._count.orders}</TableCell>
                     <TableCell>

@@ -6,6 +6,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 import { unstable_cache } from 'next/cache'
+import { resolveReportRange } from '@/lib/report-range'
 
 // Veri cekimi ~21 sorgu/cagri — kimlik dogrulamadan bagimsiz, kisa TTL'li cache
 // ile tekrarli dashboard yuklemelerinde DB'ye tekrar tekrar gidilmesi engellenir.
@@ -16,8 +17,11 @@ const getDashboardData = unstable_cache(
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const startOfWeek = new Date(now)
-    startOfWeek.setDate(now.getDate() - 7)
+    // Raporlar'daki "Son 7 Gun" ile ayni tanim (6 gun once 00:00'dan itibaren)
+    const startOfWeek = resolveReportRange(new URLSearchParams('period=week'), now).gte!
+    // Grafik pencereleri tam gun/tam ay baslangicindan (ilk sutun yarim kalmasin)
+    const chartDayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)
+    const chartMonthStart = new Date(now.getFullYear(), now.getMonth() - 5, 1)
     // Odenmemis (terk edilmis checkout) siparisler hicbir sayima girmez
     const paidOnly = { status: { notIn: UNPAID_STATUSES as OrderStatus[] } }
     const revenueIn = Prisma.join(REVENUE_STATUSES)
@@ -118,7 +122,7 @@ const getDashboardData = unstable_cache(
         COUNT(*) as count,
         COALESCE(SUM(CASE WHEN status IN (${revenueIn}) THEN totalAmount ELSE 0 END), 0) as revenue
       FROM orders
-      WHERE createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)
+      WHERE createdAt >= ${chartDayStart}
         AND status NOT IN (${unpaidIn})
       GROUP BY date
       ORDER BY date ASC
@@ -130,7 +134,7 @@ const getDashboardData = unstable_cache(
         COUNT(*) as count,
         COALESCE(SUM(CASE WHEN status IN (${revenueIn}) THEN totalAmount ELSE 0 END), 0) as revenue
       FROM orders
-      WHERE createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 6 MONTH)
+      WHERE createdAt >= ${chartMonthStart}
         AND status NOT IN (${unpaidIn})
       GROUP BY month
       ORDER BY month ASC

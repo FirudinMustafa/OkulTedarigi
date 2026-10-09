@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { ArrowLeft, ArrowRight, Buildings, CheckCircle, LockSimple, WarningCircle, CaretDown, CaretUp, Eye, EyeSlash } from '@phosphor-icons/react'
 import { getLocalized } from '@/lib/i18n-content'
+import { formatPrice } from '@/lib/utils'
 
 // Sinif kartlari icin gorsel arka plan listesi (public/images/class-bg/)
 const CLASS_BG_VARIANTS = [
@@ -291,7 +292,7 @@ function SchoolPasswordFlow() {
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[14px] font-medium text-apple-ink line-clamp-1">{getLocalized(cls.package, 'name', locale)}</p>
                         <span className="text-lg font-semibold text-[#10b981] whitespace-nowrap">
-                          {Number(cls.package.price).toFixed(2)} ₺
+                          {formatPrice(Number(cls.package.price), locale)} ₺
                         </span>
                       </div>
                     )}

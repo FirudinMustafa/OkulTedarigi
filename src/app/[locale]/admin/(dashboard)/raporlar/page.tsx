@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,7 @@ import {
   BarChart3, TrendingUp, TrendingDown, DollarSign, ShoppingCart,
   Users, School, Package, Download, CreditCard, Wallet, PiggyBank, Check
 } from "lucide-react"
-import { formatNumber } from "@/lib/utils"
+import { formatNumber, formatPrice } from "@/lib/utils"
 
 interface DailyRow { date: string; orders: number; revenue: number; paymentFee: number; net: number }
 
@@ -38,6 +38,7 @@ const money = (n: number) => `${formatNumber(n)} TL`
 
 export default function RaporlarPage() {
   const t = useTranslations('admin.reports')
+  const locale = useLocale()
   const ts = useTranslations('status')
   const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -201,7 +202,7 @@ export default function RaporlarPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{money(data.totalRevenue)}</div>
-            <p className="text-xs text-gray-500 mt-1">{t('avgOrder', { value: data.averageOrderValue.toFixed(2) })}</p>
+            <p className="text-xs text-gray-500 mt-1">{t('avgOrder', { value: formatPrice(data.averageOrderValue, locale) })}</p>
           </CardContent>
         </Card>
 

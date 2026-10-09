@@ -51,7 +51,7 @@ async function getDashboardStats(schoolId: string) {
     paidCommission: payout?.paid ?? 0,
     // Okulun henuz eline gecmeyen tutar (eksiye dusmez; fazla odeme ayri gosterilir)
     pendingCommission: payout?.notYetPaid ?? 0,
-    overpaid: payout?.overpaid ?? 0,
+    overpaid: payout?.overpaidPaid ?? 0,
     totalClasses: school._count.classes,
     recentOrders: recentOrders as Order[]
   }

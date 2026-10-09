@@ -270,6 +270,22 @@ export async function DELETE(
       )
     }
 
+    // Son 2 saatte acilmis odenmemis siparis = veli su an odeme sayfasinda olabilir; paket
+    // silinirse gelen odeme "siparis bulunamadi" ile sahipsiz kalir. Bu durumda reddet.
+    const recentUnpaid = await prisma.order.count({
+      where: {
+        packageId: id,
+        status: { in: UNPAID_STATUSES as OrderStatus[] },
+        createdAt: { gte: new Date(Date.now() - 2 * 60 * 60 * 1000) }
+      }
+    })
+    if (recentUnpaid > 0) {
+      return NextResponse.json(
+        { error: t('catalog.packageHasOrdersDeactivate', { count: recentUnpaid }) },
+        { status: 409 }
+      )
+    }
+
     // Yalniz odenmemis (terk edilmis) siparisler + paket: hepsi tek transaction
     await prisma.$transaction(async (tx) => {
       await tx.cancelRequest.deleteMany({

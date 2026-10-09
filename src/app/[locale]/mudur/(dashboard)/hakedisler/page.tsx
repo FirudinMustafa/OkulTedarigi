@@ -37,7 +37,7 @@ async function getSchoolPayments(schoolId: string) {
     totalCommission: summary.commission,
     paidAmount: summary.paid,
     pendingAmount: summary.notYetPaid,
-    overpaid: summary.overpaid
+    overpaid: summary.overpaidPaid
   }
 }
 

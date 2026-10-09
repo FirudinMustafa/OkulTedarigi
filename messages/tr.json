@@ -1666,7 +1666,8 @@
         "UNDELIVERED": "teslim edilemeyen olarak işaretlendi",
         "REDISPATCH": "tekrar dağıtıma çıkarıldı"
       },
-      "pendingCancelRequest": "Bu siparişin bekleyen bir iptal talebi var; önce İptal Talepleri sayfasından talebi işleyin."
+      "pendingCancelRequest": "Bu siparişin bekleyen bir iptal talebi var; önce İptal Talepleri sayfasından talebi işleyin.",
+      "trackingWriteFailed": "Kargo Yurtiçi'de oluşturuldu (takip no {trackingNo}) ancak siparişe kaydedilemedi. Sayfayı yenileyip kontrol edin."
     },
     "veli": {
       "chatUnavailable": "Sohbet asistanı şu an kullanılamıyor.",

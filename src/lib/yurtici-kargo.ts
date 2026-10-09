@@ -38,6 +38,8 @@ export interface ShipmentResult {
   trackingNo?: string
   trackingUrl?: string
   errorMessage?: string
+  /** 60020: bu siparis no (cargoKey) icin Yurtici'de zaten aktif kayit var */
+  duplicate?: boolean
 }
 
 export interface TrackingInfo {
@@ -276,7 +278,7 @@ export async function createShipment(data: ShipmentData): Promise<ShipmentResult
       msg = 'Bu siparis icin Yurtici sisteminde zaten aktif bir kargo kaydi mevcut. Once mevcut kargoyu iptal edip tekrar deneyin.'
     }
     if (isDev) console.error('[YURTICI] createShipment basarisiz:', errCode, msg)
-    return { success: false, errorMessage: msg }
+    return { success: false, errorMessage: msg, duplicate: errCode === ERR_DUPLICATE_CARGO_KEY }
   }
 
   // Yurtici createShipment'ta takip anahtari bizim gonderdigimiz cargoKey'dir.

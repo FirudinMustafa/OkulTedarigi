@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminSession } from '@/lib/auth'
 import { logAction } from '@/lib/logger'
-import { createShipment } from '@/lib/yurtici-kargo'
+import { createShipment, type ShipmentResult } from '@/lib/yurtici-kargo'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       }).catch(err => console.error('Batch shipment rollback error:', err))
 
       try {
-        const shipmentResult = await createShipment({
+        let shipmentResult: ShipmentResult = await createShipment({
           orderNumber: order.orderNumber,
           receiverName: order.parentName,
           receiverPhone: order.phone,
@@ -100,6 +100,13 @@ export async function POST(request: Request) {
           packageContent: 'Okul Malzemeleri'
         })
 
+        // 60020: cargoKey = siparis no; Yurtici'de bu siparise ait aktif kayit zaten var
+        // (onceki denemede yanit kaybolmus/zaman asimi). Kaydi sahiplen: takip no = siparis no.
+        // Aksi halde siparis bir daha kargolanamaz ve iptal de edilemezdi.
+        if (!shipmentResult.success && shipmentResult.duplicate) {
+          shipmentResult = { success: true, trackingNo: order.orderNumber }
+        }
+
         if (!shipmentResult.success) {
           await rollback()
           return {
@@ -110,11 +117,22 @@ export async function POST(request: Request) {
           }
         }
 
-        // Takip numarasini yaz (siparis claim ile zaten SHIPPED)
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { trackingNo: shipmentResult.trackingNo }
-        })
+        // Takip numarasini yaz (siparis claim ile zaten SHIPPED). Kargo Yurtici'de OLUSTU:
+        // yazim hata verirse rollback YAPILMAZ (CONFIRMED'e donup sahipsiz kayit birakmasin).
+        try {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { trackingNo: shipmentResult.trackingNo }
+          })
+        } catch (writeErr) {
+          console.error('Batch shipment trackingNo yazilamadi (kargo olustu):', order.orderNumber, writeErr)
+          return {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            success: false,
+            error: t('orders.trackingWriteFailed', { trackingNo: shipmentResult.trackingNo ?? order.orderNumber })
+          }
+        }
 
         logAction({
           userId: sessionId,

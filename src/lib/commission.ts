@@ -59,7 +59,10 @@ export interface PayoutSummary {
   remaining: number
   /** Okulun henuz eline gecmeyen tutar: toplam - PAID (mudur) */
   notYetPaid: number
+  /** Admin: (PAID + PENDING) hakedisi asiyorsa fark */
   overpaid: number
+  /** Mudur: yalniz PAID hakedisi asiyorsa fark (notYetPaid ile tutarli) */
+  overpaidPaid: number
   commissionRate: number
 }
 
@@ -127,6 +130,7 @@ export async function getPayoutSummaries(opts: { schoolId?: string; db?: Db } = 
       pendingPayments,
       remaining: diff > 0 ? diff : 0,
       notYetPaid: Math.max(round2(commission - paid), 0),
+      overpaidPaid: Math.max(round2(paid - commission), 0),
       overpaid: diff < 0 ? -diff : 0,
       commissionRate: totalRevenue > 0 ? round2(commission / totalRevenue * 100) : 0,
     }

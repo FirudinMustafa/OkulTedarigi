@@ -55,6 +55,15 @@ export async function POST(request: Request) {
 
   if (!order) {
     console.error('[paynkolay/callback] Siparis bulunamadi:', refCode)
+    // Basarili bir odeme sahipsiz kaldiysa (or. siparis silinmis) admin habersiz kalmasin
+    if (verdict.success) {
+      await logAction({
+        action: 'PAYMENT_ORPHAN',
+        entity: 'ORDER',
+        ipAddress: getClientIp(request),
+        details: { orderNumber: refCode, paymentId: verdict.paynkolayReference, amount: verdict.authorizationAmount },
+      }).catch(() => {})
+    }
     return redirectTo('/tr/odeme?reason=failed')
   }
 
@@ -91,6 +100,13 @@ export async function POST(request: Request) {
       expectedAmount: Number(order.totalAmount),
       receivedAmount: verdict.authorizationAmount,
     }))
+    await logAction({
+      action: 'PAYMENT_AMOUNT_MISMATCH',
+      entity: 'ORDER',
+      entityId: order.id,
+      ipAddress: ip,
+      details: { orderNumber: refCode, paymentId: paymentRef, expected: Number(order.totalAmount), received: verdict.authorizationAmount },
+    }).catch(() => {})
     return redirectTo(`/${locale}/odeme?reason=failed`)
   }
 
@@ -143,6 +159,20 @@ export async function POST(request: Request) {
     const alreadyPaid = current && !['NEW', 'PAYMENT_PENDING', 'CANCELLED', 'REFUNDED'].includes(current.status)
     if (alreadyPaid && current?.paymentId === paymentRef) {
       return redirectTo(`/${locale}/siparis-onay/${order.orderNumber}`)
+    }
+    // Ayni odemenin tekrar callback'i (siparis sonradan iptal/iade edilmis): yeni para cekilmedi,
+    // "elle iade et" alarmi URETME (admin cift iade yapmasin).
+    if (current?.paymentId === paymentRef) {
+      return redirectTo(`/${locale}/odeme?reason=failed`)
+    }
+    // Odeme yapilmamis sayilip IPTAL edilmis siparise gec gelen gercek odeme: referans ve
+    // odeme zamani siparise yazilir ki "Iade Et" GERCEK PayNKolay iadesi yapsin (paidAt yokken
+    // iade adimi "tahsilat yok" sayip parayi iade etmeden REFUNDED yaziyordu).
+    if (current?.status === 'CANCELLED' && !current.paymentId) {
+      await prisma.order.updateMany({
+        where: { id: order.id, status: 'CANCELLED', paymentId: null },
+        data: { paymentId: paymentRef, paidAt: new Date() },
+      }).catch(err => console.error('[paynkolay/callback] gec odeme kaydedilemedi:', err))
     }
     // Para cekildi ama siparis odenebilir durumda degil — admin elle iade etmeli.
     console.error('[paynkolay/callback] Odeme alindi ama siparis odenebilir durumda degil', sanitizeForLog({
