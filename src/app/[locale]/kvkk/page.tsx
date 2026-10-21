@@ -11,7 +11,7 @@ const COMPANY = {
   legalName: 'NEXT KIRTASİYE YAYINCILIK DAĞITIM OTOMOTİV GIDA İLETİŞİM HİZMETLERİ LİMİTED ŞİRKETİ',
   brand: 'OkulTedarigim',
   taxOffice: 'Başakşehir',
-  taxNumber: '1258793967',
+  taxNumber: '6312096195',
   mersis: '0180070520100001',
   address: 'Şamlar Mah. Hanedan Sk. Seher Hanım Apt. No: 11/1A Başakşehir / İstanbul',
   email: 'info@okultedarigim.com',
