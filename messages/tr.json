@@ -626,7 +626,22 @@
       "pendingConfirmationHint": "+ {value} onay bekliyor",
       "paymentRecordedAsPaid": "Kaydedilen tutar okula ödenmiş sayılır ve müdür panelinde görünür.",
       "inactiveSchool": "Pasif",
-      "overpaid": "Fazla ödeme: {value}"
+      "overpaid": "Fazla ödeme: {value}",
+      "statusCancelled": "İptal edildi",
+      "back": "Geri",
+      "confirmAndSave": "Onayla ve Kaydet",
+      "saveAnyway": "Yine de Kaydet",
+      "confirmPaymentText": "<b>{school}</b> okuluna <b>{amount}</b> ödeme kaydedilecek ve ödenmiş sayılacak. Onaylıyor musunuz?",
+      "paymentSaved": "{school} için {amount} ödeme kaydedildi.",
+      "paymentCancelled": "{school} için {amount} kayıt iptal edildi.",
+      "cancelPayment": "İptal Et",
+      "cancelPaymentTitle": "Ödeme Kaydını İptal Et",
+      "cancelPaymentHint": "Kayıt silinmez; \"İptal edildi\" olarak işaretlenir, hakediş hesabından düşer ve tutar okulun kalan hakedişine geri eklenir.",
+      "cancelReasonLabel": "İptal gerekçesi",
+      "cancelReasonPlaceholder": "Örn: Mükerrer giriş",
+      "cancelReasonRequired": "Lütfen bir iptal gerekçesi yazın (en az 3 karakter).",
+      "confirmCancelPayment": "Kaydı İptal Et",
+      "cancelFailed": "Kayıt iptal edilemedi (HTTP {status})"
     },
     "discounts": {
       "title": "İndirim Kodları",
@@ -1550,7 +1565,11 @@
       "summaryLoadFailed": "Özet yüklenemedi",
       "exportFailed": "Export başarısız",
       "reportLoadFailed": "Rapor yüklenemedi",
-      "orderChangedRetry": "Sipariş bu arada değişti (örn. kargolandı). Sayfayı yenileyip tekrar deneyin."
+      "orderChangedRetry": "Sipariş bu arada değişti (örn. kargolandı). Sayfayı yenileyip tekrar deneyin.",
+      "duplicatePayment": "Bu okula {date} tarihinde aynı tutarda ({amount} TL) ödeme zaten kaydedilmiş. Mükerrer giriş olabilir — gerçekten ikinci bir ödeme yapıyorsanız \"Yine de Kaydet\"e basın.",
+      "cancelReasonRequired": "İptal gerekçesi zorunludur (3-500 karakter)",
+      "paymentAlreadyCancelled": "Bu kayıt zaten iptal edilmiş",
+      "paymentCancelFailed": "Kayıt iptal edilemedi"
     },
     "catalog": {
       "unauthorized": "Yetkisiz erişim",

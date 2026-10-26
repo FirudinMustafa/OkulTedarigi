@@ -626,7 +626,22 @@
       "pendingConfirmationHint": "+ {value} بانتظار التأكيد",
       "paymentRecordedAsPaid": "يُعتبر المبلغ المسجّل مدفوعًا للمدرسة ويظهر في لوحة المدير.",
       "inactiveSchool": "غير نشط",
-      "overpaid": "دفعة زائدة: {value}"
+      "overpaid": "دفعة زائدة: {value}",
+      "statusCancelled": "ملغاة",
+      "back": "رجوع",
+      "confirmAndSave": "تأكيد وحفظ",
+      "saveAnyway": "احفظ على أي حال",
+      "confirmPaymentText": "سيتم تسجيل دفعة بقيمة <b>{amount}</b> لمدرسة <b>{school}</b> واعتبارها مدفوعة. هل تؤكد؟",
+      "paymentSaved": "تم تسجيل دفعة بقيمة {amount} لمدرسة {school}.",
+      "paymentCancelled": "تم إلغاء السجل بقيمة {amount} لمدرسة {school}.",
+      "cancelPayment": "إلغاء",
+      "cancelPaymentTitle": "إلغاء سجل الدفعة",
+      "cancelPaymentHint": "لا يُحذف السجل؛ بل يُعلَّم كـ\"ملغاة\" ويُستبعد من حساب العمولة ويُعاد المبلغ إلى العمولة المتبقية للمدرسة.",
+      "cancelReasonLabel": "سبب الإلغاء",
+      "cancelReasonPlaceholder": "مثال: إدخال مكرر",
+      "cancelReasonRequired": "يرجى كتابة سبب الإلغاء (3 أحرف على الأقل).",
+      "confirmCancelPayment": "إلغاء السجل",
+      "cancelFailed": "تعذّر إلغاء السجل (HTTP {status})"
     },
     "discounts": {
       "title": "رموز الخصم",
@@ -1550,7 +1565,11 @@
       "summaryLoadFailed": "تعذّر تحميل الملخّص",
       "exportFailed": "فشل التصدير",
       "reportLoadFailed": "تعذّر تحميل التقرير",
-      "orderChangedRetry": "تغيّر الطلب في هذه الأثناء (مثلاً تم شحنه). حدّث الصفحة وحاول مرة أخرى."
+      "orderChangedRetry": "تغيّر الطلب في هذه الأثناء (مثلاً تم شحنه). حدّث الصفحة وحاول مرة أخرى.",
+      "duplicatePayment": "تم بالفعل تسجيل دفعة بنفس المبلغ ({amount} TL) لهذه المدرسة بتاريخ {date}. قد يكون إدخالاً مكرراً — إذا كنت تقوم فعلاً بدفعة ثانية فاضغط \"احفظ على أي حال\".",
+      "cancelReasonRequired": "سبب الإلغاء مطلوب (3-500 حرف)",
+      "paymentAlreadyCancelled": "تم إلغاء هذا السجل بالفعل",
+      "paymentCancelFailed": "تعذّر إلغاء السجل"
     },
     "catalog": {
       "unauthorized": "وصول غير مصرح به",

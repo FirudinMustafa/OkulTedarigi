@@ -626,7 +626,22 @@
       "pendingConfirmationHint": "+ {value} awaiting confirmation",
       "paymentRecordedAsPaid": "The recorded amount is counted as paid to the school and appears in the director panel.",
       "inactiveSchool": "Inactive",
-      "overpaid": "Overpaid: {value}"
+      "overpaid": "Overpaid: {value}",
+      "statusCancelled": "Cancelled",
+      "back": "Back",
+      "confirmAndSave": "Confirm and Save",
+      "saveAnyway": "Save Anyway",
+      "confirmPaymentText": "A payment of <b>{amount}</b> will be recorded for <b>{school}</b> and counted as paid. Do you confirm?",
+      "paymentSaved": "Payment of {amount} recorded for {school}.",
+      "paymentCancelled": "Record of {amount} for {school} was cancelled.",
+      "cancelPayment": "Cancel",
+      "cancelPaymentTitle": "Cancel Payment Record",
+      "cancelPaymentHint": "The record is not deleted; it is marked as \"Cancelled\", excluded from the commission calculation and the amount is added back to the school's remaining commission.",
+      "cancelReasonLabel": "Cancellation reason",
+      "cancelReasonPlaceholder": "e.g. Duplicate entry",
+      "cancelReasonRequired": "Please enter a cancellation reason (at least 3 characters).",
+      "confirmCancelPayment": "Cancel Record",
+      "cancelFailed": "Record could not be cancelled (HTTP {status})"
     },
     "discounts": {
       "title": "Discount Codes",
@@ -1550,7 +1565,11 @@
       "summaryLoadFailed": "Could not load summary",
       "exportFailed": "Export failed",
       "reportLoadFailed": "Could not load report",
-      "orderChangedRetry": "The order changed in the meantime (e.g. shipped). Refresh and try again."
+      "orderChangedRetry": "The order changed in the meantime (e.g. shipped). Refresh and try again.",
+      "duplicatePayment": "A payment of the same amount ({amount} TL) was already recorded for this school on {date}. This may be a duplicate — if you really are making a second payment, press \"Save Anyway\".",
+      "cancelReasonRequired": "A cancellation reason is required (3-500 characters)",
+      "paymentAlreadyCancelled": "This record has already been cancelled",
+      "paymentCancelFailed": "Could not cancel the record"
     },
     "catalog": {
       "unauthorized": "Unauthorized access",

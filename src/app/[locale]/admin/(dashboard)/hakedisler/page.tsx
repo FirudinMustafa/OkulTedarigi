@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Search, DollarSign, CheckCircle, Clock, Building2, Download } from "lucide-react"
+import { Search, DollarSign, CheckCircle, Clock, Building2, Download, XCircle, AlertTriangle } from "lucide-react"
 import { formatDate, formatPrice, normalizeSearch } from "@/lib/utils"
 
 interface SchoolPayment {
@@ -25,6 +25,8 @@ interface SchoolPayment {
   period: string
   status: string
   paidAt: string | null
+  cancelledAt: string | null
+  cancelReason: string | null
   createdAt: string
 }
 
@@ -110,22 +112,44 @@ export default function HakedislerPage() {
   const [paymentError, setPaymentError] = useState("")
   const [paymentAmount, setPaymentAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  // Kayit oncesi ozet adimi + sunucudan gelen mukerrer uyarisi
+  const [confirmStep, setConfirmStep] = useState(false)
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  // State bir sonraki render'a kadar guncellenmez; hizli cift tikta ikinci istegi bu kilit keser
+  const submitLock = useRef(false)
 
-  const createPayment = async () => {
-    if (!selectedSchool || submitting) return
+  const openPaymentDialog = (school: SchoolSummary) => {
+    setSelectedSchool(school)
+    setPaymentAmount(school.pending.toFixed(2))
     setPaymentError("")
+    setConfirmStep(false)
+    setDuplicateWarning(null)
+    setPaymentDialogOpen(true)
+  }
 
-    const amount = parseFloat(paymentAmount.replace(',', '.'))
-    if (isNaN(amount) || amount <= 0) {
+  const parsedAmount = parseFloat(paymentAmount.replace(',', '.'))
+
+  const goToConfirm = () => {
+    if (!selectedSchool) return
+    setPaymentError("")
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       setPaymentError(t('invalidAmount'))
       return
     }
     // Kurus bazinda karsilastir: "Tamami" 26.95 iken pending 26.949999... olabilir
-    if (Math.round(amount * 100) > Math.round(selectedSchool.pending * 100)) {
+    if (Math.round(parsedAmount * 100) > Math.round(selectedSchool.pending * 100)) {
       setPaymentError(t('amountExceeds', { value: formatPrice(selectedSchool.pending, locale) }))
       return
     }
+    setDuplicateWarning(null)
+    setConfirmStep(true)
+  }
 
+  const createPayment = async () => {
+    if (!selectedSchool || submitLock.current) return
+    submitLock.current = true
+    setPaymentError("")
     setSubmitting(true)
     try {
       const res = await fetch("/api/admin/payments", {
@@ -134,22 +158,66 @@ export default function HakedislerPage() {
         credentials: 'include',
         body: JSON.stringify({
           schoolId: selectedSchool.id,
-          amount
+          amount: parsedAmount,
+          // Uyari gosterildiyse ve admin yine de kaydet dediyse
+          confirmDuplicate: duplicateWarning !== null
         })
       })
 
       if (!res.ok) {
         const data = await safeJson(res)
+        if (res.status === 409 && data?.code === 'DUPLICATE') {
+          setDuplicateWarning(data.error)
+          return
+        }
         setPaymentError(data?.error || t('createFailed', { status: res.status }))
         return
       }
 
+      setSuccessMessage(t('paymentSaved', { school: selectedSchool.name, amount: tl(parsedAmount) }))
       fetchData()
       setPaymentDialogOpen(false)
     } catch {
       setPaymentError(t('serverUnreachable'))
     } finally {
+      submitLock.current = false
       setSubmitting(false)
+    }
+  }
+
+  // Hatali/mukerrer kaydi iptal (silinmez, gerekceyle CANCELLED olur)
+  const [cancelTarget, setCancelTarget] = useState<SchoolPayment | null>(null)
+  const [cancelReason, setCancelReason] = useState("")
+  const [cancelError, setCancelError] = useState("")
+  const [cancelling, setCancelling] = useState(false)
+
+  const cancelPayment = async () => {
+    if (!cancelTarget || cancelling) return
+    if (cancelReason.trim().length < 3) {
+      setCancelError(t('cancelReasonRequired'))
+      return
+    }
+    setCancelError("")
+    setCancelling(true)
+    try {
+      const res = await fetch(`/api/admin/payments/${cancelTarget.id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ reason: cancelReason.trim() })
+      })
+      if (!res.ok) {
+        const data = await safeJson(res)
+        setCancelError(data?.error || t('cancelFailed', { status: res.status }))
+        return
+      }
+      setSuccessMessage(t('paymentCancelled', { school: cancelTarget.school.name, amount: tl(cancelTarget.amount) }))
+      setCancelTarget(null)
+      fetchData()
+    } catch {
+      setCancelError(t('serverUnreachable'))
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -291,12 +359,7 @@ export default function HakedislerPage() {
                       {school.pending > 0 && (
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setSelectedSchool(school)
-                            setPaymentAmount(school.pending.toFixed(2))
-                            setPaymentError("")
-                            setPaymentDialogOpen(true)
-                          }}
+                          onClick={() => openPaymentDialog(school)}
                         >
                           <DollarSign className="h-4 w-4 mr-1" />
                           {t('makePayment')}
@@ -334,6 +397,7 @@ export default function HakedislerPage() {
                   <SelectItem value="__all__">{t('all')}</SelectItem>
                   <SelectItem value="PENDING">{t('statusPending')}</SelectItem>
                   <SelectItem value="PAID">{t('statusPaid')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('statusCancelled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -343,6 +407,12 @@ export default function HakedislerPage() {
           {listError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {listError}
+            </div>
+          )}
+          {successMessage && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center justify-between gap-2">
+              <span>{successMessage}</span>
+              <button type="button" className="text-green-700 hover:text-green-900" onClick={() => setSuccessMessage(null)}>×</button>
             </div>
           )}
           {filteredPayments.length === 0 ? (
@@ -364,29 +434,55 @@ export default function HakedislerPage() {
               </TableHeader>
               <TableBody>
                 {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id}>
+                  <TableRow key={payment.id} className={payment.status === "CANCELLED" ? "opacity-60" : undefined}>
                     <TableCell className="font-medium">{payment.school.name}</TableCell>
                     <TableCell>{payment.period}</TableCell>
-                    <TableCell>{tl(payment.amount)}</TableCell>
+                    <TableCell className={payment.status === "CANCELLED" ? "line-through" : undefined}>{tl(payment.amount)}</TableCell>
                     <TableCell>
-                      <Badge variant={payment.status === "PAID" ? "default" : "secondary"}>
-                        {payment.status === "PAID" ? t('statusPaid') : t('statusPending')}
-                      </Badge>
+                      {payment.status === "CANCELLED" ? (
+                        <div>
+                          <Badge variant="outline" className="text-gray-500">{t('statusCancelled')}</Badge>
+                          {payment.cancelReason && (
+                            <p className="text-xs text-gray-500 mt-1 max-w-[220px]">{payment.cancelReason}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge variant={payment.status === "PAID" ? "default" : "secondary"}>
+                          {payment.status === "PAID" ? t('statusPaid') : t('statusPending')}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>{formatDate(payment.createdAt)}</TableCell>
                     <TableCell>{payment.paidAt ? formatDate(payment.paidAt) : "-"}</TableCell>
                     <TableCell className="text-right">
-                      {payment.status === "PENDING" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={payingId === payment.id}
-                          onClick={() => markAsPaid(payment.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          {payingId === payment.id ? t('processing') : t('markPaid')}
-                        </Button>
-                      )}
+                      <div className="flex justify-end gap-2">
+                        {payment.status === "PENDING" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={payingId === payment.id}
+                            onClick={() => markAsPaid(payment.id)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            {payingId === payment.id ? t('processing') : t('markPaid')}
+                          </Button>
+                        )}
+                        {payment.status !== "CANCELLED" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              setCancelTarget(payment)
+                              setCancelReason("")
+                              setCancelError("")
+                            }}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            {t('cancelPayment')}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -434,6 +530,26 @@ export default function HakedislerPage() {
                   <p className="font-bold text-yellow-700 text-lg">{tl(selectedSchool.pending)}</p>
                 </div>
               </div>
+              {confirmStep ? (
+              <div className="border-t pt-4 space-y-3">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                  {t.rich('confirmPaymentText', {
+                    school: selectedSchool.name,
+                    amount: tl(parsedAmount),
+                    b: (chunks) => <strong>{chunks}</strong>
+                  })}
+                </div>
+                {duplicateWarning && (
+                  <div className="p-3 bg-orange-50 border border-orange-300 rounded-lg text-sm text-orange-800 flex gap-2">
+                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                    <span>{duplicateWarning}</span>
+                  </div>
+                )}
+                {paymentError && (
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{paymentError}</p>
+                )}
+              </div>
+              ) : (
               <div className="border-t pt-4 space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -470,14 +586,72 @@ export default function HakedislerPage() {
                   <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{paymentError}</p>
                 )}
               </div>
+              )}
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentDialogOpen(false)} disabled={submitting}>
-              {t('cancel')}
+            {confirmStep ? (
+              <>
+                <Button variant="outline" onClick={() => { setConfirmStep(false); setDuplicateWarning(null) }} disabled={submitting}>
+                  {t('back')}
+                </Button>
+                <Button
+                  onClick={createPayment}
+                  disabled={submitting}
+                  className={duplicateWarning ? "bg-orange-600 hover:bg-orange-700" : undefined}
+                >
+                  {submitting ? t('saving') : duplicateWarning ? t('saveAnyway') : t('confirmAndSave')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button onClick={goToConfirm}>
+                  {t('createPayment')}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hakedis Iptal Dialog */}
+      <Dialog open={cancelTarget !== null} onOpenChange={(open) => { if (!open && !cancelling) setCancelTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('cancelPaymentTitle')}</DialogTitle>
+          </DialogHeader>
+          {cancelTarget && (
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                <p className="font-medium">{cancelTarget.school.name}</p>
+                <p className="text-gray-600 mt-1">
+                  {tl(cancelTarget.amount)} · {formatDate(cancelTarget.createdAt)} · {cancelTarget.status === "PAID" ? t('statusPaid') : t('statusPending')}
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">{t('cancelPaymentHint')}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('cancelReasonLabel')}</label>
+                <Input
+                  value={cancelReason}
+                  maxLength={500}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder={t('cancelReasonPlaceholder')}
+                />
+              </div>
+              {cancelError && (
+                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{cancelError}</p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelTarget(null)} disabled={cancelling}>
+              {t('back')}
             </Button>
-            <Button onClick={createPayment} disabled={submitting}>
-              {submitting ? t('saving') : t('createPayment')}
+            <Button onClick={cancelPayment} disabled={cancelling} className="bg-red-600 hover:bg-red-700">
+              {cancelling ? t('processing') : t('confirmCancelPayment')}
             </Button>
           </DialogFooter>
         </DialogContent>

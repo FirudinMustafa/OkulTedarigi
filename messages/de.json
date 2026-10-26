@@ -626,7 +626,22 @@
       "pendingConfirmationHint": "+ {value} Bestätigung ausstehend",
       "paymentRecordedAsPaid": "Der erfasste Betrag gilt als an die Schule gezahlt und erscheint im Direktorenbereich.",
       "inactiveSchool": "Inaktiv",
-      "overpaid": "Überzahlt: {value}"
+      "overpaid": "Überzahlt: {value}",
+      "statusCancelled": "Storniert",
+      "back": "Zurück",
+      "confirmAndSave": "Bestätigen und speichern",
+      "saveAnyway": "Trotzdem speichern",
+      "confirmPaymentText": "Für <b>{school}</b> wird eine Zahlung von <b>{amount}</b> erfasst und als bezahlt gewertet. Bestätigen Sie?",
+      "paymentSaved": "Zahlung von {amount} für {school} erfasst.",
+      "paymentCancelled": "Eintrag über {amount} für {school} wurde storniert.",
+      "cancelPayment": "Stornieren",
+      "cancelPaymentTitle": "Zahlungseintrag stornieren",
+      "cancelPaymentHint": "Der Eintrag wird nicht gelöscht; er wird als \"Storniert\" markiert, aus der Provisionsberechnung ausgeschlossen und der Betrag wird der offenen Provision der Schule wieder hinzugefügt.",
+      "cancelReasonLabel": "Stornierungsgrund",
+      "cancelReasonPlaceholder": "z. B. Doppelte Eingabe",
+      "cancelReasonRequired": "Bitte geben Sie einen Stornierungsgrund ein (mindestens 3 Zeichen).",
+      "confirmCancelPayment": "Eintrag stornieren",
+      "cancelFailed": "Eintrag konnte nicht storniert werden (HTTP {status})"
     },
     "discounts": {
       "title": "Rabattcodes",
@@ -1550,7 +1565,11 @@
       "summaryLoadFailed": "Übersicht konnte nicht geladen werden",
       "exportFailed": "Export fehlgeschlagen",
       "reportLoadFailed": "Bericht konnte nicht geladen werden",
-      "orderChangedRetry": "Die Bestellung wurde inzwischen geändert (z. B. versendet). Bitte neu laden und erneut versuchen."
+      "orderChangedRetry": "Die Bestellung wurde inzwischen geändert (z. B. versendet). Bitte neu laden und erneut versuchen.",
+      "duplicatePayment": "Für diese Schule wurde am {date} bereits eine Zahlung in gleicher Höhe ({amount} TL) erfasst. Möglicherweise doppelt — wenn Sie wirklich eine zweite Zahlung leisten, klicken Sie auf \"Trotzdem speichern\".",
+      "cancelReasonRequired": "Ein Stornierungsgrund ist erforderlich (3-500 Zeichen)",
+      "paymentAlreadyCancelled": "Dieser Eintrag wurde bereits storniert",
+      "paymentCancelFailed": "Eintrag konnte nicht storniert werden"
     },
     "catalog": {
       "unauthorized": "Nicht autorisierter Zugriff",

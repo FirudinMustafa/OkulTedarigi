@@ -194,7 +194,7 @@ export async function GET(request: Request) {
         safe(p.schoolName),
         safe(p.period || ''),
         p.amount,
-        p.status === 'PAID' ? 'Odendi' : 'Bekliyor',
+        p.status === 'PAID' ? 'Odendi' : p.status === 'CANCELLED' ? 'Iptal' : 'Bekliyor',
         new Date(p.createdAt).toLocaleDateString('tr-TR')
       ])
       const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
@@ -206,7 +206,7 @@ export async function GET(request: Request) {
       row.getCell(4).numFmt = currencyFormat
       row.getCell(5).font = {
         bold: true,
-        color: { argb: p.status === 'PAID' ? '16A34A' : 'D97706' }
+        color: { argb: p.status === 'PAID' ? '16A34A' : p.status === 'CANCELLED' ? '9CA3AF' : 'D97706' }
       }
       row.height = 22
     })

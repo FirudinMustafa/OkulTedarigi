@@ -7,6 +7,9 @@ import { formatPrice } from '@/lib/utils'
 import { getApiLocale } from '@/lib/api-locale'
 import { getTranslations } from 'next-intl/server'
 
+// Ayni okul + ayni tutar bu sure icinde tekrar girilirse admin'den onay istenir
+const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000
+
 export async function GET() {
   const t = await getTranslations({ locale: await getApiLocale(), namespace: 'apiErrors' })
   try {
@@ -30,6 +33,8 @@ export async function GET() {
       period: payment.period || new Date(payment.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }),
       status: payment.status,
       paidAt: payment.paidAt?.toISOString() || null,
+      cancelledAt: payment.cancelledAt?.toISOString() || null,
+      cancelReason: payment.cancelReason,
       createdAt: payment.createdAt.toISOString()
     }))
 
@@ -56,6 +61,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: t('adminMisc.invalidRequest') }, { status: 400 })
     }
     const { schoolId, amount, description } = body
+    // Mukerrer uyarisina ragmen admin "Yine de kaydet" dediyse
+    const confirmDuplicate = body.confirmDuplicate === true
 
     // Validation
     if (!schoolId || typeof schoolId !== 'string') {
@@ -81,10 +88,26 @@ export async function POST(request: Request) {
     type Result =
       | { kind: 'notFound' }
       | { kind: 'exceeds'; total: number; committed: number; remaining: number }
+      | { kind: 'duplicate'; createdAt: Date }
       | { kind: 'ok'; payment: { id: string; school: { id: string; name: string } } }
     const result: Result = await prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM schools WHERE id = ${schoolId} FOR UPDATE`
       if (locked.length === 0) return { kind: 'notFound' }
+
+      // Mukerrer giris korumasi: okul satiri kilitli oldugu icin iki sekme/cift tik da yakalanir
+      if (!confirmDuplicate) {
+        const recent = await tx.schoolPayment.findFirst({
+          where: {
+            schoolId,
+            amount: amountKurus / 100,
+            status: { in: ['PAID', 'PENDING'] },
+            createdAt: { gte: new Date(now.getTime() - DUPLICATE_WINDOW_MS) }
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true }
+        })
+        if (recent) return { kind: 'duplicate', createdAt: recent.createdAt }
+      }
 
       const summary = await getSchoolPayoutSummary(schoolId, tx)
       if (!summary) return { kind: 'notFound' }
@@ -114,6 +137,18 @@ export async function POST(request: Request) {
     if (result.kind === 'notFound') {
       return NextResponse.json({ error: t('adminMisc.schoolNotFound') }, { status: 404 })
     }
+    if (result.kind === 'duplicate') {
+      return NextResponse.json(
+        {
+          code: 'DUPLICATE',
+          error: t('adminMisc.duplicatePayment', {
+            amount: formatPrice(amountKurus / 100, 'tr'),
+            date: result.createdAt.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })
+          })
+        },
+        { status: 409 }
+      )
+    }
     if (result.kind === 'exceeds') {
       return NextResponse.json(
         {
@@ -137,7 +172,8 @@ export async function POST(request: Request) {
       details: {
         schoolName: payment.school.name,
         amount,
-        action: 'created_as_paid'
+        action: 'created_as_paid',
+        ...(confirmDuplicate ? { confirmedDuplicate: true } : {})
       }
     })
 
