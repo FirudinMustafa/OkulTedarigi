@@ -641,7 +641,11 @@
       "cancelReasonPlaceholder": "Örn: Mükerrer giriş",
       "cancelReasonRequired": "Lütfen bir iptal gerekçesi yazın (en az 3 karakter).",
       "confirmCancelPayment": "Kaydı İptal Et",
-      "cancelFailed": "Kayıt iptal edilemedi (HTTP {status})"
+      "cancelFailed": "Kayıt iptal edilemedi (HTTP {status})",
+      "paymentHistoryToggle": "Ödeme geçmişi ({count})",
+      "lastPaidAt": "Son ödeme: {date}",
+      "paidAtLabel": "Ödendi: {date}",
+      "cancelledAtLabel": "İptal: {date}"
     },
     "discounts": {
       "title": "İndirim Kodları",

@@ -641,7 +641,11 @@
       "cancelReasonPlaceholder": "z. B. Doppelte Eingabe",
       "cancelReasonRequired": "Bitte geben Sie einen Stornierungsgrund ein (mindestens 3 Zeichen).",
       "confirmCancelPayment": "Eintrag stornieren",
-      "cancelFailed": "Eintrag konnte nicht storniert werden (HTTP {status})"
+      "cancelFailed": "Eintrag konnte nicht storniert werden (HTTP {status})",
+      "paymentHistoryToggle": "Zahlungsverlauf ({count})",
+      "lastPaidAt": "Letzte Zahlung: {date}",
+      "paidAtLabel": "Bezahlt: {date}",
+      "cancelledAtLabel": "Storniert: {date}"
     },
     "discounts": {
       "title": "Rabattcodes",

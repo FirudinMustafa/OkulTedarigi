@@ -641,7 +641,11 @@
       "cancelReasonPlaceholder": "e.g. Duplicate entry",
       "cancelReasonRequired": "Please enter a cancellation reason (at least 3 characters).",
       "confirmCancelPayment": "Cancel Record",
-      "cancelFailed": "Record could not be cancelled (HTTP {status})"
+      "cancelFailed": "Record could not be cancelled (HTTP {status})",
+      "paymentHistoryToggle": "Payment history ({count})",
+      "lastPaidAt": "Last payment: {date}",
+      "paidAtLabel": "Paid: {date}",
+      "cancelledAtLabel": "Cancelled: {date}"
     },
     "discounts": {
       "title": "Discount Codes",

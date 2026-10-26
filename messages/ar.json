@@ -641,7 +641,11 @@
       "cancelReasonPlaceholder": "مثال: إدخال مكرر",
       "cancelReasonRequired": "يرجى كتابة سبب الإلغاء (3 أحرف على الأقل).",
       "confirmCancelPayment": "إلغاء السجل",
-      "cancelFailed": "تعذّر إلغاء السجل (HTTP {status})"
+      "cancelFailed": "تعذّر إلغاء السجل (HTTP {status})",
+      "paymentHistoryToggle": "سجل المدفوعات ({count})",
+      "lastPaidAt": "آخر دفعة: {date}",
+      "paidAtLabel": "دُفعت: {date}",
+      "cancelledAtLabel": "أُلغيت: {date}"
     },
     "discounts": {
       "title": "رموز الخصم",

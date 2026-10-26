@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,8 +15,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Search, DollarSign, CheckCircle, Clock, Building2, Download, XCircle, AlertTriangle } from "lucide-react"
-import { formatDate, formatPrice, normalizeSearch } from "@/lib/utils"
+import { Search, DollarSign, CheckCircle, Clock, Building2, Download, XCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
+import { formatDateTime, formatPrice, normalizeSearch } from "@/lib/utils"
 
 interface SchoolPayment {
   id: string
@@ -55,6 +55,18 @@ export default function HakedislerPage() {
   const [filterStatus, setFilterStatus] = useState("")
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [selectedSchool, setSelectedSchool] = useState<SchoolSummary | null>(null)
+  // Okul bazli tabloda acilan odeme gecmisi (ne zaman ne yapildi)
+  const [expandedSchoolId, setExpandedSchoolId] = useState<string | null>(null)
+  // API en yeni kayit once siralar; okul basina grupla
+  const paymentsBySchool = useMemo(() => {
+    const map = new Map<string, SchoolPayment[]>()
+    for (const p of payments) {
+      const list = map.get(p.school.id)
+      if (list) list.push(p)
+      else map.set(p.school.id, [p])
+    }
+    return map
+  }, [payments])
 
   useEffect(() => {
     fetchData()
@@ -329,12 +341,27 @@ export default function HakedislerPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {schoolSummaries.map((school) => (
-                  <TableRow key={school.id}>
+                {schoolSummaries.map((school) => {
+                  const history = paymentsBySchool.get(school.id) || []
+                  const lastPaid = history.find(p => p.status === "PAID")
+                  const expanded = expandedSchoolId === school.id
+                  return (
+                  <Fragment key={school.id}>
+                  <TableRow>
                     <TableCell className="font-medium">
                       {school.name}
                       {!school.isActive && (
                         <Badge variant="secondary" className="ml-2">{t('inactiveSchool')}</Badge>
+                      )}
+                      {history.length > 0 && (
+                        <button
+                          type="button"
+                          className="mt-1 flex items-center gap-1 text-xs font-normal text-blue-600 hover:text-blue-800"
+                          onClick={() => setExpandedSchoolId(expanded ? null : school.id)}
+                        >
+                          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                          {t('paymentHistoryToggle', { count: history.length })}
+                        </button>
                       )}
                     </TableCell>
                     <TableCell>{school.totalOrders}</TableCell>
@@ -342,6 +369,11 @@ export default function HakedislerPage() {
                     <TableCell>{tl(school.commission)}</TableCell>
                     <TableCell className="font-medium text-green-600">
                       {school.paid > 0 ? tl(school.paid) : <span className="text-gray-400">—</span>}
+                      {lastPaid && (
+                        <p className="text-xs font-normal text-gray-500 mt-0.5">
+                          {t('lastPaidAt', { date: formatDateTime(lastPaid.paidAt || lastPaid.createdAt, locale) })}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium text-orange-600">
                       {school.pendingPayments > 0 ? tl(school.pendingPayments) : <span className="text-gray-400">—</span>}
@@ -367,7 +399,41 @@ export default function HakedislerPage() {
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  {expanded && (
+                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                      <TableCell colSpan={8} className="py-3">
+                        <div className="space-y-1.5">
+                          {history.map(p => (
+                            <div
+                              key={p.id}
+                              className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-sm ${p.status === "CANCELLED" ? "text-gray-400" : "text-gray-700"}`}
+                            >
+                              <span className="w-36 tabular-nums">{formatDateTime(p.createdAt, locale)}</span>
+                              <span className={`w-32 font-medium tabular-nums ${p.status === "CANCELLED" ? "line-through" : ""}`}>{tl(p.amount)}</span>
+                              <Badge
+                                variant={p.status === "PAID" ? "default" : p.status === "CANCELLED" ? "outline" : "secondary"}
+                                className={p.status === "CANCELLED" ? "text-gray-500" : undefined}
+                              >
+                                {p.status === "PAID" ? t('statusPaid') : p.status === "CANCELLED" ? t('statusCancelled') : t('statusPending')}
+                              </Badge>
+                              {p.status === "PAID" && p.paidAt && (
+                                <span className="text-xs text-gray-500">{t('paidAtLabel', { date: formatDateTime(p.paidAt, locale) })}</span>
+                              )}
+                              {p.status === "CANCELLED" && (
+                                <span className="text-xs">
+                                  {p.cancelledAt && t('cancelledAtLabel', { date: formatDateTime(p.cancelledAt, locale) })}
+                                  {p.cancelReason && ` — ${p.cancelReason}`}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </Fragment>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
@@ -452,8 +518,8 @@ export default function HakedislerPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{formatDate(payment.createdAt)}</TableCell>
-                    <TableCell>{payment.paidAt ? formatDate(payment.paidAt) : "-"}</TableCell>
+                    <TableCell>{formatDateTime(payment.createdAt, locale)}</TableCell>
+                    <TableCell>{payment.paidAt ? formatDateTime(payment.paidAt, locale) : "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {payment.status === "PENDING" && (
@@ -628,7 +694,7 @@ export default function HakedislerPage() {
               <div className="p-3 bg-gray-50 rounded-lg text-sm">
                 <p className="font-medium">{cancelTarget.school.name}</p>
                 <p className="text-gray-600 mt-1">
-                  {tl(cancelTarget.amount)} · {formatDate(cancelTarget.createdAt)} · {cancelTarget.status === "PAID" ? t('statusPaid') : t('statusPending')}
+                  {tl(cancelTarget.amount)} · {formatDateTime(cancelTarget.createdAt, locale)} · {cancelTarget.status === "PAID" ? t('statusPaid') : t('statusPending')}
                 </p>
               </div>
               <p className="text-sm text-gray-600">{t('cancelPaymentHint')}</p>
